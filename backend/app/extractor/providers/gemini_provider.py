@@ -1,6 +1,6 @@
 """Google Gemini Flash provider (free-tier fallback).
 
-Uses the new google-genai SDK (REST transport — no gRPC, no SSL cert issues).
+Uses direct REST API — no SDK, no gRPC, no version conflicts.
 
 Free tier: 15 RPM, 1M tokens/day, 1M token context window.
 Get a free key: https://aistudio.google.com/app/apikey
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 MAX_CHARS = 800_000
 MODEL = "gemini-2.0-flash"
+BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 
 
 class GeminiProvider(ExtractionProvider):
@@ -27,35 +28,36 @@ class GeminiProvider(ExtractionProvider):
             raise RuntimeError("No Gemini API key configured.")
 
         try:
-            from google import genai
-            from google.genai import types
+            import httpx
         except ImportError:
-            raise RuntimeError("google-genai not installed. Run: pip install google-genai")
-
-        client = genai.Client(
-            api_key=settings.gemini_api_key,
-            http_options=types.HttpOptions(api_version="v1beta"),
-        )
+            raise RuntimeError("httpx not installed.")
 
         text = self._truncate(conv.full_text(), MAX_CHARS)
         ts = conv.created_at.isoformat() if conv.created_at else "unknown"
         user_msg = USER_TEMPLATE.format(title=conv.title, timestamp=ts, text=text)
 
+        headers = {"x-goog-api-key": settings.gemini_api_key, "Content-Type": "application/json"}
+        payload = {
+            "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+            "contents": [{"parts": [{"text": user_msg}]}],
+            "generationConfig": {"maxOutputTokens": 4096, "temperature": 0.1},
+        }
+
         try:
-            response = client.models.generate_content(
-                model=MODEL,
-                contents=user_msg,
-                config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
-                    max_output_tokens=4096,
-                    temperature=0.1,
-                ),
-            )
-            return {"raw": response.text, "provider": self.name}
+            with httpx.Client(timeout=120) as client:
+                resp = client.post(
+                    f"{BASE_URL}/models/{MODEL}:generateContent",
+                    headers=headers,
+                    json=payload,
+                )
+            if resp.status_code == 429:
+                raise RuntimeError(f"Gemini quota/rate limit: {resp.text}")
+            if resp.status_code in (401, 403):
+                raise RuntimeError(f"Gemini auth failed: {resp.text}")
+            resp.raise_for_status()
+            content = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+            return {"raw": content, "provider": self.name}
+        except RuntimeError:
+            raise
         except Exception as e:
-            err = str(e).lower()
-            if "quota" in err or "rate" in err or "429" in err:
-                raise RuntimeError(f"Gemini quota/rate limit: {e}") from e
-            if "api_key" in err or "auth" in err or "403" in err or "invalid" in err:
-                raise RuntimeError(f"Gemini auth failed: {e}") from e
             raise RuntimeError(f"Gemini call failed: {e}") from e

@@ -1,0 +1,153 @@
+{
+  "_comment": "Human-labelled ground truth for evaluation. Each entity has an 'id', 'type', and 'description'. Ambiguous cases are flagged with 'ambiguous': true — these are expected to have lower inter-rater agreement and the engine should mark low confidence.",
+  "dataset1_founder_chatgpt": {
+    "decisions": [
+      {"id": "d1_1", "description": "Set pricing at $85/seat/month with annual plan at $75/seat"},
+      {"id": "d1_2", "description": "Use per-seat pricing model instead of flat fee"},
+      {"id": "d1_3", "description": "Review pricing again after 10 paying customers"},
+      {"id": "d1_4", "description": "Pass on VP Sales candidate and hire an AE instead"},
+      {"id": "d1_5", "description": "Hire AE once 12 customers are signed"}
+    ],
+    "reasons": [
+      {"id": "r1_1", "linked_decision": "d1_1", "description": "One pilot flagged $75 as the budget-approval threshold; $85 stays above the veto while below $100 where two pilots said felt reasonable"},
+      {"id": "r1_2", "linked_decision": "d1_2", "description": "Per-seat aligns revenue with customer growth; HR teams already track headcount making the metric intuitive"},
+      {"id": "r1_3", "linked_decision": "d1_4", "description": "$180k base on $240k ARR with 6 months runway is existential risk; sales process not yet fully documented"},
+      {"id": "r1_4", "linked_decision": "d1_5", "description": "12 customers provides a proven repeatable sales playbook and more runway comfort"}
+    ],
+    "evidence": [
+      {"id": "e1_1", "linked_decision": "d1_1", "description": "Two pilots mentioned $100/seat feels reasonable; one said they'd need budget approval above $75"},
+      {"id": "e1_2", "linked_decision": "d1_4", "description": "Company has $240k ARR, 6 months runway, 8 deals closed by CEO"}
+    ],
+    "goals": [
+      {"id": "g1_1", "description": "Reach 10 paying customers"},
+      {"id": "g1_2", "description": "Build a repeatable sales process before hiring sales staff"}
+    ],
+    "constraints": [
+      {"id": "c1_1", "description": "$40k/month burn rate with 6 months runway — limits high fixed-cost hires"},
+      {"id": "c1_2", "description": "New paying customer onboarding next week — pricing decision needed before end of month"}
+    ],
+    "open_questions": [
+      {"id": "q1_1", "description": "What is the right time to raise prices?"},
+      {"id": "q1_2", "description": "When exactly should the AE hire happen relative to fundraising?", "ambiguous": true}
+    ],
+    "action_items": [
+      {"id": "a1_1", "description": "Close 2 more deals before hiring AE"},
+      {"id": "a1_2", "description": "Document the sales process"}
+    ]
+  },
+
+  "dataset2_meeting_notes": {
+    "decisions": [
+      {"id": "d2_1", "description": "Prioritise SSO integration for Q1 delivery by Dec 15"},
+      {"id": "d2_2", "description": "Hire a contractor for the reporting dashboard targeting Jan 10 delivery"},
+      {"id": "d2_3", "description": "Move mobile app to Q2"},
+      {"id": "d2_4", "description": "Defer database migration to February"},
+      {"id": "d2_5", "description": "Marcus to add query optimisation this week as temporary fix for database performance"}
+    ],
+    "reasons": [
+      {"id": "r2_1", "linked_decision": "d2_1", "description": "Two enterprise prospects are blocking on SSO; estimated 3 weeks to deliver; unblocks $40k ARR"},
+      {"id": "r2_2", "linked_decision": "d2_2", "description": "8 of 8 customers mentioned inability to show CFO ROI without better reporting; retention risk"},
+      {"id": "r2_3", "linked_decision": "d2_3", "description": "Mobile app is 6-10 weeks of work; SSO and reporting are higher urgency"},
+      {"id": "r2_4", "linked_decision": "d2_4", "description": "Maintenance window not viable during SSO sprint with enterprise prospects watching; migration can wait until February"}
+    ],
+    "evidence": [
+      {"id": "e2_1", "linked_decision": "d2_2", "description": "Customer interview showed all 8 current customers cannot show ROI to their CFO without better reporting"},
+      {"id": "e2_2", "linked_decision": "d2_4", "description": "Database query times creeping up; largest customer at 8k records; performance issues expected at 50k records; ~4 months at current growth rate"}
+    ],
+    "goals": [
+      {"id": "g2_1", "description": "Close two enterprise prospects currently blocked on SSO"},
+      {"id": "g2_2", "description": "Reduce churn risk by delivering reporting dashboard"}
+    ],
+    "constraints": [
+      {"id": "c2_1", "description": "SSO delivery deadline Dec 15 — enterprise prospects are watching"},
+      {"id": "c2_2", "description": "Team has no experience working with contractors — ramp time risk"},
+      {"id": "c2_3", "description": "P0 API rate limit issue causing intermittent failures must be fixed regardless of roadmap"}
+    ],
+    "open_questions": [
+      {"id": "q2_1", "description": "What is the fallback plan if the reporting contractor doesn't work out?"},
+      {"id": "q2_2", "description": "Will the database query optimisation be sufficient to hold until February?", "ambiguous": true}
+    ],
+    "action_items": [
+      {"id": "a2_1", "description": "Marcus delivers SSO integration by Dec 15"},
+      {"id": "a2_2", "description": "Priya hires reporting contractor this week"},
+      {"id": "a2_3", "description": "Sarah updates two SSO prospects today"},
+      {"id": "a2_4", "description": "Marcus fixes API rate limit issue this week"},
+      {"id": "a2_5", "description": "Marcus adds query optimisation this week"},
+      {"id": "a2_6", "description": "Marcus documents database migration risk"}
+    ]
+  },
+
+  "dataset3_founder_discussion": {
+    "decisions": [
+      {"id": "d3_1", "description": "Stop looking for a co-founder; build the team through hires instead"},
+      {"id": "d3_2", "description": "No PLG model — product requires hands-on onboarding"},
+      {"id": "d3_3", "description": "No enterprise deals this year; focus on SMB"},
+      {"id": "d3_4", "description": "No product pivot; stay with workforce planning"},
+      {"id": "d3_5", "description": "First hire is a senior engineer in January"}
+    ],
+    "reasons": [
+      {"id": "r3_1", "linked_decision": "d3_1", "description": "What is needed is someone to own sales (VP Sales role), not a technical co-founder; the search has been going on 4 months without result"},
+      {"id": "r3_2", "linked_decision": "d3_2", "description": "Three competitors tried PLG and are struggling; product requires onboarding and hand-holding in month one"},
+      {"id": "r3_3", "linked_decision": "d3_3", "description": "Enterprise sales cycles are 9-12 months; security audit and BAA required; no time with current runway"},
+      {"id": "r3_4", "linked_decision": "d3_4", "description": "Have paying customers and a working product; pivoting now would kill morale and burn runway"}
+    ],
+    "evidence": [
+      {"id": "e3_1", "linked_decision": "d3_2", "description": "Three named competitors attempted PLG and are struggling"},
+      {"id": "e3_2", "linked_decision": "d3_3", "description": "Enterprise deal would require security audit, BAA; 9-12 month sales cycles; Fortune 500 inbound identified"},
+      {"id": "e3_3", "linked_decision": "d3_1", "description": "Advisor Lisa said: 'You're not looking for a co-founder, you're looking for an excuse not to make a decision'"}
+    ],
+    "goals": [
+      {"id": "g3_1", "description": "Reach $50k MRR to raise Series A from a position of strength"},
+      {"id": "g3_2", "description": "Close Series A or bridge round before June runway end"}
+    ],
+    "constraints": [
+      {"id": "c3_1", "description": "Runway runs out in June — Series A or bridge conversations must start by December"},
+      {"id": "c3_2", "description": "Current MRR $18k — below typical Series A floor of $50-80k MRR"},
+      {"id": "c3_3", "description": "No enterprise deals this year due to time, compliance, and sales cycle constraints"}
+    ],
+    "open_questions": [
+      {"id": "q3_1", "description": "Bridge round vs Series A — which fundraising path to take?"},
+      {"id": "q3_2", "description": "When exactly should fundraise outreach begin?"},
+      {"id": "q3_3", "description": "Should the senior engineer be hired before or after starting fundraise?"}
+    ],
+    "action_items": [
+      {"id": "a3_1", "description": "Start Series A or bridge outreach by December (6 weeks away)"},
+      {"id": "a3_2", "description": "Hire senior engineer in January"}
+    ]
+  },
+
+  "dataset4_postmortem": {
+    "decisions": [
+      {"id": "d4_1", "description": "Did not charge customers for the first 12 months (retrospective — described as a mistake)"},
+      {"id": "d4_2", "description": "Pivoted roadmap to enterprise features in month 8 after first enterprise pilot signed"},
+      {"id": "d4_3", "description": "Tolerated non-shipping CTO from month 14 to month 22 without resolution"},
+      {"id": "d4_4", "ambiguous": true, "description": "Implicitly decided to keep founding team intact despite performance issues — ambiguous whether this was a conscious decision or drift"}
+    ],
+    "reasons": [
+      {"id": "r4_1", "linked_decision": "d4_1", "description": "Advisor said 'get to 50 customers before thinking about pricing'"},
+      {"id": "r4_2", "linked_decision": "d4_2", "description": "One signed $60k ARR enterprise contract and two enterprise inbounds"},
+      {"id": "r4_3", "linked_decision": "d4_3", "description": "Replacing a co-founder mid-company is terrifying — acknowledged constraint that was not acted on"}
+    ],
+    "evidence": [
+      {"id": "e4_1", "linked_decision": "d4_1", "description": "Two customers told them unsolicited they would pay immediately; one offered $500/month — counter-evidence that was ignored"},
+      {"id": "e4_2", "linked_decision": "d4_2", "description": "Existing 40 SMB users were churning at 8%/month — counter-evidence that was ignored"},
+      {"id": "e4_3", "linked_decision": "d4_2", "description": "Enterprise contracts never closed; 2000-person company built internal tool instead; two inbounds ghosted after 4 months"}
+    ],
+    "goals": [
+      {"id": "g4_1", "description": "Reach 50 customers (original goal from advisor advice)"},
+      {"id": "g4_2", "description": "Build sustainable B2B SaaS business for customer success teams"}
+    ],
+    "constraints": [
+      {"id": "c4_1", "description": "Author recommends: no enterprise deal worth less than $100k ARR, and only after 20 retained SMB customers"},
+      {"id": "c4_2", "description": "NPS of 72 among active users — product worked; failure was strategic not product-market fit"}
+    ],
+    "open_questions": [
+      {"id": "q4_1", "description": "What would have happened if co-founder performance had been addressed in month 15?", "ambiguous": true},
+      {"id": "q4_2", "description": "Would charging from day one have changed the customer cohort quality?", "ambiguous": true}
+    ],
+    "action_items": [
+      {"id": "a4_1", "description": "Author recommends: enforce written decision + counter-argument for every major decision"},
+      {"id": "a4_2", "description": "Author recommends: define enterprise readiness as a deliberate milestone with explicit criteria"}
+    ]
+  }
+}

@@ -18,11 +18,12 @@ from app.parsers.base import Conversation
 from app.extractor.providers.anthropic_provider import AnthropicProvider
 from app.extractor.providers.gemini_provider import GeminiProvider
 from app.extractor.providers.cerebras_provider import CerebrasProvider
+from app.extractor.providers.heuristic_provider import HeuristicProvider
 
 logger = logging.getLogger(__name__)
 
 # Provider chain — tried in order; first success wins
-_PROVIDERS = [AnthropicProvider(), GeminiProvider(), CerebrasProvider()]
+_PROVIDERS = [AnthropicProvider(), GeminiProvider(), CerebrasProvider(), HeuristicProvider()]
 
 
 @dataclass

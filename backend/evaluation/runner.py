@@ -18,7 +18,7 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.parsers.router import parse_file
-from app.extractor.engine import extract_from_conversation
+from app.extractor.engine import analyse_conversation, ConversationAnalysis
 from evaluation.matcher import match_entities, MatchResult
 
 ENTITY_TYPES = ["decisions", "reasons", "evidence", "goals", "constraints", "open_questions", "action_items"]
@@ -54,10 +54,15 @@ def run_dataset(dataset_file: Path, gt_key: str, ground_truth: Dict) -> Dict[str
 
     all_entities: List[Dict[str, Any]] = []
     for conv in conversations:
-        entities = extract_from_conversation(conv)
-        all_entities.extend(entities)
+        analysis = analyse_conversation(conv)
+        if analysis is None:
+            print(f"  ✗ [{conv.title}] — all providers failed")
+            continue
+        print(f"\n  ✓ [{analysis.conversation_name}] via {analysis.provider_used}")
+        print(f"    Pattern: {analysis.behavioral_pattern}")
+        all_entities.extend(analysis.entities)
 
-    print(f"  Extracted {len(all_entities)} raw entities")
+    print(f"\n  Total entities extracted: {len(all_entities)}")
 
     # group extracted entities by type
     extracted_by_type: Dict[str, List[str]] = {t: [] for t in ENTITY_TYPES}

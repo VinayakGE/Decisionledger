@@ -1,6 +1,6 @@
 """Extraction engine — one API call per conversation, provider fallback chain.
 
-Provider order:  Anthropic (primary)  →  Gemini Flash (free-tier fallback)
+Provider order:  Anthropic (primary)  →  Gemini Flash  →  Cerebras (free-tier fallback)
 
 Each conversation produces ONE ConversationAnalysis:
   - conversation_name
@@ -17,11 +17,12 @@ from datetime import datetime
 from app.parsers.base import Conversation
 from app.extractor.providers.anthropic_provider import AnthropicProvider
 from app.extractor.providers.gemini_provider import GeminiProvider
+from app.extractor.providers.cerebras_provider import CerebrasProvider
 
 logger = logging.getLogger(__name__)
 
 # Provider chain — tried in order; first success wins
-_PROVIDERS = [AnthropicProvider(), GeminiProvider()]
+_PROVIDERS = [AnthropicProvider(), GeminiProvider(), CerebrasProvider()]
 
 
 @dataclass

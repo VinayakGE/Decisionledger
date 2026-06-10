@@ -1,0 +1,119 @@
+"""Persist extracted entities to the database."""
+from typing import List, Dict, Any
+from datetime import datetime
+from sqlalchemy.orm import Session
+from app.models.orm import Decision, Reason, Evidence, Goal, Constraint, OpenQuestion, ActionItem, GoalStatus, ActionStatus
+
+
+def persist_entities(
+    db: Session,
+    entities: List[Dict[str, Any]],
+    source_id: int,
+) -> int:
+    """Write entities to DB. Returns count of rows created."""
+    count = 0
+    # first pass: create decisions so reasons/evidence can link to them
+    decision_map: Dict[str, int] = {}  # title → id
+
+    for e in entities:
+        if e.get("type") != "decision":
+            continue
+        d = _make_decision(e, source_id)
+        db.add(d)
+        db.flush()
+        decision_map[e.get("title", "").lower()] = d.id
+        count += 1
+
+    for e in entities:
+        entity_type = e.get("type")
+        if entity_type == "decision":
+            continue
+
+        linked_id = _resolve_link(e, decision_map)
+
+        if entity_type == "reason":
+            db.add(Reason(
+                linked_decision_id=linked_id,
+                description=e.get("description") or "Unknown",
+                confidence=_clamp(e.get("confidence", 0.0)),
+            ))
+        elif entity_type == "evidence":
+            db.add(Evidence(
+                linked_decision_id=linked_id,
+                description=e.get("description") or "Unknown",
+                source_reference=e.get("conversation_title"),
+            ))
+        elif entity_type == "goal":
+            db.add(Goal(
+                description=e.get("description") or "Unknown",
+                status=GoalStatus.unknown,
+                confidence=_clamp(e.get("confidence", 0.0)),
+                source_reference=e.get("conversation_title"),
+                supporting_snippet=e.get("supporting_snippet"),
+                timestamp=e.get("conversation_ts"),
+                source_id=source_id,
+            ))
+        elif entity_type == "constraint":
+            db.add(Constraint(
+                description=e.get("description") or "Unknown",
+                confidence=_clamp(e.get("confidence", 0.0)),
+                source_reference=e.get("conversation_title"),
+                supporting_snippet=e.get("supporting_snippet"),
+                timestamp=e.get("conversation_ts"),
+                source_id=source_id,
+            ))
+        elif entity_type == "open_question":
+            db.add(OpenQuestion(
+                description=e.get("description") or "Unknown",
+                confidence=_clamp(e.get("confidence", 0.0)),
+                source_reference=e.get("conversation_title"),
+                supporting_snippet=e.get("supporting_snippet"),
+                timestamp=e.get("conversation_ts"),
+                source_id=source_id,
+            ))
+        elif entity_type == "action_item":
+            db.add(ActionItem(
+                description=e.get("description") or "Unknown",
+                status=ActionStatus.unknown,
+                confidence=_clamp(e.get("confidence", 0.0)),
+                source_reference=e.get("conversation_title"),
+                supporting_snippet=e.get("supporting_snippet"),
+                timestamp=e.get("conversation_ts"),
+                source_id=source_id,
+            ))
+        else:
+            continue
+        count += 1
+
+    db.commit()
+    return count
+
+
+def _make_decision(e: Dict[str, Any], source_id: int) -> Decision:
+    return Decision(
+        title=e.get("title") or "Unknown",
+        description=e.get("description"),
+        timestamp=e.get("conversation_ts"),
+        confidence=_clamp(e.get("confidence", 0.0)),
+        source_reference=e.get("conversation_title"),
+        supporting_snippet=e.get("supporting_snippet"),
+        source_id=source_id,
+    )
+
+
+def _resolve_link(e: Dict[str, Any], decision_map: Dict[str, int]):
+    linked = (e.get("linked_to") or "").lower().strip()
+    if linked and linked in decision_map:
+        return decision_map[linked]
+    # fuzzy: find a key that contains the linked_to string
+    for key, did in decision_map.items():
+        if linked and (linked in key or key in linked):
+            return did
+    return None
+
+
+def _clamp(v) -> float:
+    try:
+        return max(0.0, min(1.0, float(v)))
+    except Exception:
+        return 0.0

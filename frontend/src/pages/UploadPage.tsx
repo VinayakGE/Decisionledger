@@ -43,7 +43,9 @@ export function UploadPage() {
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Upload Conversations</h1>
       <p style={{ color: colors.textSecondary, marginBottom: 32, fontSize: 14 }}>
         Upload a ChatGPT export, Claude export, Markdown, or plain text file.
-        All processing happens locally — no data leaves your machine.
+        Parsing and storage happen locally. Entity extraction may call your configured
+        LLM provider using your own API key — if no provider is configured, the
+        heuristic fallback runs entirely locally.
       </p>
 
       <Card

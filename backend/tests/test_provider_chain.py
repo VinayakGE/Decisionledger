@@ -177,6 +177,99 @@ def test_provider_used_is_recorded():
 # SentenceTransformer: _model_load_failed sentinel prevents retry
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# extract_source: provider aggregation across multiple conversations
+# ---------------------------------------------------------------------------
+
+def test_extract_source_single_provider():
+    """All conversations use same provider → provider_used is that provider name."""
+    from app.extractor.engine import extract_source
+
+    mock_p = MagicMock()
+    mock_p.name = "anthropic"
+    mock_p.extract.return_value = _ok_result("anthropic")
+
+    with patch("app.extractor.engine._PROVIDERS", [mock_p]):
+        result = extract_source([_make_conv("c1"), _make_conv("c2")])
+
+    assert result.provider_used == "anthropic"
+    assert result.extraction_status == "completed"
+
+
+def test_extract_source_mixed_providers():
+    """Conversations using different providers → provider_used is 'mixed'."""
+    from app.extractor.engine import extract_source
+
+    call_count = [0]
+    def side_effect(conv):
+        call_count[0] += 1
+        name = "anthropic" if call_count[0] == 1 else "heuristic"
+        return _ok_result(name)
+
+    mock_p = MagicMock()
+    mock_p.name = "dynamic"
+    mock_p.extract.side_effect = side_effect
+
+    with patch("app.extractor.engine._PROVIDERS", [mock_p]):
+        result = extract_source([_make_conv("c1"), _make_conv("c2")])
+
+    assert result.provider_used == "mixed"
+    assert result.extraction_status == "completed_with_fallback"
+
+
+def test_extract_source_all_heuristic():
+    """All heuristic → provider_used='heuristic', status='heuristic_fallback'."""
+    from app.extractor.engine import extract_source
+    from app.extractor.providers.heuristic_provider import HeuristicProvider
+
+    heuristic = HeuristicProvider()
+    failing = MagicMock()
+    failing.name = "failing"
+    failing.extract.side_effect = RuntimeError("no key")
+
+    with patch("app.extractor.engine._PROVIDERS", [failing, heuristic]):
+        result = extract_source([_make_conv("c1"), _make_conv("c2")])
+
+    assert result.provider_used == "heuristic"
+    assert result.extraction_status == "heuristic_fallback"
+
+
+def test_extract_source_partial_failure():
+    """Some conversations fail entirely → status='partial'."""
+    from app.extractor.engine import extract_source
+
+    call_count = [0]
+    def side_effect(conv):
+        call_count[0] += 1
+        if call_count[0] == 1:
+            return _ok_result("anthropic")
+        raise RuntimeError("total fail")
+
+    mock_p = MagicMock()
+    mock_p.name = "mock"
+    mock_p.extract.side_effect = side_effect
+
+    with patch("app.extractor.engine._PROVIDERS", [mock_p]):
+        result = extract_source([_make_conv("c1"), _make_conv("c2")])
+
+    assert result.extraction_status == "partial"
+
+
+def test_extract_source_all_fail():
+    """No conversations succeed → provider_used='none', status='failed'."""
+    from app.extractor.engine import extract_source
+
+    failing = MagicMock()
+    failing.name = "fail"
+    failing.extract.side_effect = RuntimeError("all gone")
+
+    with patch("app.extractor.engine._PROVIDERS", [failing]):
+        result = extract_source([_make_conv("c1")])
+
+    assert result.provider_used == "none"
+    assert result.extraction_status == "failed"
+
+
 def test_sentence_transformer_sentinel_prevents_retry():
     """After a failed model load, _get_model() returns None without retrying."""
     import app.insight_engine.engine as ie

@@ -80,9 +80,9 @@ export function UploadPage() {
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 24px" }}>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Upload Conversations</h1>
       <p style={{ color: colors.textSecondary, marginBottom: 24, fontSize: 14 }}>
-        Upload a ChatGPT or Claude export (ZIP or JSON), Markdown, or plain text file.
-        Entities are extracted using your configured AI provider — or the local heuristic
-        fallback if no keys are set.
+        Upload a ChatGPT or Claude export (ZIP or JSON), Markdown, or plain text file. Entities are
+        extracted using your configured AI provider — or the local heuristic fallback if no keys are
+        set.
       </p>
 
       {/* Provider banner */}
@@ -107,13 +107,21 @@ export function UploadPage() {
           )}
           <span style={{ color: anyConfigured ? colors.success : colors.warning, fontWeight: 500 }}>
             {anyConfigured
-              ? `Extraction via: ${providers.filter((p: ProviderStatus) => p.configured).map((p: ProviderStatus) => p.label).join(", ")}`
+              ? `Extraction via: ${providers
+                  .filter((p: ProviderStatus) => p.configured)
+                  .map((p: ProviderStatus) => p.label)
+                  .join(", ")}`
               : "No AI provider configured — extraction will use local heuristic fallback."}
           </span>
           {!anyConfigured && (
             <Link
               to="/settings"
-              style={{ color: colors.primary, fontSize: 12, marginLeft: "auto", whiteSpace: "nowrap" }}
+              style={{
+                color: colors.primary,
+                fontSize: 12,
+                marginLeft: "auto",
+                whiteSpace: "nowrap",
+              }}
             >
               Add API key →
             </Link>
@@ -193,16 +201,24 @@ export function UploadPage() {
             <CheckCircle size={20} color={colors.success} />
             <span style={{ fontWeight: 600 }}>Extraction complete</span>
             {result.extraction_status === "heuristic_fallback" && (
-              <StatusBadge color="#92400E" bg="#FEF3C7">Heuristic fallback</StatusBadge>
+              <StatusBadge color="#92400E" bg="#FEF3C7">
+                Heuristic fallback
+              </StatusBadge>
             )}
             {result.extraction_status === "completed_with_fallback" && (
-              <StatusBadge color="#065F46" bg="#D1FAE5">Completed with fallback</StatusBadge>
+              <StatusBadge color="#065F46" bg="#D1FAE5">
+                Completed with fallback
+              </StatusBadge>
             )}
             {result.extraction_status === "partial" && (
-              <StatusBadge color="#92400E" bg="#FEF3C7">Partial</StatusBadge>
+              <StatusBadge color="#92400E" bg="#FEF3C7">
+                Partial
+              </StatusBadge>
             )}
             {result.extraction_status === "failed" && (
-              <StatusBadge color="#991B1B" bg="#FEE2E2">Extraction failed</StatusBadge>
+              <StatusBadge color="#991B1B" bg="#FEE2E2">
+                Extraction failed
+              </StatusBadge>
             )}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -289,9 +305,13 @@ export function UploadPage() {
         <Card style={{ marginTop: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
             <AlertCircle size={20} color={colors.danger} />
-            <span style={{ fontSize: 14, color: colors.danger, fontWeight: 600 }}>Upload failed</span>
+            <span style={{ fontSize: 14, color: colors.danger, fontWeight: 600 }}>
+              Upload failed
+            </span>
           </div>
-          <p style={{ fontSize: 13, color: colors.textSecondary, margin: "0 0 12px" }}>{state.msg}</p>
+          <p style={{ fontSize: 13, color: colors.textSecondary, margin: "0 0 12px" }}>
+            {state.msg}
+          </p>
           <button
             onClick={() => setState({ type: "idle" })}
             style={{
@@ -336,7 +356,15 @@ export function UploadPage() {
   );
 }
 
-function StatusBadge({ color, bg, children }: { color: string; bg: string; children: React.ReactNode }) {
+function StatusBadge({
+  color,
+  bg,
+  children,
+}: {
+  color: string;
+  bg: string;
+  children: React.ReactNode;
+}) {
   return (
     <span
       style={{

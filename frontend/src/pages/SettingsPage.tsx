@@ -3,7 +3,16 @@ import { api, ProviderStatus } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
 import { colors } from "../lib/styles";
-import { CheckCircle, XCircle, Settings, KeyRound, ExternalLink, Info, Zap, FlaskConical } from "lucide-react";
+import {
+  CheckCircle,
+  XCircle,
+  Settings,
+  KeyRound,
+  ExternalLink,
+  Info,
+  Zap,
+  FlaskConical,
+} from "lucide-react";
 
 export function SettingsPage() {
   const { data, loading, error, reload } = useData(() => api.getSettings());
@@ -29,7 +38,12 @@ export function SettingsPage() {
       }
       await api.updateSettings(payload as Parameters<typeof api.updateSettings>[0]);
       setSaveSuccess(true);
-      setKeys({ anthropic_api_key: "", gemini_api_key: "", cerebras_api_key: "", groq_api_key: "" });
+      setKeys({
+        anthropic_api_key: "",
+        gemini_api_key: "",
+        cerebras_api_key: "",
+        groq_api_key: "",
+      });
       reload();
     } catch (e: unknown) {
       setSaveError(e instanceof Error ? e.message : String(e));
@@ -47,8 +61,8 @@ export function SettingsPage() {
         <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Settings</h1>
       </div>
       <p style={{ color: colors.textSecondary, marginBottom: 32, fontSize: 14 }}>
-        Configure API keys for entity extraction. Keys are kept in memory until the server
-        restarts — add them as <strong>Replit Secrets</strong> for permanent storage.
+        Configure API keys for entity extraction. Keys are kept in memory until the server restarts
+        — add them as <strong>Replit Secrets</strong> for permanent storage.
       </p>
 
       {/* Extraction mode banner */}
@@ -65,13 +79,27 @@ export function SettingsPage() {
             border: `1px solid ${data.llm_enabled ? colors.success : colors.warning}44`,
           }}
         >
-          {data.llm_enabled
-            ? <Zap size={16} color={colors.success} style={{ flexShrink: 0, marginTop: 2 }} />
-            : <FlaskConical size={16} color={colors.warning} style={{ flexShrink: 0, marginTop: 2 }} />
-          }
+          {data.llm_enabled ? (
+            <Zap size={16} color={colors.success} style={{ flexShrink: 0, marginTop: 2 }} />
+          ) : (
+            <FlaskConical
+              size={16}
+              color={colors.warning}
+              style={{ flexShrink: 0, marginTop: 2 }}
+            />
+          )}
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: data.llm_enabled ? colors.success : colors.warning, marginBottom: 3 }}>
-              {data.llm_enabled ? "Production mode — LLM extraction active" : "Dev mode — heuristic only (no API tokens spent)"}
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: data.llm_enabled ? colors.success : colors.warning,
+                marginBottom: 3,
+              }}
+            >
+              {data.llm_enabled
+                ? "Production mode — LLM extraction active"
+                : "Dev mode — heuristic only (no API tokens spent)"}
             </div>
             <div style={{ fontSize: 12, color: colors.textSecondary }}>
               {data.llm_enabled
@@ -84,7 +112,9 @@ export function SettingsPage() {
 
       {/* Provider status */}
       <Card style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textSecondary, marginBottom: 14 }}>
+        <div
+          style={{ fontSize: 13, fontWeight: 600, color: colors.textSecondary, marginBottom: 14 }}
+        >
           PROVIDER STATUS
         </div>
         {loading && <p style={{ color: colors.muted, fontSize: 13 }}>Loading…</p>}
@@ -113,10 +143,28 @@ export function SettingsPage() {
                 </span>
               </div>
             ))}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 4, paddingTop: 10, borderTop: `1px solid ${colors.border}` }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                marginTop: 4,
+                paddingTop: 10,
+                borderTop: `1px solid ${colors.border}`,
+              }}
+            >
               <CheckCircle size={16} color={colors.success} />
               <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>Heuristic (local)</span>
-              <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: `${colors.success}22`, color: colors.success }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  padding: "2px 8px",
+                  borderRadius: 999,
+                  background: `${colors.success}22`,
+                  color: colors.success,
+                }}
+              >
                 Always available
               </span>
             </div>
@@ -133,18 +181,45 @@ export function SettingsPage() {
           </span>
         </div>
         <p style={{ fontSize: 12, color: colors.muted, marginBottom: 16 }}>
-          Leave a field blank to keep the existing key. Keys will be active until the server restarts.
+          Leave a field blank to keep the existing key. Keys will be active until the server
+          restarts.
         </p>
         {[
-          { field: "anthropic_api_key", label: "Anthropic API Key", placeholder: "sk-ant-…", link: "https://console.anthropic.com/" },
-          { field: "gemini_api_key",    label: "Google Gemini API Key", placeholder: "AIza…",  link: "https://aistudio.google.com/app/apikey" },
-          { field: "cerebras_api_key",  label: "Cerebras API Key", placeholder: "csk-…",       link: "https://cloud.cerebras.ai/" },
-          { field: "groq_api_key",      label: "Groq API Key", placeholder: "gsk_…",           link: "https://console.groq.com/keys" },
+          {
+            field: "anthropic_api_key",
+            label: "Anthropic API Key",
+            placeholder: "sk-ant-…",
+            link: "https://console.anthropic.com/",
+          },
+          {
+            field: "gemini_api_key",
+            label: "Google Gemini API Key",
+            placeholder: "AIza…",
+            link: "https://aistudio.google.com/app/apikey",
+          },
+          {
+            field: "cerebras_api_key",
+            label: "Cerebras API Key",
+            placeholder: "csk-…",
+            link: "https://cloud.cerebras.ai/",
+          },
+          {
+            field: "groq_api_key",
+            label: "Groq API Key",
+            placeholder: "gsk_…",
+            link: "https://console.groq.com/keys",
+          },
         ].map(({ field, label, placeholder, link }) => (
           <div key={field} style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
               <label style={{ fontSize: 13, fontWeight: 500 }}>{label}</label>
-              <a href={link} target="_blank" rel="noreferrer" title="Get API key" style={{ color: colors.muted, display: "flex" }}>
+              <a
+                href={link}
+                target="_blank"
+                rel="noreferrer"
+                title="Get API key"
+                style={{ color: colors.muted, display: "flex" }}
+              >
                 <ExternalLink size={11} />
               </a>
             </div>
@@ -204,31 +279,28 @@ export function SettingsPage() {
               Permanent Storage via Replit Secrets
             </div>
             <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 10 }}>
-              For keys that survive server restarts, add them in the Replit
-              {" "}<strong>Secrets</strong> panel (lock icon in the sidebar) using these variable names:
+              For keys that survive server restarts, add them in the Replit <strong>Secrets</strong>{" "}
+              panel (lock icon in the sidebar) using these variable names:
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {[
-                "ANTHROPIC_API_KEY",
-                "GEMINI_API_KEY",
-                "CEREBRAS_API_KEY",
-                "GROQ_API_KEY",
-              ].map((name) => (
-                <code
-                  key={name}
-                  style={{
-                    fontSize: 12,
-                    background: colors.bg,
-                    color: colors.primary,
-                    padding: "3px 8px",
-                    borderRadius: 4,
-                    display: "inline-block",
-                    width: "fit-content",
-                  }}
-                >
-                  {name}
-                </code>
-              ))}
+              {["ANTHROPIC_API_KEY", "GEMINI_API_KEY", "CEREBRAS_API_KEY", "GROQ_API_KEY"].map(
+                (name) => (
+                  <code
+                    key={name}
+                    style={{
+                      fontSize: 12,
+                      background: colors.bg,
+                      color: colors.primary,
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      display: "inline-block",
+                      width: "fit-content",
+                    }}
+                  >
+                    {name}
+                  </code>
+                )
+              )}
             </div>
           </div>
         </div>

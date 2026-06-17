@@ -33,6 +33,14 @@ class ConversationSource(Base):
     raw_path = Column(String)  # path to stored upload
     conversation_count = Column(Integer, default=0)
 
+    # Extraction observability (all nullable — safe on existing DBs without migration)
+    extraction_status = Column(String, nullable=True)   # completed | heuristic_fallback | partial | failed
+    provider_used = Column(String, nullable=True)        # winning provider name
+    entities_extracted = Column(Integer, nullable=True)
+    extraction_confidence_avg = Column(Float, nullable=True)
+    extraction_duration_ms = Column(Integer, nullable=True)
+    fallback_chain_json = Column(Text, nullable=True)    # JSON list of {provider, status, error}
+
     decisions = relationship("Decision", back_populates="source")
     goals = relationship("Goal", back_populates="source")
     constraints = relationship("Constraint", back_populates="source")

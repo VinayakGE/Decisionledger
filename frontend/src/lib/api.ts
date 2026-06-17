@@ -6,6 +6,11 @@ export interface Source {
   source_type: string;
   uploaded_at: string;
   conversation_count: number;
+  extraction_status: string | null;
+  provider_used: string | null;
+  entities_extracted: number | null;
+  extraction_confidence_avg: number | null;
+  extraction_duration_ms: number | null;
 }
 
 export interface Decision {
@@ -97,12 +102,23 @@ export interface InsightReport {
   total_action_items: number;
 }
 
+export interface FallbackStep {
+  provider: string;
+  status: string;
+  error?: string;
+}
+
 export interface UploadResponse {
   source_id: number;
   filename: string;
   source_type: string;
   conversation_count: number;
   entities_extracted: number;
+  provider_used: string | null;
+  extraction_status: string | null;
+  extraction_confidence_avg: number | null;
+  extraction_duration_ms: number | null;
+  fallback_chain: FallbackStep[];
 }
 
 async function get<T>(path: string): Promise<T> {

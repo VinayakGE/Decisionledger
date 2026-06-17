@@ -1,15 +1,17 @@
 """Extraction engine — one API call per conversation, provider fallback chain.
 
-Provider order:  Anthropic (primary)  →  Gemini Flash  →  Cerebras (free-tier fallback)
+Provider order:  Anthropic (primary)  →  Gemini Flash  →  Cerebras  →  Groq  →  Heuristic
 
 Each conversation produces ONE ConversationAnalysis:
   - conversation_name
   - behavioral_pattern  (how the founder reasons, not just what they decided)
   - entities            (all types, flat list)
+  - fallback_chain      (which providers were tried, in order, with outcome)
 """
 
 import json
 import logging
+import time
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -35,6 +37,17 @@ class ConversationAnalysis:
     provider_used: str = "unknown"
     conversation_ts: Optional[datetime] = None
     source_title: str = ""
+    fallback_chain: List[Dict[str, str]] = field(default_factory=list)
+
+
+@dataclass
+class ExtractionResult:
+    """Aggregate result for a full source upload (multiple conversations)."""
+    entities: List[Dict[str, Any]] = field(default_factory=list)
+    provider_used: str = "unknown"
+    extraction_status: str = "completed"
+    fallback_chain: List[Dict[str, str]] = field(default_factory=list)
+    duration_ms: int = 0
 
 
 def extract_from_conversation(conv: Conversation) -> List[Dict[str, Any]]:
@@ -54,9 +67,55 @@ def extract_from_conversation(conv: Conversation) -> List[Dict[str, Any]]:
     return analysis.entities
 
 
+def extract_source(conversations: List[Conversation]) -> ExtractionResult:
+    """Extract entities from all conversations in a source upload.
+    Returns an ExtractionResult with aggregate observability metadata.
+    """
+    start = time.monotonic()
+    all_entities: List[Dict[str, Any]] = []
+    provider_used = "unknown"
+    extraction_status = "completed"
+    merged_chain: List[Dict[str, str]] = []
+    any_success = False
+    any_failure = False
+
+    for conv in conversations:
+        analysis = analyse_conversation(conv)
+        if analysis is None:
+            any_failure = True
+            continue
+        any_success = True
+        for e in analysis.entities:
+            e["conversation_title"] = analysis.conversation_name
+            e["conversation_ts"] = analysis.conversation_ts
+            e["behavioral_pattern"] = analysis.behavioral_pattern
+            e["provider_used"] = analysis.provider_used
+        all_entities.extend(analysis.entities)
+        provider_used = analysis.provider_used
+        for step in analysis.fallback_chain:
+            if step not in merged_chain:
+                merged_chain.append(step)
+
+    if any_success and any_failure:
+        extraction_status = "partial"
+    elif not any_success:
+        extraction_status = "failed"
+    elif provider_used == "heuristic":
+        extraction_status = "heuristic_fallback"
+
+    return ExtractionResult(
+        entities=all_entities,
+        provider_used=provider_used,
+        extraction_status=extraction_status,
+        fallback_chain=merged_chain,
+        duration_ms=int((time.monotonic() - start) * 1000),
+    )
+
+
 def analyse_conversation(conv: Conversation) -> Optional[ConversationAnalysis]:
     """Return a single ConversationAnalysis for the conversation, or None on total failure."""
     last_error = None
+    chain: List[Dict[str, str]] = []
 
     for provider in _PROVIDERS:
         try:
@@ -65,8 +124,10 @@ def analyse_conversation(conv: Conversation) -> Optional[ConversationAnalysis]:
             parsed = _parse_response(result["raw"])
             if parsed is None:
                 logger.warning("Provider '%s' returned unparseable response.", provider.name)
+                chain.append({"provider": provider.name, "status": "unparseable"})
                 continue
 
+            chain.append({"provider": provider.name, "status": "success"})
             entities = parsed.get("entities", [])
             return ConversationAnalysis(
                 conversation_name=parsed.get("conversation_name") or conv.title,
@@ -75,9 +136,11 @@ def analyse_conversation(conv: Conversation) -> Optional[ConversationAnalysis]:
                 provider_used=result["provider"],
                 conversation_ts=conv.created_at,
                 source_title=conv.title,
+                fallback_chain=chain,
             )
         except RuntimeError as e:
             last_error = e
+            chain.append({"provider": provider.name, "status": "failed", "error": str(e)[:120]})
             logger.warning("Provider '%s' failed: %s — trying next.", provider.name, e)
             continue
 

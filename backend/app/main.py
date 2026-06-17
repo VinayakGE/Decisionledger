@@ -1,5 +1,9 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api import entities, insights, upload
 from app.database import init_db
@@ -12,7 +16,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,3 +35,15 @@ def on_startup():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# Serve built React frontend — must be last so API routes take priority
+_STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
+
+if os.path.isdir(_STATIC_DIR):
+    app.mount("/assets", StaticFiles(directory=os.path.join(_STATIC_DIR, "assets")), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def serve_spa(full_path: str):
+        index = os.path.join(_STATIC_DIR, "index.html")
+        return FileResponse(index)

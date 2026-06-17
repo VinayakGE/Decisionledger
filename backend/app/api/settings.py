@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.config import settings
+from app.extractor.engine import _LLM_ENABLED
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -27,6 +28,7 @@ class ProviderStatus(BaseModel):
 class SettingsOut(BaseModel):
     providers: List[ProviderStatus]
     heuristic_always_available: bool = True
+    llm_enabled: bool = False
 
 
 class UpdateKeysIn(BaseModel):
@@ -46,7 +48,7 @@ def _provider_statuses() -> List[ProviderStatus]:
 
 @router.get("", response_model=SettingsOut)
 def get_settings():
-    return SettingsOut(providers=_provider_statuses())
+    return SettingsOut(providers=_provider_statuses(), llm_enabled=_LLM_ENABLED)
 
 
 @router.post("", response_model=SettingsOut)
@@ -66,4 +68,4 @@ def update_settings(req: UpdateKeysIn):
             env_key = attr.upper()
             os.environ[env_key] = val
 
-    return SettingsOut(providers=_provider_statuses())
+    return SettingsOut(providers=_provider_statuses(), llm_enabled=_LLM_ENABLED)

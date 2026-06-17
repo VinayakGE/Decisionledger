@@ -11,6 +11,7 @@ Each conversation produces ONE ConversationAnalysis:
 
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -25,14 +26,33 @@ from app.parsers.base import Conversation
 
 logger = logging.getLogger(__name__)
 
-# Provider chain — tried in order; first success wins
-_PROVIDERS = [
+# LLM providers only run in production (REPLIT_DEPLOYMENT=1) or when
+# explicitly enabled via ENABLE_LLM_EXTRACTION=true. This prevents burning
+# API tokens during local development and testing.
+_LLM_ENABLED = bool(
+    os.environ.get("REPLIT_DEPLOYMENT") or
+    os.environ.get("ENABLE_LLM_EXTRACTION", "").lower() in ("1", "true", "yes")
+)
+
+if _LLM_ENABLED:
+    logger.info("LLM extraction ENABLED (production mode) — full provider chain active.")
+else:
+    logger.info("LLM extraction DISABLED (dev mode) — heuristic only. Set ENABLE_LLM_EXTRACTION=true to override.")
+
+# Provider chain — tried in order; first success wins.
+# In dev mode, LLM providers are excluded to avoid spending API tokens.
+_LLM_PROVIDERS = [
     AnthropicProvider(),
     GeminiProvider(),
     CerebrasProvider(),
     GroqProvider(),
-    HeuristicProvider(),
 ]
+_HEURISTIC = HeuristicProvider()
+
+def _get_providers() -> List:
+    if _LLM_ENABLED:
+        return [*_LLM_PROVIDERS, _HEURISTIC]
+    return [_HEURISTIC]
 
 
 @dataclass
@@ -136,7 +156,7 @@ def analyse_conversation(conv: Conversation) -> Optional[ConversationAnalysis]:
     last_error = None
     chain: List[Dict[str, str]] = []
 
-    for provider in _PROVIDERS:
+    for provider in _get_providers():
         try:
             logger.info("Trying provider '%s' for conversation '%s'", provider.name, conv.title)
             result = provider.extract(conv)

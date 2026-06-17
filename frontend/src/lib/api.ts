@@ -36,6 +36,7 @@ export interface ProviderStatus {
 export interface SettingsResponse {
   providers: ProviderStatus[];
   heuristic_always_available: boolean;
+  llm_enabled: boolean;
 }
 
 export interface UpdateKeysPayload {

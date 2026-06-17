@@ -3,7 +3,7 @@ import { api, ProviderStatus } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
 import { colors } from "../lib/styles";
-import { CheckCircle, XCircle, Settings, KeyRound, ExternalLink, Info } from "lucide-react";
+import { CheckCircle, XCircle, Settings, KeyRound, ExternalLink, Info, Zap, FlaskConical } from "lucide-react";
 
 export function SettingsPage() {
   const { data, loading, error, reload } = useData(() => api.getSettings());
@@ -50,6 +50,37 @@ export function SettingsPage() {
         Configure API keys for entity extraction. Keys are kept in memory until the server
         restarts — add them as <strong>Replit Secrets</strong> for permanent storage.
       </p>
+
+      {/* Extraction mode banner */}
+      {data && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 12,
+            padding: "14px 16px",
+            borderRadius: 10,
+            marginBottom: 24,
+            background: data.llm_enabled ? `${colors.success}15` : `${colors.warning}15`,
+            border: `1px solid ${data.llm_enabled ? colors.success : colors.warning}44`,
+          }}
+        >
+          {data.llm_enabled
+            ? <Zap size={16} color={colors.success} style={{ flexShrink: 0, marginTop: 2 }} />
+            : <FlaskConical size={16} color={colors.warning} style={{ flexShrink: 0, marginTop: 2 }} />
+          }
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: data.llm_enabled ? colors.success : colors.warning, marginBottom: 3 }}>
+              {data.llm_enabled ? "Production mode — LLM extraction active" : "Dev mode — heuristic only (no API tokens spent)"}
+            </div>
+            <div style={{ fontSize: 12, color: colors.textSecondary }}>
+              {data.llm_enabled
+                ? "Uploads will use the full AI provider chain (Anthropic → Gemini → Cerebras → Groq → Heuristic)."
+                : "Uploads skip all LLM providers and use local heuristics. AI extraction runs automatically once the app is published."}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Provider status */}
       <Card style={{ marginBottom: 24 }}>

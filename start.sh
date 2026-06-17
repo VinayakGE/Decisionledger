@@ -12,8 +12,8 @@ cd ..
 
 # ── Backend setup ──────────────────────────────────────────────────────────────
 echo "[2/3] Setting up backend..."
-mkdir -p /tmp/uploads
-export UPLOAD_DIR=/tmp/uploads
+mkdir -p /home/runner/workspace/uploads
+export UPLOAD_DIR=/home/runner/workspace/uploads
 
 # ── Start server ───────────────────────────────────────────────────────────────
 echo "[3/3] Starting server on port 8000..."

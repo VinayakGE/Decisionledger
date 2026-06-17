@@ -11,6 +11,7 @@ import {
   CheckSquare,
   Brain,
   Database,
+  Settings,
 } from "lucide-react";
 
 const nav = [
@@ -34,7 +35,7 @@ export function Sidebar() {
         borderRight: `1px solid ${colors.border}`,
         display: "flex",
         flexDirection: "column",
-        padding: "24px 0",
+        padding: "24px 0 0",
         flexShrink: 0,
       }}
     >
@@ -49,13 +50,43 @@ export function Sidebar() {
         }}
       >
         <Brain size={22} color={colors.primary} />
-        <span style={{ fontWeight: 700, fontSize: 15, color: colors.text }}>Brain Audit</span>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 14, color: colors.text, lineHeight: 1.2 }}>
+            Founder Brain
+          </div>
+          <div style={{ fontSize: 11, color: colors.muted, lineHeight: 1.2 }}>Audit</div>
+        </div>
       </div>
-      {nav.map(({ to, label, icon: Icon }) => (
+
+      <div style={{ flex: 1 }}>
+        {nav.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === "/"}
+            style={({ isActive }) => ({
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "10px 20px",
+              textDecoration: "none",
+              color: isActive ? colors.primary : colors.textSecondary,
+              background: isActive ? `${colors.primary}18` : "transparent",
+              borderLeft: isActive ? `3px solid ${colors.primary}` : "3px solid transparent",
+              fontWeight: isActive ? 600 : 400,
+              fontSize: 14,
+              transition: "all 0.15s",
+            })}
+          >
+            <Icon size={16} />
+            {label}
+          </NavLink>
+        ))}
+      </div>
+
+      <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 8, paddingBottom: 16 }}>
         <NavLink
-          key={to}
-          to={to}
-          end={to === "/"}
+          to="/settings"
           style={({ isActive }) => ({
             display: "flex",
             alignItems: "center",
@@ -64,15 +95,16 @@ export function Sidebar() {
             textDecoration: "none",
             color: isActive ? colors.primary : colors.textSecondary,
             background: isActive ? `${colors.primary}18` : "transparent",
+            borderLeft: isActive ? `3px solid ${colors.primary}` : "3px solid transparent",
             fontWeight: isActive ? 600 : 400,
             fontSize: 14,
             transition: "all 0.15s",
           })}
         >
-          <Icon size={16} />
-          {label}
+          <Settings size={16} />
+          Settings
         </NavLink>
-      ))}
+      </div>
     </nav>
   );
 }

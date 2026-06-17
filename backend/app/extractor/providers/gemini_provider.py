@@ -54,8 +54,8 @@ class GeminiProvider(ExtractionProvider):
                 )
             if resp.status_code == 429:
                 raise RuntimeError(f"Gemini quota/rate limit: {resp.text}")
-            if resp.status_code in (401, 403):
-                raise RuntimeError(f"Gemini auth failed: {resp.text}")
+            if resp.status_code in (400, 401, 403):
+                raise RuntimeError(f"Gemini auth/config error ({resp.status_code}): check GEMINI_API_KEY")
             resp.raise_for_status()
             content = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
             return {"raw": content, "provider": self.name}

@@ -9,6 +9,7 @@ import { ActionItemsPage } from "./pages/ActionItemsPage";
 import { ConstraintsPage } from "./pages/ConstraintsPage";
 import { InsightsPage } from "./pages/InsightsPage";
 import { SourcesPage } from "./pages/SourcesPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { colors } from "./lib/styles";
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="/constraints" element={<ConstraintsPage />} />
             <Route path="/insights" element={<InsightsPage />} />
             <Route path="/sources" element={<SourcesPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </main>
       </div>

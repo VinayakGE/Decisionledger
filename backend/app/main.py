@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import entities, insights, upload
+from app.api import entities, insights, settings, upload
 from app.database import init_db
 
 app = FastAPI(
@@ -25,6 +25,7 @@ app.add_middleware(
 app.include_router(upload.router)
 app.include_router(entities.router)
 app.include_router(insights.router)
+app.include_router(settings.router)
 
 
 @app.on_event("startup")

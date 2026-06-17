@@ -1,7 +1,5 @@
 /**
  * Typed API client — all types are derived from the generated api-types.gen.ts.
- * Run `npm run generate:api` from the frontend directory to regenerate after
- * backend schema changes.
  */
 import type { components } from "./api-types.gen";
 
@@ -29,11 +27,42 @@ export interface FallbackStep {
   error?: string;
 }
 
+export interface ProviderStatus {
+  name: string;
+  label: string;
+  configured: boolean;
+}
+
+export interface SettingsResponse {
+  providers: ProviderStatus[];
+  heuristic_always_available: boolean;
+}
+
+export interface UpdateKeysPayload {
+  anthropic_api_key?: string | null;
+  gemini_api_key?: string | null;
+  cerebras_api_key?: string | null;
+  groq_api_key?: string | null;
+}
+
 // ── HTTP helpers ──────────────────────────────────────────────────────────────
 
 async function get<T>(path: string): Promise<T> {
   const r = await fetch(BASE + path);
   if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const r = await fetch(BASE + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || r.statusText);
+  }
   return r.json();
 }
 
@@ -58,12 +87,14 @@ export const api = {
     }
     return r.json();
   },
+
   getSources: () => get<Source[]>("/entities/sources"),
   getSource: (id: number) => get<Source>(`/entities/sources/${id}`),
   deleteSource: async (id: number): Promise<void> => {
     const r = await fetch(`${BASE}/entities/sources/${id}`, { method: "DELETE" });
     if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
   },
+
   getDecisions: (sourceId?: number) =>
     get<Decision[]>(`/entities/decisions${sourceId ? `?source_id=${sourceId}` : ""}`),
   getGoals: (sourceId?: number) =>
@@ -74,5 +105,10 @@ export const api = {
     get<OpenQuestion[]>(`/entities/open-questions${sourceId ? `?source_id=${sourceId}` : ""}`),
   getActionItems: (sourceId?: number) =>
     get<ActionItem[]>(`/entities/action-items${sourceId ? `?source_id=${sourceId}` : ""}`),
+
   getInsights: () => get<InsightReport>("/insights"),
+
+  getSettings: () => get<SettingsResponse>("/settings"),
+  updateSettings: (payload: UpdateKeysPayload) =>
+    post<SettingsResponse>("/settings", payload),
 };

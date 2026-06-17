@@ -1,0 +1,4 @@
+- [Replit Python package install](python-packages.md) — pip install blocked; use installLanguagePackages(); sentence-transformers unavailable on Linux/Nix.
+- [PostgreSQL + SQLite dual support](pg-sqlite-dual.md) — DATABASE_URL is set to Replit's helium PostgreSQL; database.py must branch on _is_sqlite for connect_args and PRAGMA vs information_schema migrations.
+- [ZIP upload pipeline](zip-upload.md) — Added ZIP support in router.py; extracts conversations.json, sniffs format (claude/chatgpt), delegates to existing parsers. Gemini provider returns 400 (not 401) for invalid keys — treat 400 as auth error.
+- [Settings API pattern](settings-api.md) — Runtime key updates work via setattr(settings, attr, val); providers read settings lazily on each extract() call so in-memory updates take effect immediately.

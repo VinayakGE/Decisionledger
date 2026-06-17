@@ -1,9 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Upload, FileText, CheckCircle, AlertCircle, Loader, Clock } from "lucide-react";
-import { api, UploadResponse, Source, TERMINAL_STATUSES } from "../lib/api";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Upload,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  Loader,
+  Clock,
+  AlertTriangle,
+  CheckSquare,
+} from "lucide-react";
+import { api, UploadResponse, Source, TERMINAL_STATUSES, ProviderStatus } from "../lib/api";
 import { colors } from "../lib/styles";
 import { Card } from "../components/Card";
+import { useData } from "../hooks/useData";
 
 type State =
   | { type: "idle" }
@@ -21,6 +31,10 @@ export function UploadPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  const { data: settingsData } = useData(() => api.getSettings());
+  const providers = settingsData?.providers ?? [];
+  const anyConfigured = providers.some((p: ProviderStatus) => p.configured);
+
   const handleFile = async (file: File) => {
     setState({ type: "uploading" });
     try {
@@ -28,7 +42,6 @@ export function UploadPage() {
       if (res.extraction_status === "pending") {
         setState({ type: "pending", sourceId: res.source_id, filename: res.filename });
       } else {
-        // Already completed (shouldn't normally happen, but handle gracefully)
         const source = await api.getSource(res.source_id);
         setState({ type: "done", result: source });
       }
@@ -37,7 +50,6 @@ export function UploadPage() {
     }
   };
 
-  // Poll while in pending state
   useEffect(() => {
     if (state.type !== "pending") return;
     const { sourceId } = state;
@@ -67,11 +79,47 @@ export function UploadPage() {
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 24px" }}>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Upload Conversations</h1>
-      <p style={{ color: colors.textSecondary, marginBottom: 32, fontSize: 14 }}>
-        Upload a ChatGPT export, Claude export, Markdown, or plain text file. Parsing and storage
-        happen locally. Entity extraction may call your configured LLM provider using your own API
-        key — if no provider is configured, the heuristic fallback runs entirely locally.
+      <p style={{ color: colors.textSecondary, marginBottom: 24, fontSize: 14 }}>
+        Upload a ChatGPT or Claude export (ZIP or JSON), Markdown, or plain text file.
+        Entities are extracted using your configured AI provider — or the local heuristic
+        fallback if no keys are set.
       </p>
+
+      {/* Provider banner */}
+      {settingsData && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "10px 14px",
+            borderRadius: 8,
+            marginBottom: 20,
+            background: anyConfigured ? `${colors.success}12` : `${colors.warning}12`,
+            border: `1px solid ${anyConfigured ? colors.success : colors.warning}44`,
+            fontSize: 13,
+          }}
+        >
+          {anyConfigured ? (
+            <CheckSquare size={15} color={colors.success} />
+          ) : (
+            <AlertTriangle size={15} color={colors.warning} />
+          )}
+          <span style={{ color: anyConfigured ? colors.success : colors.warning, fontWeight: 500 }}>
+            {anyConfigured
+              ? `Extraction via: ${providers.filter((p: ProviderStatus) => p.configured).map((p: ProviderStatus) => p.label).join(", ")}`
+              : "No AI provider configured — extraction will use local heuristic fallback."}
+          </span>
+          {!anyConfigured && (
+            <Link
+              to="/settings"
+              style={{ color: colors.primary, fontSize: 12, marginLeft: "auto", whiteSpace: "nowrap" }}
+            >
+              Add API key →
+            </Link>
+          )}
+        </div>
+      )}
 
       <Card
         style={{
@@ -97,7 +145,7 @@ export function UploadPage() {
             Drop your file here or click to browse
           </p>
           <p style={{ fontSize: 13, color: colors.textSecondary }}>
-            Supports: ChatGPT/Claude ZIP export · JSON · Markdown · Plain text
+            ChatGPT/Claude ZIP · JSON · Markdown · Plain text
           </p>
           <input
             ref={inputRef}
@@ -132,7 +180,8 @@ export function UploadPage() {
             <span style={{ fontWeight: 600 }}>Extracting entities…</span>
           </div>
           <p style={{ fontSize: 13, color: colors.textSecondary, margin: 0 }}>
-            Analysing <strong>{state.filename}</strong> with AI. This usually takes 10–30 seconds.
+            Analysing <strong>{state.filename}</strong> with AI. This usually takes 10–60 seconds
+            depending on file size.
           </p>
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </Card>
@@ -144,54 +193,40 @@ export function UploadPage() {
             <CheckCircle size={20} color={colors.success} />
             <span style={{ fontWeight: 600 }}>Extraction complete</span>
             {result.extraction_status === "heuristic_fallback" && (
-              <span
-                style={{
-                  fontSize: 11,
-                  background: "#FEF3C7",
-                  color: "#92400E",
-                  borderRadius: 4,
-                  padding: "2px 8px",
-                  fontWeight: 600,
-                }}
-              >
-                Heuristic fallback
-              </span>
+              <StatusBadge color="#92400E" bg="#FEF3C7">Heuristic fallback</StatusBadge>
+            )}
+            {result.extraction_status === "completed_with_fallback" && (
+              <StatusBadge color="#065F46" bg="#D1FAE5">Completed with fallback</StatusBadge>
+            )}
+            {result.extraction_status === "partial" && (
+              <StatusBadge color="#92400E" bg="#FEF3C7">Partial</StatusBadge>
             )}
             {result.extraction_status === "failed" && (
-              <span
-                style={{
-                  fontSize: 11,
-                  background: "#FEE2E2",
-                  color: "#991B1B",
-                  borderRadius: 4,
-                  padding: "2px 8px",
-                  fontWeight: 600,
-                }}
-              >
-                Extraction failed
-              </span>
+              <StatusBadge color="#991B1B" bg="#FEE2E2">Extraction failed</StatusBadge>
             )}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            {[
-              ["File", result.filename],
-              ["Format", result.source_type.toUpperCase()],
-              ["Conversations", result.conversation_count],
-              ["Entities extracted", result.entities_extracted ?? 0],
-              ["Provider", result.provider_used ?? "—"],
+            {(
               [
-                "Avg confidence",
-                result.extraction_confidence_avg != null
-                  ? `${(result.extraction_confidence_avg * 100).toFixed(0)}%`
-                  : "—",
-              ],
-              [
-                "Duration",
-                result.extraction_duration_ms != null
-                  ? `${(result.extraction_duration_ms / 1000).toFixed(1)}s`
-                  : "—",
-              ],
-            ].map(([label, value]) => (
+                ["File", result.filename],
+                ["Format", result.source_type.toUpperCase()],
+                ["Conversations", result.conversation_count],
+                ["Entities extracted", result.entities_extracted ?? 0],
+                ["Provider", result.provider_used ?? "—"],
+                [
+                  "Avg confidence",
+                  result.extraction_confidence_avg != null
+                    ? `${(result.extraction_confidence_avg * 100).toFixed(0)}%`
+                    : "—",
+                ],
+                [
+                  "Duration",
+                  result.extraction_duration_ms != null
+                    ? `${(result.extraction_duration_ms / 1000).toFixed(1)}s`
+                    : "—",
+                ],
+              ] as [string, string | number][]
+            ).map(([label, value]) => (
               <div
                 key={String(label)}
                 style={{ background: colors.bg, borderRadius: 8, padding: "12px 16px" }}
@@ -232,14 +267,45 @@ export function UploadPage() {
             >
               View Insights
             </button>
+            <button
+              onClick={() => setState({ type: "idle" })}
+              style={{
+                background: "transparent",
+                color: colors.textSecondary,
+                border: `1px solid ${colors.border}`,
+                borderRadius: 8,
+                padding: "10px 20px",
+                cursor: "pointer",
+                fontSize: 14,
+              }}
+            >
+              Upload another
+            </button>
           </div>
         </Card>
       )}
 
       {state.type === "error" && (
-        <Card style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
-          <AlertCircle size={20} color={colors.danger} />
-          <span style={{ fontSize: 14, color: colors.danger }}>{state.msg}</span>
+        <Card style={{ marginTop: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+            <AlertCircle size={20} color={colors.danger} />
+            <span style={{ fontSize: 14, color: colors.danger, fontWeight: 600 }}>Upload failed</span>
+          </div>
+          <p style={{ fontSize: 13, color: colors.textSecondary, margin: "0 0 12px" }}>{state.msg}</p>
+          <button
+            onClick={() => setState({ type: "idle" })}
+            style={{
+              background: "transparent",
+              color: colors.textSecondary,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 8,
+              padding: "8px 16px",
+              cursor: "pointer",
+              fontSize: 13,
+            }}
+          >
+            Try again
+          </button>
         </Card>
       )}
 
@@ -267,5 +333,22 @@ export function UploadPage() {
         ))}
       </Card>
     </div>
+  );
+}
+
+function StatusBadge({ color, bg, children }: { color: string; bg: string; children: React.ReactNode }) {
+  return (
+    <span
+      style={{
+        fontSize: 11,
+        background: bg,
+        color,
+        borderRadius: 4,
+        padding: "2px 8px",
+        fontWeight: 600,
+      }}
+    >
+      {children}
+    </span>
   );
 }

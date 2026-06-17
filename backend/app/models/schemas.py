@@ -13,6 +13,11 @@ class UploadResponse(BaseModel):
     source_type: str
     conversation_count: int
     entities_extracted: int
+    provider_used: Optional[str] = None
+    extraction_status: Optional[str] = None
+    extraction_confidence_avg: Optional[float] = None
+    extraction_duration_ms: Optional[int] = None
+    fallback_chain: List[dict] = []
 
 
 # ── Reason / Evidence (nested) ────────────────────────────────────────────────
@@ -117,6 +122,11 @@ class ConversationSourceOut(BaseModel):
     source_type: str
     uploaded_at: datetime
     conversation_count: int
+    extraction_status: Optional[str] = None
+    provider_used: Optional[str] = None
+    entities_extracted: Optional[int] = None
+    extraction_confidence_avg: Optional[float] = None
+    extraction_duration_ms: Optional[int] = None
 
     class Config:
         from_attributes = True

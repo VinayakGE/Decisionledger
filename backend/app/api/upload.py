@@ -1,11 +1,12 @@
 """Upload endpoint — parse, extract, persist."""
+import json
 import os
 import shutil
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.parsers.router import parse_file
-from app.extractor.engine import extract_from_conversation
+from app.extractor.engine import extract_source
 from app.extractor.persister import persist_entities
 from app.models.orm import ConversationSource
 from app.models.schemas import UploadResponse
@@ -41,15 +42,26 @@ async def upload_file(
         source_type=source_type,
         raw_path=dest,
         conversation_count=len(conversations),
+        extraction_status="processing",
     )
     db.add(source)
     db.commit()
     db.refresh(source)
 
-    total_entities = 0
-    for conv in conversations:
-        entities = extract_from_conversation(conv)
-        total_entities += persist_entities(db, entities, source.id)
+    result = extract_source(conversations)
+    total_entities = persist_entities(db, result.entities, source.id)
+
+    # compute average confidence from persisted entity dicts
+    confidences = [e.get("confidence", 0.0) for e in result.entities if isinstance(e.get("confidence"), (int, float))]
+    avg_confidence = round(sum(confidences) / len(confidences), 4) if confidences else None
+
+    source.extraction_status = result.extraction_status
+    source.provider_used = result.provider_used
+    source.entities_extracted = total_entities
+    source.extraction_confidence_avg = avg_confidence
+    source.extraction_duration_ms = result.duration_ms
+    source.fallback_chain_json = json.dumps(result.fallback_chain)
+    db.commit()
 
     return UploadResponse(
         source_id=source.id,
@@ -57,4 +69,9 @@ async def upload_file(
         source_type=source.source_type,
         conversation_count=source.conversation_count,
         entities_extracted=total_entities,
+        provider_used=result.provider_used,
+        extraction_status=result.extraction_status,
+        extraction_confidence_avg=avg_confidence,
+        extraction_duration_ms=result.duration_ms,
+        fallback_chain=result.fallback_chain,
     )

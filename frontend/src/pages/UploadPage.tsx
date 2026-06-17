@@ -92,6 +92,12 @@ export function UploadPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <CheckCircle size={20} color={colors.success} />
             <span style={{ fontWeight: 600 }}>Upload complete</span>
+            {result.extraction_status === "heuristic_fallback" && (
+              <span style={{
+                fontSize: 11, background: "#FEF3C7", color: "#92400E",
+                borderRadius: 4, padding: "2px 8px", fontWeight: 600,
+              }}>Heuristic fallback</span>
+            )}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
@@ -99,6 +105,11 @@ export function UploadPage() {
               ["Format", result.source_type.toUpperCase()],
               ["Conversations", result.conversation_count],
               ["Entities extracted", result.entities_extracted],
+              ["Provider", result.provider_used ?? "—"],
+              ["Avg confidence", result.extraction_confidence_avg != null
+                ? `${(result.extraction_confidence_avg * 100).toFixed(0)}%` : "—"],
+              ["Duration", result.extraction_duration_ms != null
+                ? `${(result.extraction_duration_ms / 1000).toFixed(1)}s` : "—"],
             ].map(([label, value]) => (
               <div key={String(label)} style={{ background: colors.bg, borderRadius: 8, padding: "12px 16px" }}>
                 <div style={{ fontSize: 11, color: colors.muted, marginBottom: 4 }}>{label}</div>

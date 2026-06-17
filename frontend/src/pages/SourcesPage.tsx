@@ -27,6 +27,7 @@ const STATUS_BG: Record<string, string> = {
 export function SourcesPage() {
   const { data: sources, loading, error, reload } = useData(() => api.getSources());
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [removed, setRemoved] = useState<Set<number>>(new Set());
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDelete = async (source: Source) => {
@@ -35,6 +36,7 @@ export function SourcesPage() {
     setDeleteError(null);
     try {
       await api.deleteSource(source.id);
+      setRemoved((prev) => new Set(prev).add(source.id));
       reload();
     } catch (e: unknown) {
       setDeleteError(e instanceof Error ? e.message : String(e));
@@ -45,18 +47,20 @@ export function SourcesPage() {
 
   if (loading) return <Shell><Spinner /></Shell>;
   if (error) return <Shell><p style={{ color: colors.danger }}>{error}</p></Shell>;
-  if (!sources?.length) return (
+
+  const visible = (sources ?? []).filter((s) => !removed.has(s.id));
+  if (!visible.length) return (
     <Shell>
       <EmptyState message="No uploads yet. Go to Upload to add a conversation file." />
     </Shell>
   );
 
   return (
-    <Shell count={sources.length}>
+    <Shell count={visible.length}>
       {deleteError && (
         <p style={{ color: colors.danger, marginBottom: 12, fontSize: 13 }}>{deleteError}</p>
       )}
-      {sources.map((s) => {
+      {visible.map((s) => {
         const status = s.extraction_status ?? "unknown";
         return (
           <Card key={s.id} style={{ marginBottom: 12 }}>

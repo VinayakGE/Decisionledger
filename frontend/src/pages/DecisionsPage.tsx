@@ -1,15 +1,26 @@
 import React, { useState } from "react";
-import { api, Decision } from "../lib/api";
+import { Link } from "react-router-dom";
+import { api, Decision, Source } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
 import { ConfidenceBadge } from "../components/ConfidenceBadge";
-import { EmptyState } from "../components/EmptyState";
+import { FilterBar } from "../components/FilterBar";
 import { colors } from "../lib/styles";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 export function DecisionsPage() {
-  const { data: decisions, loading, error } = useData(() => api.getDecisions());
+  const [sourceId, setSourceId] = useState<number | null>(null);
+  const [minConfidence, setMinConfidence] = useState(0);
   const [expanded, setExpanded] = useState<number | null>(null);
+
+  const { data: sources } = useData(() => api.getSources());
+  const {
+    data: decisions,
+    loading,
+    error,
+  } = useData(() => api.getDecisions(sourceId ?? undefined), [sourceId]);
+
+  const visible = (decisions ?? []).filter((d) => (d.confidence ?? 0) >= minConfidence);
 
   if (loading)
     return (
@@ -23,16 +34,32 @@ export function DecisionsPage() {
         <ErrorMsg msg={error} />
       </PageShell>
     );
-  if (!decisions?.length)
-    return (
-      <PageShell title="Decisions">
-        <EmptyState message="No decisions found. Upload a conversation to get started." />
-      </PageShell>
-    );
 
   return (
-    <PageShell title="Decisions" count={decisions.length}>
-      {decisions.map((d) => (
+    <PageShell title="Decisions" count={visible.length}>
+      <FilterBar
+        sources={sources ?? []}
+        sourceId={sourceId}
+        onSourceChange={(id) => {
+          setSourceId(id);
+          setExpanded(null);
+        }}
+        minConfidence={minConfidence}
+        onConfidenceChange={setMinConfidence}
+      />
+
+      {!visible.length && (
+        <EmptyState
+          message={
+            sourceId || minConfidence > 0
+              ? "No decisions match the current filters."
+              : "No decisions yet."
+          }
+          showUploadLink={!sourceId && minConfidence === 0}
+        />
+      )}
+
+      {visible.map((d) => (
         <Card key={d.id} style={{ marginBottom: 12 }}>
           <div
             style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer" }}
@@ -76,8 +103,7 @@ export function DecisionsPage() {
                       key={r.id}
                       style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}
                     >
-                      {r.description}
-                      <ConfidenceBadge value={r.confidence} />
+                      {r.description} <ConfidenceBadge value={r.confidence} />
                     </li>
                   ))}
                 </Section>
@@ -129,6 +155,26 @@ function Snippet({ text }: { text: string }) {
     >
       "{text}"
     </blockquote>
+  );
+}
+
+function EmptyState({ message, showUploadLink }: { message: string; showUploadLink?: boolean }) {
+  return (
+    <div
+      style={{
+        textAlign: "center",
+        padding: "48px 24px",
+        color: colors.muted,
+        fontSize: 14,
+      }}
+    >
+      <p style={{ marginBottom: showUploadLink ? 12 : 0 }}>{message}</p>
+      {showUploadLink && (
+        <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
+          Upload a conversation to get started →
+        </Link>
+      )}
+    </div>
   );
 }
 

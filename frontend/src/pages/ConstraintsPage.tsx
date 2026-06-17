@@ -1,15 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
 import { ConfidenceBadge } from "../components/ConfidenceBadge";
-import { EmptyState } from "../components/EmptyState";
+import { FilterBar } from "../components/FilterBar";
 import { PageShell, Spinner, ErrorMsg } from "./DecisionsPage";
 import { colors } from "../lib/styles";
 import { AlertTriangle } from "lucide-react";
 
 export function ConstraintsPage() {
-  const { data: constraints, loading, error } = useData(() => api.getConstraints());
+  const [sourceId, setSourceId] = useState<number | null>(null);
+  const [minConfidence, setMinConfidence] = useState(0);
+
+  const { data: sources } = useData(() => api.getSources());
+  const {
+    data: constraints,
+    loading,
+    error,
+  } = useData(() => api.getConstraints(sourceId ?? undefined), [sourceId]);
+
+  const visible = (constraints ?? []).filter((c) => (c.confidence ?? 0) >= minConfidence);
 
   if (loading)
     return (
@@ -23,16 +34,35 @@ export function ConstraintsPage() {
         <ErrorMsg msg={error} />
       </PageShell>
     );
-  if (!constraints?.length)
-    return (
-      <PageShell title="Constraints">
-        <EmptyState message="No constraints detected yet." />
-      </PageShell>
-    );
 
   return (
-    <PageShell title="Constraints" count={constraints.length}>
-      {constraints.map((c) => (
+    <PageShell title="Constraints" count={visible.length}>
+      <FilterBar
+        sources={sources ?? []}
+        sourceId={sourceId}
+        onSourceChange={setSourceId}
+        minConfidence={minConfidence}
+        onConfidenceChange={setMinConfidence}
+      />
+
+      {!visible.length && (
+        <div
+          style={{ textAlign: "center", padding: "48px 24px", color: colors.muted, fontSize: 14 }}
+        >
+          <p style={{ marginBottom: sourceId || minConfidence > 0 ? 0 : 12 }}>
+            {sourceId || minConfidence > 0
+              ? "No constraints match the current filters."
+              : "No constraints detected yet."}
+          </p>
+          {!sourceId && minConfidence === 0 && (
+            <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
+              Upload a conversation to get started →
+            </Link>
+          )}
+        </div>
+      )}
+
+      {visible.map((c) => (
         <Card
           key={c.id}
           style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}

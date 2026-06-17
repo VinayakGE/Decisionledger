@@ -1,15 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
 import { ConfidenceBadge } from "../components/ConfidenceBadge";
-import { EmptyState } from "../components/EmptyState";
+import { FilterBar } from "../components/FilterBar";
 import { PageShell, Spinner, ErrorMsg } from "./DecisionsPage";
 import { colors } from "../lib/styles";
 import { HelpCircle } from "lucide-react";
 
 export function OpenQuestionsPage() {
-  const { data: questions, loading, error } = useData(() => api.getOpenQuestions());
+  const [sourceId, setSourceId] = useState<number | null>(null);
+  const [minConfidence, setMinConfidence] = useState(0);
+
+  const { data: sources } = useData(() => api.getSources());
+  const {
+    data: questions,
+    loading,
+    error,
+  } = useData(() => api.getOpenQuestions(sourceId ?? undefined), [sourceId]);
+
+  const visible = (questions ?? []).filter((q) => (q.confidence ?? 0) >= minConfidence);
 
   if (loading)
     return (
@@ -23,16 +34,35 @@ export function OpenQuestionsPage() {
         <ErrorMsg msg={error} />
       </PageShell>
     );
-  if (!questions?.length)
-    return (
-      <PageShell title="Open Questions">
-        <EmptyState message="No open questions detected yet." />
-      </PageShell>
-    );
 
   return (
-    <PageShell title="Open Questions" count={questions.length}>
-      {questions.map((q) => (
+    <PageShell title="Open Questions" count={visible.length}>
+      <FilterBar
+        sources={sources ?? []}
+        sourceId={sourceId}
+        onSourceChange={setSourceId}
+        minConfidence={minConfidence}
+        onConfidenceChange={setMinConfidence}
+      />
+
+      {!visible.length && (
+        <div
+          style={{ textAlign: "center", padding: "48px 24px", color: colors.muted, fontSize: 14 }}
+        >
+          <p style={{ marginBottom: sourceId || minConfidence > 0 ? 0 : 12 }}>
+            {sourceId || minConfidence > 0
+              ? "No questions match the current filters."
+              : "No open questions detected yet."}
+          </p>
+          {!sourceId && minConfidence === 0 && (
+            <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
+              Upload a conversation to get started →
+            </Link>
+          )}
+        </div>
+      )}
+
+      {visible.map((q) => (
         <Card
           key={q.id}
           style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}

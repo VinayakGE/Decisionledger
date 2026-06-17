@@ -1,8 +1,7 @@
 """Tests for insight engine helpers."""
-import pytest
-from unittest.mock import MagicMock, patch
-from app.insight_engine.engine import _group_by_overlap, _find_blind_spots, _topic_key
-from app.models.orm import OpenQuestion, ActionItem
+
+from app.insight_engine.engine import _find_blind_spots, _group_by_overlap, _topic_key
+from app.models.orm import OpenQuestion
 
 
 def test_group_by_overlap_finds_similar():

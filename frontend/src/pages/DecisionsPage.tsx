@@ -11,13 +11,24 @@ export function DecisionsPage() {
   const { data: decisions, loading, error } = useData(() => api.getDecisions());
   const [expanded, setExpanded] = useState<number | null>(null);
 
-  if (loading) return <PageShell title="Decisions"><Spinner /></PageShell>;
-  if (error) return <PageShell title="Decisions"><ErrorMsg msg={error} /></PageShell>;
-  if (!decisions?.length) return (
-    <PageShell title="Decisions">
-      <EmptyState message="No decisions found. Upload a conversation to get started." />
-    </PageShell>
-  );
+  if (loading)
+    return (
+      <PageShell title="Decisions">
+        <Spinner />
+      </PageShell>
+    );
+  if (error)
+    return (
+      <PageShell title="Decisions">
+        <ErrorMsg msg={error} />
+      </PageShell>
+    );
+  if (!decisions?.length)
+    return (
+      <PageShell title="Decisions">
+        <EmptyState message="No decisions found. Upload a conversation to get started." />
+      </PageShell>
+    );
 
   return (
     <PageShell title="Decisions" count={decisions.length}>
@@ -41,7 +52,14 @@ export function DecisionsPage() {
                 )}
               </div>
               {d.description && (
-                <p style={{ fontSize: 13, color: colors.textSecondary, marginTop: 6, marginBottom: 0 }}>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: colors.textSecondary,
+                    marginTop: 6,
+                    marginBottom: 0,
+                  }}
+                >
                   {d.description}
                 </p>
               )}
@@ -50,13 +68,14 @@ export function DecisionsPage() {
 
           {expanded === d.id && (
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${colors.border}` }}>
-              {d.supporting_snippet && (
-                <Snippet text={d.supporting_snippet} />
-              )}
+              {d.supporting_snippet && <Snippet text={d.supporting_snippet} />}
               {d.reasons.length > 0 && (
                 <Section title="Reasons">
                   {d.reasons.map((r) => (
-                    <li key={r.id} style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+                    <li
+                      key={r.id}
+                      style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}
+                    >
                       {r.description}
                       <ConfidenceBadge value={r.confidence} />
                     </li>
@@ -66,7 +85,10 @@ export function DecisionsPage() {
               {d.evidence.length > 0 && (
                 <Section title="Evidence">
                   {d.evidence.map((ev) => (
-                    <li key={ev.id} style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+                    <li
+                      key={ev.id}
+                      style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}
+                    >
                       {ev.description}
                     </li>
                   ))}
@@ -83,7 +105,9 @@ export function DecisionsPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginTop: 12 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: colors.muted, marginBottom: 6 }}>{title.toUpperCase()}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: colors.muted, marginBottom: 6 }}>
+        {title.toUpperCase()}
+      </div>
       <ul style={{ margin: 0, paddingLeft: 16 }}>{children}</ul>
     </div>
   );
@@ -91,24 +115,32 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Snippet({ text }: { text: string }) {
   return (
-    <blockquote style={{
-      borderLeft: `3px solid ${colors.primary}`,
-      margin: "0 0 12px",
-      padding: "8px 12px",
-      fontSize: 12,
-      color: colors.textSecondary,
-      fontStyle: "italic",
-      background: colors.bg,
-      borderRadius: "0 6px 6px 0",
-    }}>
+    <blockquote
+      style={{
+        borderLeft: `3px solid ${colors.primary}`,
+        margin: "0 0 12px",
+        padding: "8px 12px",
+        fontSize: 12,
+        color: colors.textSecondary,
+        fontStyle: "italic",
+        background: colors.bg,
+        borderRadius: "0 6px 6px 0",
+      }}
+    >
       "{text}"
     </blockquote>
   );
 }
 
 export function PageShell({
-  title, count, children,
-}: { title: string; count?: number; children: React.ReactNode }) {
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count?: number;
+  children: React.ReactNode;
+}) {
   return (
     <div style={{ padding: "40px 32px", maxWidth: 820 }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>
@@ -125,9 +157,7 @@ export function PageShell({
 }
 
 export function Spinner() {
-  return (
-    <div style={{ color: colors.muted, fontSize: 14 }}>Loading…</div>
-  );
+  return <div style={{ color: colors.muted, fontSize: 14 }}>Loading…</div>;
 }
 
 export function ErrorMsg({ msg }: { msg: string }) {

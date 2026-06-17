@@ -1,8 +1,20 @@
 """Persist extracted entities to the database."""
-from typing import List, Dict, Any
-from datetime import datetime
+
+from typing import Any, Dict, List
+
 from sqlalchemy.orm import Session
-from app.models.orm import Decision, Reason, Evidence, Goal, Constraint, OpenQuestion, ActionItem, GoalStatus, ActionStatus
+
+from app.models.orm import (
+    ActionItem,
+    ActionStatus,
+    Constraint,
+    Decision,
+    Evidence,
+    Goal,
+    GoalStatus,
+    OpenQuestion,
+    Reason,
+)
 
 
 def persist_entities(
@@ -32,55 +44,67 @@ def persist_entities(
         linked_id = _resolve_link(e, decision_map)
 
         if entity_type == "reason":
-            db.add(Reason(
-                linked_decision_id=linked_id,
-                description=e.get("description") or "Unknown",
-                confidence=_clamp(e.get("confidence", 0.0)),
-            ))
+            db.add(
+                Reason(
+                    linked_decision_id=linked_id,
+                    description=e.get("description") or "Unknown",
+                    confidence=_clamp(e.get("confidence", 0.0)),
+                )
+            )
         elif entity_type == "evidence":
-            db.add(Evidence(
-                linked_decision_id=linked_id,
-                description=e.get("description") or "Unknown",
-                source_reference=e.get("conversation_title"),
-            ))
+            db.add(
+                Evidence(
+                    linked_decision_id=linked_id,
+                    description=e.get("description") or "Unknown",
+                    source_reference=e.get("conversation_title"),
+                )
+            )
         elif entity_type == "goal":
-            db.add(Goal(
-                description=e.get("description") or "Unknown",
-                status=GoalStatus.unknown,
-                confidence=_clamp(e.get("confidence", 0.0)),
-                source_reference=e.get("conversation_title"),
-                supporting_snippet=e.get("supporting_snippet"),
-                timestamp=e.get("conversation_ts"),
-                source_id=source_id,
-            ))
+            db.add(
+                Goal(
+                    description=e.get("description") or "Unknown",
+                    status=GoalStatus.unknown,
+                    confidence=_clamp(e.get("confidence", 0.0)),
+                    source_reference=e.get("conversation_title"),
+                    supporting_snippet=e.get("supporting_snippet"),
+                    timestamp=e.get("conversation_ts"),
+                    source_id=source_id,
+                )
+            )
         elif entity_type == "constraint":
-            db.add(Constraint(
-                description=e.get("description") or "Unknown",
-                confidence=_clamp(e.get("confidence", 0.0)),
-                source_reference=e.get("conversation_title"),
-                supporting_snippet=e.get("supporting_snippet"),
-                timestamp=e.get("conversation_ts"),
-                source_id=source_id,
-            ))
+            db.add(
+                Constraint(
+                    description=e.get("description") or "Unknown",
+                    confidence=_clamp(e.get("confidence", 0.0)),
+                    source_reference=e.get("conversation_title"),
+                    supporting_snippet=e.get("supporting_snippet"),
+                    timestamp=e.get("conversation_ts"),
+                    source_id=source_id,
+                )
+            )
         elif entity_type == "open_question":
-            db.add(OpenQuestion(
-                description=e.get("description") or "Unknown",
-                confidence=_clamp(e.get("confidence", 0.0)),
-                source_reference=e.get("conversation_title"),
-                supporting_snippet=e.get("supporting_snippet"),
-                timestamp=e.get("conversation_ts"),
-                source_id=source_id,
-            ))
+            db.add(
+                OpenQuestion(
+                    description=e.get("description") or "Unknown",
+                    confidence=_clamp(e.get("confidence", 0.0)),
+                    source_reference=e.get("conversation_title"),
+                    supporting_snippet=e.get("supporting_snippet"),
+                    timestamp=e.get("conversation_ts"),
+                    source_id=source_id,
+                )
+            )
         elif entity_type == "action_item":
-            db.add(ActionItem(
-                description=e.get("description") or "Unknown",
-                status=ActionStatus.unknown,
-                confidence=_clamp(e.get("confidence", 0.0)),
-                source_reference=e.get("conversation_title"),
-                supporting_snippet=e.get("supporting_snippet"),
-                timestamp=e.get("conversation_ts"),
-                source_id=source_id,
-            ))
+            db.add(
+                ActionItem(
+                    description=e.get("description") or "Unknown",
+                    status=ActionStatus.unknown,
+                    confidence=_clamp(e.get("confidence", 0.0)),
+                    source_reference=e.get("conversation_title"),
+                    supporting_snippet=e.get("supporting_snippet"),
+                    timestamp=e.get("conversation_ts"),
+                    source_id=source_id,
+                )
+            )
         else:
             continue
         count += 1

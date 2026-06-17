@@ -10,7 +10,13 @@ vi.mock("../lib/api", () => ({
     uploadFile: vi.fn(),
     getSource: vi.fn(),
   },
-  TERMINAL_STATUSES: new Set(["completed", "heuristic_fallback", "completed_with_fallback", "partial", "failed"]),
+  TERMINAL_STATUSES: new Set([
+    "completed",
+    "heuristic_fallback",
+    "completed_with_fallback",
+    "partial",
+    "failed",
+  ]),
 }));
 
 vi.mock("react-router-dom", async (importOriginal) => {
@@ -65,7 +71,9 @@ describe("UploadPage", () => {
   it("shows uploading state while upload is in progress", async () => {
     let resolveUpload!: (v: typeof mockUploadResponse) => void;
     vi.mocked(api.uploadFile).mockReturnValue(
-      new Promise((res) => { resolveUpload = res; })
+      new Promise((res) => {
+        resolveUpload = res;
+      })
     );
 
     renderUploadPage();
@@ -73,9 +81,7 @@ describe("UploadPage", () => {
     const file = new File(["{}"], "test.json", { type: "application/json" });
     fireEvent.change(input, { target: { files: [file] } });
 
-    await waitFor(() =>
-      expect(screen.getByText(/uploading and parsing/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/uploading and parsing/i)).toBeInTheDocument());
     resolveUpload(mockUploadResponse);
   });
 
@@ -92,9 +98,7 @@ describe("UploadPage", () => {
       fireEvent.change(input, { target: { files: [file] } });
     });
 
-    await waitFor(() =>
-      expect(screen.getByText(/extracting entities/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/extracting entities/i)).toBeInTheDocument());
     expect(screen.getByText(/test\.json/i)).toBeInTheDocument();
   });
 
@@ -111,10 +115,9 @@ describe("UploadPage", () => {
     });
 
     // Wait for the poll to fire (2 s interval) and complete
-    await waitFor(() =>
-      expect(screen.getByText(/extraction complete/i)).toBeInTheDocument(),
-      { timeout: 5000 }
-    );
+    await waitFor(() => expect(screen.getByText(/extraction complete/i)).toBeInTheDocument(), {
+      timeout: 5000,
+    });
     expect(screen.getByText("12")).toBeInTheDocument(); // entities_extracted
   });
 
@@ -129,9 +132,7 @@ describe("UploadPage", () => {
       fireEvent.change(input, { target: { files: [file] } });
     });
 
-    await waitFor(() =>
-      expect(screen.getByText(/413 File too large/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/413 File too large/i)).toBeInTheDocument());
   });
 
   it("stops polling after unmount", async () => {

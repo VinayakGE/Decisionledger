@@ -1,7 +1,8 @@
 """Tests for entity extraction helpers (no API calls)."""
+
 import pytest
+
 from app.extractor.engine import _parse_response
-from app.extractor.providers.base import ExtractionProvider
 from app.extractor.persister import _clamp, _resolve_link
 
 
@@ -25,6 +26,7 @@ def test_parse_response_garbage():
 
 def test_provider_truncate():
     from app.extractor.providers.anthropic_provider import AnthropicProvider
+
     provider = AnthropicProvider()
     text = "a" * 200
     truncated = provider._truncate(text, 100)

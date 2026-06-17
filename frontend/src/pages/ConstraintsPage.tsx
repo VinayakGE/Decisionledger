@@ -11,21 +11,43 @@ import { AlertTriangle } from "lucide-react";
 export function ConstraintsPage() {
   const { data: constraints, loading, error } = useData(() => api.getConstraints());
 
-  if (loading) return <PageShell title="Constraints"><Spinner /></PageShell>;
-  if (error) return <PageShell title="Constraints"><ErrorMsg msg={error} /></PageShell>;
-  if (!constraints?.length) return (
-    <PageShell title="Constraints">
-      <EmptyState message="No constraints detected yet." />
-    </PageShell>
-  );
+  if (loading)
+    return (
+      <PageShell title="Constraints">
+        <Spinner />
+      </PageShell>
+    );
+  if (error)
+    return (
+      <PageShell title="Constraints">
+        <ErrorMsg msg={error} />
+      </PageShell>
+    );
+  if (!constraints?.length)
+    return (
+      <PageShell title="Constraints">
+        <EmptyState message="No constraints detected yet." />
+      </PageShell>
+    );
 
   return (
     <PageShell title="Constraints" count={constraints.length}>
       {constraints.map((c) => (
-        <Card key={c.id} style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}>
+        <Card
+          key={c.id}
+          style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}
+        >
           <AlertTriangle size={16} color={colors.warning} style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                flexWrap: "wrap",
+                marginBottom: 4,
+              }}
+            >
               <span style={{ fontSize: 14 }}>{c.description}</span>
               <ConfidenceBadge value={c.confidence} />
             </div>

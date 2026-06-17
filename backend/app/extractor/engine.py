@@ -13,20 +13,26 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from app.parsers.base import Conversation
 from app.extractor.providers.anthropic_provider import AnthropicProvider
-from app.extractor.providers.gemini_provider import GeminiProvider
 from app.extractor.providers.cerebras_provider import CerebrasProvider
+from app.extractor.providers.gemini_provider import GeminiProvider
 from app.extractor.providers.groq_provider import GroqProvider
 from app.extractor.providers.heuristic_provider import HeuristicProvider
+from app.parsers.base import Conversation
 
 logger = logging.getLogger(__name__)
 
 # Provider chain — tried in order; first success wins
-_PROVIDERS = [AnthropicProvider(), GeminiProvider(), CerebrasProvider(), GroqProvider(), HeuristicProvider()]
+_PROVIDERS = [
+    AnthropicProvider(),
+    GeminiProvider(),
+    CerebrasProvider(),
+    GroqProvider(),
+    HeuristicProvider(),
+]
 
 
 @dataclass
@@ -43,6 +49,7 @@ class ConversationAnalysis:
 @dataclass
 class ExtractionResult:
     """Aggregate result for a full source upload (multiple conversations)."""
+
     entities: List[Dict[str, Any]] = field(default_factory=list)
     provider_used: str = "unknown"
     extraction_status: str = "completed"
@@ -156,7 +163,9 @@ def analyse_conversation(conv: Conversation) -> Optional[ConversationAnalysis]:
             logger.warning("Provider '%s' failed: %s — trying next.", provider.name, e)
             continue
 
-    logger.error("All providers failed for conversation '%s'. Last error: %s", conv.title, last_error)
+    logger.error(
+        "All providers failed for conversation '%s'. Last error: %s", conv.title, last_error
+    )
     return None
 
 

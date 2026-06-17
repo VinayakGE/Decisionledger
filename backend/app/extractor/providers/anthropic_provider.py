@@ -1,11 +1,14 @@
 """Anthropic Claude provider (primary)."""
+
 import logging
+from typing import Any, Dict
+
 import anthropic
-from typing import Dict, Any
-from app.parsers.base import Conversation
-from app.extractor.providers.base import ExtractionProvider
-from app.extractor.prompts import SYSTEM_PROMPT, USER_TEMPLATE
+
 from app.config import settings
+from app.extractor.prompts import SYSTEM_PROMPT, USER_TEMPLATE
+from app.extractor.providers.base import ExtractionProvider
+from app.parsers.base import Conversation
 
 logger = logging.getLogger(__name__)
 

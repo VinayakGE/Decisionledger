@@ -2,7 +2,15 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { colors } from "../lib/styles";
 import {
-  Upload, Target, GitBranch, HelpCircle, Zap, AlertTriangle, CheckSquare, Brain, Database
+  Upload,
+  Target,
+  GitBranch,
+  HelpCircle,
+  Zap,
+  AlertTriangle,
+  CheckSquare,
+  Brain,
+  Database,
 } from "lucide-react";
 
 const nav = [
@@ -41,9 +49,7 @@ export function Sidebar() {
         }}
       >
         <Brain size={22} color={colors.primary} />
-        <span style={{ fontWeight: 700, fontSize: 15, color: colors.text }}>
-          Brain Audit
-        </span>
+        <span style={{ fontWeight: 700, fontSize: 15, color: colors.text }}>Brain Audit</span>
       </div>
       {nav.map(({ to, label, icon: Icon }) => (
         <NavLink

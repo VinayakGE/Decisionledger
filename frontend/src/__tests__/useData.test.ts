@@ -25,9 +25,7 @@ describe("useData", () => {
   });
 
   it("reload re-fetches data", async () => {
-    const fetcher = vi.fn()
-      .mockResolvedValueOnce(["first"])
-      .mockResolvedValueOnce(["second"]);
+    const fetcher = vi.fn().mockResolvedValueOnce(["first"]).mockResolvedValueOnce(["second"]);
     const { result } = renderHook(() => useData(fetcher));
 
     await waitFor(() => expect(result.current.data).toEqual(["first"]));
@@ -37,9 +35,7 @@ describe("useData", () => {
   });
 
   it("reload resets error state on success", async () => {
-    const fetcher = vi.fn()
-      .mockRejectedValueOnce(new Error("boom"))
-      .mockResolvedValueOnce(["ok"]);
+    const fetcher = vi.fn().mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce(["ok"]);
     const { result } = renderHook(() => useData(fetcher));
 
     await waitFor(() => expect(result.current.error).toBe("boom"));

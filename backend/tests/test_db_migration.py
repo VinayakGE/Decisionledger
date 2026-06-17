@@ -1,5 +1,5 @@
 """Tests for the idempotent SQLite column migration helper."""
-import pytest
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.pool import StaticPool
 
@@ -18,20 +18,23 @@ def _existing_columns(conn, table):
 
 def test_migration_adds_missing_columns():
     """Migration adds all 6 observability columns when they are absent."""
-    from app.database import _SCHEMA_ADDITIONS, _migrate_sqlite_columns, Base, engine as real_engine
+    from app.database import _SCHEMA_ADDITIONS
 
     test_engine = _make_engine()
     # Create the table WITHOUT the new columns (simulating a pre-PR#4 DB).
     with test_engine.connect() as conn:
-        conn.execute(text(
-            "CREATE TABLE conversation_sources "
-            "(id INTEGER PRIMARY KEY, filename VARCHAR, source_type VARCHAR, "
-            "uploaded_at DATETIME, raw_path VARCHAR, conversation_count INTEGER)"
-        ))
+        conn.execute(
+            text(
+                "CREATE TABLE conversation_sources "
+                "(id INTEGER PRIMARY KEY, filename VARCHAR, source_type VARCHAR, "
+                "uploaded_at DATETIME, raw_path VARCHAR, conversation_count INTEGER)"
+            )
+        )
         conn.commit()
 
     # Patch the module-level engine to use our test engine.
     import app.database as db_module
+
     original = db_module.engine
     db_module.engine = test_engine
     try:
@@ -51,11 +54,13 @@ def test_migration_is_idempotent():
 
     test_engine = _make_engine()
     with test_engine.connect() as conn:
-        conn.execute(text(
-            "CREATE TABLE conversation_sources "
-            "(id INTEGER PRIMARY KEY, filename VARCHAR, source_type VARCHAR, "
-            "uploaded_at DATETIME, raw_path VARCHAR, conversation_count INTEGER)"
-        ))
+        conn.execute(
+            text(
+                "CREATE TABLE conversation_sources "
+                "(id INTEGER PRIMARY KEY, filename VARCHAR, source_type VARCHAR, "
+                "uploaded_at DATETIME, raw_path VARCHAR, conversation_count INTEGER)"
+            )
+        )
         conn.commit()
 
     original = db_module.engine

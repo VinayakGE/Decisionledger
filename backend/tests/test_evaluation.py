@@ -1,6 +1,6 @@
 """Tests for the evaluation matcher — no API calls, no LLM needed."""
-import pytest
-from evaluation.matcher import match_entities, MatchResult, MATCH_THRESHOLD
+
+from evaluation.matcher import match_entities
 
 
 def _gt(desc, ambiguous=False):
@@ -8,6 +8,7 @@ def _gt(desc, ambiguous=False):
 
 
 # ── Basic matching ────────────────────────────────────────────────────────────
+
 
 def test_exact_match():
     gt = [_gt("Set pricing at $85 per seat per month")]
@@ -79,6 +80,7 @@ def test_ambiguous_excluded_from_recall():
 
 
 # ── F1 sanity ─────────────────────────────────────────────────────────────────
+
 
 def test_f1_harmonic_mean():
     gt = [_gt("A"), _gt("B"), _gt("C")]

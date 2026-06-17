@@ -3,15 +3,23 @@
 Treats each H1/H2 section as a separate conversation.
 Speaker lines like '**User:**' or '**Assistant:**' are split into messages.
 """
+
 import re
-from typing import List, BinaryIO
+from typing import BinaryIO, List
+
 from app.parsers.base import Conversation, Message
 
 _HEADING = re.compile(r"^#{1,2}\s+(.+)$", re.MULTILINE)
-_SPEAKER = re.compile(r"^\*\*(User|Human|Assistant|AI|System|You|Me)\*\*[:\s]", re.IGNORECASE | re.MULTILINE)
+_SPEAKER = re.compile(
+    r"^\*\*(User|Human|Assistant|AI|System|You|Me)\*\*[:\s]", re.IGNORECASE | re.MULTILINE
+)
 _ROLE_MAP = {
-    "user": "user", "human": "user", "you": "user", "me": "user",
-    "assistant": "assistant", "ai": "assistant",
+    "user": "user",
+    "human": "user",
+    "you": "user",
+    "me": "user",
+    "assistant": "assistant",
+    "ai": "assistant",
     "system": "system",
 }
 

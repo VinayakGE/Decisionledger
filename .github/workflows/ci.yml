@@ -28,6 +28,14 @@ jobs:
         working-directory: backend
         run: pip install -r requirements.txt
 
+      - name: Lint (ruff)
+        working-directory: backend
+        run: ruff check app/ tests/
+
+      - name: Format check (black)
+        working-directory: backend
+        run: black --check app/ tests/
+
       - name: Run tests
         working-directory: backend
         env:
@@ -68,9 +76,17 @@ jobs:
           git diff --exit-code src/lib/api-types.gen.ts || \
             (echo "api-types.gen.ts is stale — run 'npm run generate:api' in frontend/ and commit the result" && exit 1)
 
+      - name: Format check (prettier)
+        working-directory: frontend
+        run: npm run lint
+
       - name: Type-check
         working-directory: frontend
         run: npx tsc --noEmit
+
+      - name: Run tests
+        working-directory: frontend
+        run: npm test
 
       - name: Build
         working-directory: frontend

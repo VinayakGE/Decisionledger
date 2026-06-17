@@ -4,13 +4,14 @@ Uses the OpenAI-compatible REST API — no gRPC, no SSL cert issues.
 Get a free key: https://cloud.cerebras.ai
 Set CEREBRAS_API_KEY in .env
 """
-import json
+
 import logging
-from typing import Dict, Any
-from app.parsers.base import Conversation
-from app.extractor.providers.base import ExtractionProvider
-from app.extractor.prompts import SYSTEM_PROMPT, USER_TEMPLATE
+from typing import Any, Dict
+
 from app.config import settings
+from app.extractor.prompts import SYSTEM_PROMPT, USER_TEMPLATE
+from app.extractor.providers.base import ExtractionProvider
+from app.parsers.base import Conversation
 
 logger = logging.getLogger(__name__)
 

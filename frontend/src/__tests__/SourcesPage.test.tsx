@@ -74,9 +74,7 @@ describe("SourcesPage", () => {
   it("shows empty state when no sources", async () => {
     vi.mocked(api.getSources).mockResolvedValue([]);
     renderSourcesPage();
-    await waitFor(() =>
-      expect(screen.getByText(/no uploads yet/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/no uploads yet/i)).toBeInTheDocument());
   });
 
   it("deletes a source and removes it from the list immediately", async () => {
@@ -95,9 +93,7 @@ describe("SourcesPage", () => {
     expect(vi.mocked(api.deleteSource)).toHaveBeenCalledWith(1);
 
     // Card removed immediately (optimistic)
-    await waitFor(() =>
-      expect(screen.queryByText("conversations.json")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByText("conversations.json")).not.toBeInTheDocument());
     expect(screen.getByText("notes.md")).toBeInTheDocument();
   });
 
@@ -112,9 +108,7 @@ describe("SourcesPage", () => {
     const deleteButtons = screen.getAllByTitle("Delete source and all entities");
     await user.click(deleteButtons[0]);
 
-    await waitFor(() =>
-      expect(screen.getByText("404 Not Found")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("404 Not Found")).toBeInTheDocument());
     // Card still present on failure
     expect(screen.getByText("conversations.json")).toBeInTheDocument();
   });

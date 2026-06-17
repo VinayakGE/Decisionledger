@@ -23,6 +23,7 @@ from app.models.schemas import (
 )
 from app.parsers.router import parse_file
 
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/entities", tags=["entities"])
 

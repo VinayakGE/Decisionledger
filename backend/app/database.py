@@ -4,9 +4,10 @@ from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
 
+_is_sqlite = settings.database_url.startswith("sqlite")
 engine = create_engine(
     settings.database_url,
-    connect_args={"check_same_thread": False},
+    connect_args={"check_same_thread": False} if _is_sqlite else {},
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -71,12 +72,28 @@ _SCHEMA_ADDITIONS = [
 
 
 def _migrate_sqlite_columns():
-    """Idempotent ALTER TABLE helper for SQLite.
+    """Idempotent ALTER TABLE helper.
 
     create_all() creates missing tables but never alters existing ones.
     This adds any new nullable columns so users with an older DB don't need
     to reset. Safe to run on every startup — skips columns that already exist.
     """
+    if not _is_sqlite:
+        # For PostgreSQL, use information_schema to check existing columns
+        with engine.connect() as conn:
+            for table, column, col_type in _SCHEMA_ADDITIONS:
+                result = conn.execute(
+                    text(
+                        "SELECT column_name FROM information_schema.columns "
+                        "WHERE table_name = :table AND column_name = :col"
+                    ),
+                    {"table": table, "col": column},
+                )
+                if result.fetchone() is None:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
+                    conn.commit()
+        return
+
     with engine.connect() as conn:
         for table, column, col_type in _SCHEMA_ADDITIONS:
             existing = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))}

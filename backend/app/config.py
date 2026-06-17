@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     gemini_api_key: str = ""
     cerebras_api_key: str = ""
+    groq_api_key: str = ""
     upload_dir: str = "./uploads"
     max_upload_size_mb: int = 50
     extraction_model: str = "claude-haiku-4-5-20251001"

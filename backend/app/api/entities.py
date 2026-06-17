@@ -12,7 +12,16 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
 from app.extractor.engine import extract_source
 from app.extractor.persister import persist_entities
-from app.models.orm import ActionItem, Constraint, ConversationSource, Decision, Evidence, Goal, OpenQuestion, Reason
+from app.models.orm import (
+    ActionItem,
+    Constraint,
+    ConversationSource,
+    Decision,
+    Evidence,
+    Goal,
+    OpenQuestion,
+    Reason,
+)
 from app.models.schemas import (
     ActionItemOut,
     ConstraintOut,

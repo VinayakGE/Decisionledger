@@ -26,6 +26,16 @@ def get_source(source_id: int, db: Session = Depends(get_db)):
     return source
 
 
+@router.delete("/sources/{source_id}", status_code=204)
+def delete_source(source_id: int, db: Session = Depends(get_db)):
+    """Delete a source and all its extracted entities (cascade)."""
+    source = db.query(ConversationSource).filter(ConversationSource.id == source_id).first()
+    if source is None:
+        raise HTTPException(status_code=404, detail="Source not found.")
+    db.delete(source)
+    db.commit()
+
+
 @router.get("/decisions", response_model=List[DecisionOut])
 def list_decisions(
     source_id: Optional[int] = Query(None),

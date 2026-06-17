@@ -248,3 +248,58 @@ def test_insights_empty():
     r = client.get("/insights")
     assert r.status_code == 200
     assert r.json()["total_decisions"] == 0
+
+
+# ── Delete source ─────────────────────────────────────────────────────────────
+
+def test_delete_source():
+    """DELETE /entities/sources/{id} removes source and returns 204."""
+    from app.models.orm import ConversationSource
+    db = TestSessionLocal()
+    source = ConversationSource(
+        filename="todelete.md", source_type="markdown",
+        extraction_status="completed", entities_extracted=0,
+    )
+    db.add(source)
+    db.commit()
+    source_id = source.id
+    db.close()
+
+    r = client.delete(f"/entities/sources/{source_id}")
+    assert r.status_code == 204
+
+    # Confirm gone
+    r2 = client.get(f"/entities/sources/{source_id}")
+    assert r2.status_code == 404
+
+
+def test_delete_source_cascades_entities():
+    """Deleting a source removes all associated decisions."""
+    from app.models.orm import ConversationSource, Decision
+    db = TestSessionLocal()
+    source = ConversationSource(
+        filename="cascade.md", source_type="markdown",
+        extraction_status="completed", entities_extracted=1,
+    )
+    db.add(source)
+    db.flush()
+    decision = Decision(
+        title="Launch at $29", description="desc", confidence=0.9, source_id=source.id,
+    )
+    db.add(decision)
+    db.commit()
+    source_id = source.id
+    decision_id = decision.id
+    db.close()
+
+    r = client.delete(f"/entities/sources/{source_id}")
+    assert r.status_code == 204
+
+    db = TestSessionLocal()
+    assert db.query(Decision).filter_by(id=decision_id).first() is None
+    db.close()
+
+
+def test_delete_source_404():
+    r = client.delete("/entities/sources/99999")
+    assert r.status_code == 404

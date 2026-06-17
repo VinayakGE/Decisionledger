@@ -8,6 +8,7 @@ import { OpenQuestionsPage } from "./pages/OpenQuestionsPage";
 import { ActionItemsPage } from "./pages/ActionItemsPage";
 import { ConstraintsPage } from "./pages/ConstraintsPage";
 import { InsightsPage } from "./pages/InsightsPage";
+import { SourcesPage } from "./pages/SourcesPage";
 import { colors } from "./lib/styles";
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="/actions" element={<ActionItemsPage />} />
             <Route path="/constraints" element={<ConstraintsPage />} />
             <Route path="/insights" element={<InsightsPage />} />
+            <Route path="/sources" element={<SourcesPage />} />
           </Routes>
         </main>
       </div>

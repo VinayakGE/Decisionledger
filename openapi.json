@@ -113,6 +113,40 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Delete Source",
+        "description": "Delete a source and all its extracted entities (cascade).",
+        "operationId": "delete_source_entities_sources__source_id__delete",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Source Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/entities/decisions": {

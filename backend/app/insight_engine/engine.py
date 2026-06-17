@@ -21,15 +21,19 @@ except ImportError:
     logger.warning("sentence-transformers not available — semantic similarity disabled.")
 
 _model: Optional[object] = None
+_model_load_failed: bool = False
 
 
 def _get_model():
-    global _model
-    if _model is None and _ST_AVAILABLE:
+    global _model, _model_load_failed
+    if _model_load_failed or not _ST_AVAILABLE:
+        return None
+    if _model is None:
         try:
             _model = SentenceTransformer("all-MiniLM-L6-v2")
         except Exception as e:
             logger.warning("SentenceTransformer model load failed: %s — falling back to word overlap.", e)
+            _model_load_failed = True
             return None
     return _model
 

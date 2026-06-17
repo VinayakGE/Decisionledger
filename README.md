@@ -4,7 +4,7 @@
 
 Founder Brain Audit is a local-first analysis engine that parses your exported ChatGPT, Claude, Markdown, and plain text conversations and extracts structured entities — Decisions, Goals, Reasons, Evidence, Constraints, Open Questions, and Action Items — then runs an insight engine to surface recurring patterns, decision reversals, and blind spots.
 
-> **No data leaves your machine.** All processing is local. The only external call is to the Anthropic API for entity extraction (opt-in, using your own API key).
+> **Privacy-first.** All parsing and insight generation runs locally. Entity extraction sends conversation text to an LLM provider via your own API key — no data is sent anywhere without your explicit configuration. The default provider is Anthropic; the fallback chain (Anthropic → Gemini → Cerebras → Groq → Heuristic) tries each provider in order and stops at the first success. The Heuristic provider is fully local (no network calls). You control which providers are active by setting API keys in `.env`.
 
 ---
 
@@ -123,6 +123,7 @@ rm backend/founder_brain_audit.db   # wipe and let the app recreate on next star
 | `MAX_UPLOAD_SIZE_MB` | `50` | Upload size limit |
 | `EXTRACTION_MODEL` | `claude-haiku-4-5-20251001` | Model used for extraction (fast + cheap) |
 | `SIMILARITY_THRESHOLD` | `0.80` | Cosine similarity cutoff for clustering |
+| `VITE_API_BASE_URL` | *(empty — same-origin)* | **Frontend build-time only.** Set when frontend and backend are on different origins. Leave empty for Docker/nginx same-origin routing. |
 
 ---
 

@@ -73,8 +73,7 @@ def extract_source(conversations: List[Conversation]) -> ExtractionResult:
     """
     start = time.monotonic()
     all_entities: List[Dict[str, Any]] = []
-    provider_used = "unknown"
-    extraction_status = "completed"
+    providers_seen: set = set()
     merged_chain: List[Dict[str, str]] = []
     any_success = False
     any_failure = False
@@ -85,23 +84,36 @@ def extract_source(conversations: List[Conversation]) -> ExtractionResult:
             any_failure = True
             continue
         any_success = True
+        providers_seen.add(analysis.provider_used)
         for e in analysis.entities:
             e["conversation_title"] = analysis.conversation_name
             e["conversation_ts"] = analysis.conversation_ts
             e["behavioral_pattern"] = analysis.behavioral_pattern
             e["provider_used"] = analysis.provider_used
         all_entities.extend(analysis.entities)
-        provider_used = analysis.provider_used
         for step in analysis.fallback_chain:
             if step not in merged_chain:
                 merged_chain.append(step)
 
-    if any_success and any_failure:
-        extraction_status = "partial"
-    elif not any_success:
+    # Aggregate provider label: single name when unanimous, "mixed" otherwise.
+    if not providers_seen:
+        provider_used = "none"
+    elif len(providers_seen) == 1:
+        provider_used = next(iter(providers_seen))
+    else:
+        provider_used = "mixed"
+
+    # Derive status from outcome, not just provider name.
+    if not any_success:
         extraction_status = "failed"
+    elif any_failure:
+        extraction_status = "partial"
     elif provider_used == "heuristic":
         extraction_status = "heuristic_fallback"
+    elif provider_used == "mixed" and "heuristic" in providers_seen:
+        extraction_status = "completed_with_fallback"
+    else:
+        extraction_status = "completed"
 
     return ExtractionResult(
         entities=all_entities,

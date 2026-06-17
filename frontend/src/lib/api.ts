@@ -58,10 +58,7 @@ export const api = {
   getSource:        (id: number) => get<Source>(`/entities/sources/${id}`),
   deleteSource:     async (id: number): Promise<void> => {
     const r = await fetch(`${BASE}/entities/sources/${id}`, { method: "DELETE" });
-    if (!r.ok) {
-      const err = await r.json().catch(() => ({ detail: r.statusText }));
-      throw new Error(err.detail || r.statusText);
-    }
+    if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
   },
   getDecisions:     (sourceId?: number) =>
     get<Decision[]>(`/entities/decisions${sourceId ? `?source_id=${sourceId}` : ""}`),

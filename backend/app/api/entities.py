@@ -1,4 +1,6 @@
 """CRUD read endpoints for extracted entities."""
+import logging
+import os
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -9,6 +11,7 @@ from app.models.schemas import (
     ConversationSourceOut,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/entities", tags=["entities"])
 
 
@@ -28,12 +31,19 @@ def get_source(source_id: int, db: Session = Depends(get_db)):
 
 @router.delete("/sources/{source_id}", status_code=204)
 def delete_source(source_id: int, db: Session = Depends(get_db)):
-    """Delete a source and all its extracted entities (cascade)."""
+    """Delete a source, all its extracted entities (cascade), and the raw uploaded file."""
     source = db.query(ConversationSource).filter(ConversationSource.id == source_id).first()
     if source is None:
         raise HTTPException(status_code=404, detail="Source not found.")
+    raw_path = source.raw_path
     db.delete(source)
     db.commit()
+    if raw_path and os.path.exists(raw_path):
+        try:
+            os.remove(raw_path)
+            logger.info("Deleted raw file: %s", raw_path)
+        except OSError as e:
+            logger.warning("Could not delete raw file %s: %s", raw_path, e)
 
 
 @router.get("/decisions", response_model=List[DecisionOut])

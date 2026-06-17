@@ -119,7 +119,7 @@
           "entities"
         ],
         "summary": "Delete Source",
-        "description": "Delete a source and all its extracted entities (cascade).",
+        "description": "Delete a source, all its extracted entities (cascade), and the raw uploaded file.",
         "operationId": "delete_source_entities_sources__source_id__delete",
         "parameters": [
           {

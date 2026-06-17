@@ -303,3 +303,46 @@ def test_delete_source_cascades_entities():
 def test_delete_source_404():
     r = client.delete("/entities/sources/99999")
     assert r.status_code == 404
+
+
+def test_delete_source_removes_raw_file(tmp_path):
+    """Deleting a source removes the raw uploaded file from disk."""
+    from app.models.orm import ConversationSource
+
+    raw_file = tmp_path / "upload.md"
+    raw_file.write_text("# Test content")
+
+    db = TestSessionLocal()
+    source = ConversationSource(
+        filename="upload.md", source_type="markdown",
+        extraction_status="completed", entities_extracted=0,
+        raw_path=str(raw_file),
+    )
+    db.add(source)
+    db.commit()
+    source_id = source.id
+    db.close()
+
+    assert raw_file.exists()
+    r = client.delete(f"/entities/sources/{source_id}")
+    assert r.status_code == 204
+    assert not raw_file.exists()
+
+
+def test_delete_source_tolerates_missing_file(tmp_path):
+    """Delete succeeds even if the raw file is already gone from disk."""
+    from app.models.orm import ConversationSource
+
+    db = TestSessionLocal()
+    source = ConversationSource(
+        filename="gone.md", source_type="markdown",
+        extraction_status="completed", entities_extracted=0,
+        raw_path=str(tmp_path / "already_deleted.md"),
+    )
+    db.add(source)
+    db.commit()
+    source_id = source.id
+    db.close()
+
+    r = client.delete(f"/entities/sources/{source_id}")
+    assert r.status_code == 204

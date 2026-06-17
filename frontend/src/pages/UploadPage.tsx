@@ -12,7 +12,7 @@ type State =
   | { type: "done"; result: Source }
   | { type: "error"; msg: string };
 
-const ACCEPTED = ".json,.md,.txt";
+const ACCEPTED = ".zip,.json,.md,.txt";
 const POLL_INTERVAL_MS = 2000;
 
 export function UploadPage() {
@@ -97,7 +97,7 @@ export function UploadPage() {
             Drop your file here or click to browse
           </p>
           <p style={{ fontSize: 13, color: colors.textSecondary }}>
-            Supports: ChatGPT JSON · Claude JSON · Markdown · Plain text
+            Supports: ChatGPT/Claude ZIP export · JSON · Markdown · Plain text
           </p>
           <input
             ref={inputRef}
@@ -250,8 +250,10 @@ export function UploadPage() {
           HOW TO EXPORT YOUR CONVERSATIONS
         </div>
         {[
-          ["ChatGPT", "Settings → Data Controls → Export Data → conversations.json"],
-          ["Claude", "claude.ai → Settings → Export Data → JSON file"],
+          ["ChatGPT ZIP", "Settings → Data Controls → Export Data → upload the .zip directly"],
+          ["Claude ZIP", "claude.ai → Settings → Export Data → upload the .zip directly"],
+          ["ChatGPT JSON", "Extract conversations.json from the ChatGPT export zip"],
+          ["Claude JSON", "Extract conversations.json from the Claude export zip"],
           ["Markdown", "Any .md file with **User:** / **Assistant:** speaker labels"],
           ["Plain text", "Any .txt file with notes, decisions, or meeting transcripts"],
         ].map(([src, hint]) => (

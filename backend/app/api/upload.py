@@ -32,7 +32,10 @@ async def upload_file(
 
     import io
 
-    conversations, source_type = parse_file(file.filename or "upload", io.BytesIO(content))
+    try:
+        conversations, source_type = parse_file(file.filename or "upload", io.BytesIO(content))
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
 
     if not conversations:
         raise HTTPException(422, "No conversations found in the uploaded file.")

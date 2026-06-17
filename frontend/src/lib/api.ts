@@ -109,6 +109,9 @@ export const api = {
 
   getInsights: () => get<InsightReport>("/insights"),
 
+  reanalyzeSource: (id: number) =>
+    post<Source>(`/entities/sources/${id}/reanalyze`, {}),
+
   getSettings: () => get<SettingsResponse>("/settings"),
   updateSettings: (payload: UpdateKeysPayload) =>
     post<SettingsResponse>("/settings", payload),

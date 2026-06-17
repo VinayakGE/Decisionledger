@@ -1,14 +1,18 @@
 """CRUD read endpoints for extracted entities."""
 
+import io
+import json
 import logging
 import os
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.models.orm import ActionItem, Constraint, ConversationSource, Decision, Goal, OpenQuestion
+from app.database import SessionLocal, get_db
+from app.extractor.engine import extract_source
+from app.extractor.persister import persist_entities
+from app.models.orm import ActionItem, Constraint, ConversationSource, Decision, Evidence, Goal, OpenQuestion, Reason
 from app.models.schemas import (
     ActionItemOut,
     ConstraintOut,
@@ -17,6 +21,7 @@ from app.models.schemas import (
     GoalOut,
     OpenQuestionOut,
 )
+from app.parsers.router import parse_file
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/entities", tags=["entities"])
@@ -34,6 +39,98 @@ def get_source(source_id: int, db: Session = Depends(get_db)):
     if source is None:
         raise HTTPException(status_code=404, detail="Source not found.")
     return source
+
+
+@router.post("/sources/{source_id}/reanalyze", response_model=ConversationSourceOut)
+def reanalyze_source(
+    source_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """Wipe existing entities for a source and re-run extraction in the background."""
+    source = db.query(ConversationSource).filter(ConversationSource.id == source_id).first()
+    if source is None:
+        raise HTTPException(status_code=404, detail="Source not found.")
+
+    if not source.raw_path or not os.path.exists(source.raw_path):
+        raise HTTPException(
+            status_code=409,
+            detail="Raw file not found on disk — cannot re-analyze. Please re-upload the file.",
+        )
+
+    # Wipe all existing entities for this source.
+    # Evidence and Reason link to Decision (not directly to source), so delete those first.
+    decision_ids = [
+        row[0] for row in db.query(Decision.id).filter(Decision.source_id == source_id).all()
+    ]
+    if decision_ids:
+        db.query(Evidence).filter(Evidence.linked_decision_id.in_(decision_ids)).delete(synchronize_session=False)
+        db.query(Reason).filter(Reason.linked_decision_id.in_(decision_ids)).delete(synchronize_session=False)
+    for model in (Decision, Goal, Constraint, OpenQuestion, ActionItem):
+        db.query(model).filter(model.source_id == source_id).delete(synchronize_session=False)
+
+    source.extraction_status = "pending"
+    source.entities_extracted = 0
+    source.provider_used = None
+    source.extraction_confidence_avg = None
+    source.extraction_duration_ms = None
+    source.fallback_chain_json = None
+    db.commit()
+    db.refresh(source)
+
+    # Re-parse the raw file and schedule background extraction
+    filename = os.path.basename(source.raw_path)
+    with open(source.raw_path, "rb") as f:
+        content = f.read()
+    try:
+        conversations, _ = parse_file(filename, io.BytesIO(content))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=f"Failed to re-parse file: {exc}")
+
+    background_tasks.add_task(_reextract_and_persist, source_id, conversations)
+    return source
+
+
+def _reextract_and_persist(source_id: int, conversations: list) -> None:
+    """Background task for re-extraction (same logic as initial upload)."""
+    db = SessionLocal()
+    try:
+        source = db.query(ConversationSource).filter_by(id=source_id).first()
+        if source is None:
+            return
+
+        result = extract_source(conversations)
+        total_entities = persist_entities(db, result.entities, source_id)
+
+        confidences = [
+            e.get("confidence", 0.0)
+            for e in result.entities
+            if isinstance(e.get("confidence"), (int, float))
+        ]
+        avg_confidence = round(sum(confidences) / len(confidences), 4) if confidences else None
+
+        source.extraction_status = result.extraction_status
+        source.provider_used = result.provider_used
+        source.entities_extracted = total_entities
+        source.extraction_confidence_avg = avg_confidence
+        source.extraction_duration_ms = result.duration_ms
+        source.fallback_chain_json = json.dumps(result.fallback_chain)
+        db.commit()
+        logger.info(
+            "Re-extraction complete for source %d: %d entities, provider=%s, status=%s",
+            source_id, total_entities, result.provider_used, result.extraction_status,
+        )
+    except Exception as e:
+        logger.error("Re-extraction failed for source %d: %s", source_id, e, exc_info=True)
+        try:
+            source = db.query(ConversationSource).filter_by(id=source_id).first()
+            if source:
+                source.extraction_status = "failed"
+                db.commit()
+        except Exception:
+            pass
+    finally:
+        db.close()
 
 
 @router.delete("/sources/{source_id}", status_code=204)

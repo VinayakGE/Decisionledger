@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { api, Source } from "../lib/api";
+import React, { useEffect, useState } from "react";
+import { api, Source, TERMINAL_STATUSES } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
 import { EmptyState } from "../components/EmptyState";
 import { colors } from "../lib/styles";
-import { Trash2 } from "lucide-react";
+import { Trash2, RefreshCw } from "lucide-react";
 
 const STATUS_COLOR: Record<string, string> = {
   completed: colors.success,
@@ -27,21 +27,45 @@ const STATUS_BG: Record<string, string> = {
 export function SourcesPage() {
   const { data: sources, loading, error, reload } = useData(() => api.getSources());
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [reanalyzing, setReanalyzing] = useState<number | null>(null);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  // Poll every 3 s while any source is pending
+  useEffect(() => {
+    const hasPending = (sources ?? []).some(
+      (s) => !TERMINAL_STATUSES.has(s.extraction_status ?? "")
+    );
+    if (!hasPending) return;
+    const id = setInterval(reload, 3000);
+    return () => clearInterval(id);
+  }, [sources, reload]);
 
   const handleDelete = async (source: Source) => {
     if (!window.confirm(`Delete "${source.filename}" and all its extracted entities?`)) return;
     setDeleting(source.id);
-    setDeleteError(null);
+    setActionError(null);
     try {
       await api.deleteSource(source.id);
       setRemoved((prev) => new Set(prev).add(source.id));
       reload();
     } catch (e: unknown) {
-      setDeleteError(e instanceof Error ? e.message : String(e));
+      setActionError(e instanceof Error ? e.message : String(e));
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleReanalyze = async (source: Source) => {
+    setReanalyzing(source.id);
+    setActionError(null);
+    try {
+      await api.reanalyzeSource(source.id);
+      reload();
+    } catch (e: unknown) {
+      setActionError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setReanalyzing(null);
     }
   };
 
@@ -68,11 +92,13 @@ export function SourcesPage() {
 
   return (
     <Shell count={visible.length}>
-      {deleteError && (
-        <p style={{ color: colors.danger, marginBottom: 12, fontSize: 13 }}>{deleteError}</p>
+      {actionError && (
+        <p style={{ color: colors.danger, marginBottom: 12, fontSize: 13 }}>{actionError}</p>
       )}
       {visible.map((s) => {
         const status = s.extraction_status ?? "unknown";
+        const isPending = !TERMINAL_STATUSES.has(status);
+        const isBusy = deleting === s.id || reanalyzing === s.id || isPending;
         return (
           <Card key={s.id} style={{ marginBottom: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -87,8 +113,24 @@ export function SourcesPage() {
                       padding: "2px 8px",
                       background: STATUS_BG[status] ?? "#F3F4F6",
                       color: STATUS_COLOR[status] ?? colors.muted,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
                     }}
                   >
+                    {isPending && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          border: `1.5px solid ${colors.muted}`,
+                          borderTopColor: "transparent",
+                          animation: "spin 0.8s linear infinite",
+                        }}
+                      />
+                    )}
                     {status}
                   </span>
                   <span style={{ fontSize: 11, color: colors.muted }}>
@@ -114,19 +156,49 @@ export function SourcesPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Re-analyze button */}
+              <button
+                onClick={() => handleReanalyze(s)}
+                disabled={isBusy}
+                title={isPending ? "Extraction in progress…" : "Re-analyze with AI"}
+                style={{
+                  background: "none",
+                  border: `1px solid ${isBusy ? colors.border : colors.primary}`,
+                  cursor: isBusy ? "not-allowed" : "pointer",
+                  color: isBusy ? colors.muted : colors.primary,
+                  padding: "5px 10px",
+                  borderRadius: 6,
+                  flexShrink: 0,
+                  opacity: isBusy ? 0.5 : 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  fontSize: 12,
+                  fontWeight: 500,
+                }}
+              >
+                <RefreshCw
+                  size={13}
+                  style={reanalyzing === s.id ? { animation: "spin 0.8s linear infinite" } : {}}
+                />
+                Re-analyze
+              </button>
+
+              {/* Delete button */}
               <button
                 onClick={() => handleDelete(s)}
-                disabled={deleting === s.id}
+                disabled={isBusy}
                 title="Delete source and all entities"
                 style={{
                   background: "none",
                   border: "none",
-                  cursor: deleting === s.id ? "wait" : "pointer",
-                  color: deleting === s.id ? colors.muted : colors.danger,
+                  cursor: isBusy ? "not-allowed" : "pointer",
+                  color: isBusy ? colors.muted : colors.danger,
                   padding: 6,
                   borderRadius: 6,
                   flexShrink: 0,
-                  opacity: deleting === s.id ? 0.5 : 1,
+                  opacity: isBusy ? 0.5 : 1,
                 }}
               >
                 <Trash2 size={16} />
@@ -135,6 +207,7 @@ export function SourcesPage() {
           </Card>
         );
       })}
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </Shell>
   );
 }

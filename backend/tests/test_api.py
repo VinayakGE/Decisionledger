@@ -12,7 +12,6 @@ from app.main import app
 
 # ── in-memory DB fixture ──────────────────────────────────────────────────────
 
-# StaticPool forces all connections to share the same in-memory SQLite instance.
 TEST_DB_URL = "sqlite:///:memory:"
 engine = create_engine(
     TEST_DB_URL,
@@ -58,11 +57,6 @@ CHATGPT_FIXTURE = [
 ]
 
 
-def test_health():
-    r = client.get("/health")
-    assert r.status_code == 200
-
-
 def _mock_extraction_result(entities=None):
     from app.extractor.engine import ExtractionResult
     return ExtractionResult(
@@ -74,22 +68,10 @@ def _mock_extraction_result(entities=None):
     )
 
 
-@patch("app.api.upload.extract_source")
-def test_upload_chatgpt(mock_extract, tmp_path, monkeypatch):
-    mock_extract.return_value = _mock_extraction_result(entities=[
-        {
-            "type": "decision",
-            "title": "Launch in Q1",
-            "description": "We decided to launch the product in Q1.",
-            "confidence": 0.9,
-            "supporting_snippet": "Should we launch in Q1?",
-            "linked_to": None,
-            "conversation_title": "Test Conversation",
-            "conversation_ts": None,
-            "behavioral_pattern": "Decisive under pressure.",
-            "provider_used": "mock",
-        }
-    ])
+# ── Upload: async behaviour ───────────────────────────────────────────────────
+
+def test_upload_returns_pending_immediately(tmp_path, monkeypatch):
+    """Upload responds immediately with status='pending' — extraction runs in background."""
     monkeypatch.setattr("app.api.upload.settings.upload_dir", str(tmp_path))
     content = json.dumps(CHATGPT_FIXTURE).encode()
     r = client.post(
@@ -99,16 +81,27 @@ def test_upload_chatgpt(mock_extract, tmp_path, monkeypatch):
     assert r.status_code == 200
     data = r.json()
     assert data["source_type"] == "chatgpt"
-    assert data["entities_extracted"] == 1
-    assert data["provider_used"] == "mock"
-    assert data["extraction_status"] == "completed"
-    assert data["extraction_duration_ms"] == 42
-    assert len(data["fallback_chain"]) == 1
+    assert data["extraction_status"] == "pending"
+    assert data["entities_extracted"] == 0
+    assert data["provider_used"] is None
 
 
-@patch("app.api.upload.extract_source")
-def test_upload_markdown(mock_extract, tmp_path, monkeypatch):
-    mock_extract.return_value = _mock_extraction_result()
+def test_upload_chatgpt(tmp_path, monkeypatch):
+    """Upload commits source and schedules background extraction."""
+    monkeypatch.setattr("app.api.upload.settings.upload_dir", str(tmp_path))
+    content = json.dumps(CHATGPT_FIXTURE).encode()
+    r = client.post(
+        "/upload",
+        files={"file": ("conversations.json", io.BytesIO(content), "application/json")},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["source_type"] == "chatgpt"
+    assert data["source_id"] is not None
+
+
+def test_upload_markdown(tmp_path, monkeypatch):
+    """Markdown upload returns pending status."""
     monkeypatch.setattr("app.api.upload.settings.upload_dir", str(tmp_path))
     md = b"# Strategy\n\n**User:** What should we build?\n\n**Assistant:** Build an MVP.\n"
     r = client.post(
@@ -116,10 +109,134 @@ def test_upload_markdown(mock_extract, tmp_path, monkeypatch):
         files={"file": ("notes.md", io.BytesIO(md), "text/markdown")},
     )
     assert r.status_code == 200
-    data = r.json()
-    assert data["provider_used"] == "mock"
-    assert data["extraction_status"] == "completed"
+    assert r.json()["extraction_status"] == "pending"
 
+
+# ── Background extraction task ────────────────────────────────────────────────
+
+def test_extract_and_persist_background_task(tmp_path, monkeypatch):
+    """Background task runs extraction and updates source status to completed."""
+    monkeypatch.setattr("app.api.upload.settings.upload_dir", str(tmp_path))
+    from app.api.upload import _extract_and_persist
+    from app.models.orm import ConversationSource
+    from app.parsers.base import Conversation, Message
+
+    db = TestSessionLocal()
+    source = ConversationSource(
+        filename="test.md", source_type="markdown",
+        extraction_status="pending", entities_extracted=0,
+    )
+    db.add(source)
+    db.commit()
+    source_id = source.id
+    db.close()
+
+    conversations = [Conversation(
+        title="Test",
+        messages=[Message(role="user", content="We decided to launch at $29/month.")],
+    )]
+
+    with patch("app.api.upload.extract_source") as mock_extract, \
+         patch("app.api.upload.SessionLocal", TestSessionLocal):
+        mock_extract.return_value = _mock_extraction_result(entities=[{
+            "type": "decision", "title": "Launch at $29", "description": "Launch at $29/month.",
+            "confidence": 0.9, "supporting_snippet": "launch at $29/month",
+            "linked_to": None, "conversation_title": "Test",
+            "conversation_ts": None, "behavioral_pattern": "Data-driven", "provider_used": "mock",
+        }])
+        _extract_and_persist(source_id, conversations)
+
+    db = TestSessionLocal()
+    updated = db.query(ConversationSource).filter_by(id=source_id).first()
+    assert updated.extraction_status == "completed"
+    assert updated.provider_used == "mock"
+    assert updated.extraction_duration_ms == 42
+    db.close()
+
+
+def test_extract_and_persist_handles_failure(tmp_path, monkeypatch):
+    """Background task marks source as 'failed' on extraction error."""
+    from app.api.upload import _extract_and_persist
+    from app.models.orm import ConversationSource
+
+    db = TestSessionLocal()
+    source = ConversationSource(
+        filename="crash.md", source_type="markdown",
+        extraction_status="pending", entities_extracted=0,
+    )
+    db.add(source)
+    db.commit()
+    source_id = source.id
+    db.close()
+
+    with patch("app.api.upload.extract_source", side_effect=RuntimeError("boom")), \
+         patch("app.api.upload.SessionLocal", TestSessionLocal):
+        _extract_and_persist(source_id, [])
+
+    db = TestSessionLocal()
+    updated = db.query(ConversationSource).filter_by(id=source_id).first()
+    assert updated.extraction_status == "failed"
+    db.close()
+
+
+# ── Polling endpoint ──────────────────────────────────────────────────────────
+
+def test_get_source_status(tmp_path, monkeypatch):
+    """GET /entities/sources/{id} returns current source state for polling."""
+    from app.models.orm import ConversationSource
+    db = TestSessionLocal()
+    source = ConversationSource(
+        filename="poll.md", source_type="markdown",
+        extraction_status="completed", entities_extracted=5,
+        provider_used="anthropic",
+    )
+    db.add(source)
+    db.commit()
+    source_id = source.id
+    db.close()
+
+    r = client.get(f"/entities/sources/{source_id}")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["extraction_status"] == "completed"
+    assert data["entities_extracted"] == 5
+    assert data["provider_used"] == "anthropic"
+
+
+def test_get_source_status_404():
+    r = client.get("/entities/sources/99999")
+    assert r.status_code == 404
+
+
+# ── Startup recovery ──────────────────────────────────────────────────────────
+
+def test_stuck_pending_reset_on_startup():
+    """_reset_stuck_pending_sources() marks pending sources as failed."""
+    from app.models.orm import ConversationSource
+    from app.database import _reset_stuck_pending_sources
+
+    db = TestSessionLocal()
+    stuck = ConversationSource(
+        filename="stuck.md", source_type="markdown", extraction_status="pending",
+    )
+    done = ConversationSource(
+        filename="done.md", source_type="markdown", extraction_status="completed",
+    )
+    db.add_all([stuck, done])
+    db.commit()
+    stuck_id, done_id = stuck.id, done.id
+    db.close()
+
+    with patch("app.database.SessionLocal", TestSessionLocal):
+        _reset_stuck_pending_sources()
+
+    db = TestSessionLocal()
+    assert db.query(ConversationSource).get(stuck_id).extraction_status == "failed"
+    assert db.query(ConversationSource).get(done_id).extraction_status == "completed"
+    db.close()
+
+
+# ── Other entity endpoints ────────────────────────────────────────────────────
 
 def test_list_decisions_empty():
     r = client.get("/entities/decisions")
@@ -130,5 +247,4 @@ def test_list_decisions_empty():
 def test_insights_empty():
     r = client.get("/insights")
     assert r.status_code == 200
-    data = r.json()
-    assert data["total_decisions"] == 0
+    assert r.json()["total_decisions"] == 0

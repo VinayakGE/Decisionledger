@@ -23,6 +23,33 @@ def init_db():
     from app.models import orm  # noqa: F401 — registers all models
     Base.metadata.create_all(bind=engine)
     _migrate_sqlite_columns()
+    _reset_stuck_pending_sources()
+
+
+def _reset_stuck_pending_sources():
+    """On startup, reset any sources stuck in 'pending' to 'failed'.
+
+    If the server crashed or was killed mid-extraction the background task is
+    gone but the source record remains pending forever. This runs once at boot
+    so users see a clear 'failed' state instead of infinite spinner.
+    """
+    from app.models.orm import ConversationSource
+    db = SessionLocal()
+    try:
+        stuck = db.query(ConversationSource).filter(
+            ConversationSource.extraction_status == "pending"
+        ).all()
+        for src in stuck:
+            src.extraction_status = "failed"
+            src.entities_extracted = src.entities_extracted or 0
+        if stuck:
+            import logging
+            logging.getLogger(__name__).warning(
+                "Reset %d stuck 'pending' source(s) to 'failed' on startup.", len(stuck)
+            )
+        db.commit()
+    finally:
+        db.close()
 
 
 # Columns added after initial schema. Each entry: (table, column, sqlite_type).

@@ -156,3 +156,7 @@ backend/evaluation/results/
 .vscode/
 .idea/
 *.swp
+
+# Evaluation outputs
+backend/evaluation/results/
+backend/evaluation/__pycache__/

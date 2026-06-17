@@ -1,6 +1,6 @@
 """CRUD read endpoints for extracted entities."""
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.orm import Decision, Goal, Constraint, OpenQuestion, ActionItem, ConversationSource
@@ -15,6 +15,15 @@ router = APIRouter(prefix="/entities", tags=["entities"])
 @router.get("/sources", response_model=List[ConversationSourceOut])
 def list_sources(db: Session = Depends(get_db)):
     return db.query(ConversationSource).order_by(ConversationSource.uploaded_at.desc()).all()
+
+
+@router.get("/sources/{source_id}", response_model=ConversationSourceOut)
+def get_source(source_id: int, db: Session = Depends(get_db)):
+    """Poll extraction status for a specific source after upload."""
+    source = db.query(ConversationSource).filter(ConversationSource.id == source_id).first()
+    if source is None:
+        raise HTTPException(status_code=404, detail="Source not found.")
+    return source
 
 
 @router.get("/decisions", response_model=List[DecisionOut])

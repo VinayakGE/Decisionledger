@@ -39,6 +39,10 @@ async function get<T>(path: string): Promise<T> {
 
 // ── API surface ───────────────────────────────────────────────────────────────
 
+export const TERMINAL_STATUSES = new Set([
+  "completed", "heuristic_fallback", "completed_with_fallback", "partial", "failed",
+]);
+
 export const api = {
   uploadFile: async (file: File): Promise<UploadResponse> => {
     const form = new FormData();
@@ -51,6 +55,7 @@ export const api = {
     return r.json();
   },
   getSources:       () => get<Source[]>("/entities/sources"),
+  getSource:        (id: number) => get<Source>(`/entities/sources/${id}`),
   getDecisions:     (sourceId?: number) =>
     get<Decision[]>(`/entities/decisions${sourceId ? `?source_id=${sourceId}` : ""}`),
   getGoals:         (sourceId?: number) =>

@@ -1,35 +1,59 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, FileText, CheckCircle, AlertCircle, Loader } from "lucide-react";
-import { api, UploadResponse } from "../lib/api";
+import { Upload, FileText, CheckCircle, AlertCircle, Loader, Clock } from "lucide-react";
+import { api, UploadResponse, Source, TERMINAL_STATUSES } from "../lib/api";
 import { colors } from "../lib/styles";
 import { Card } from "../components/Card";
 
-type State = "idle" | "uploading" | "done" | "error";
+type State =
+  | { type: "idle" }
+  | { type: "uploading" }
+  | { type: "pending"; sourceId: number; filename: string }
+  | { type: "done"; result: Source }
+  | { type: "error"; msg: string };
 
 const ACCEPTED = ".json,.md,.txt";
+const POLL_INTERVAL_MS = 2000;
 
 export function UploadPage() {
-  const [state, setState] = useState<State>("idle");
-  const [result, setResult] = useState<UploadResponse | null>(null);
-  const [errMsg, setErrMsg] = useState("");
+  const [state, setState] = useState<State>({ type: "idle" });
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   const handleFile = async (file: File) => {
-    setState("uploading");
-    setResult(null);
-    setErrMsg("");
+    setState({ type: "uploading" });
     try {
-      const res = await api.uploadFile(file);
-      setResult(res);
-      setState("done");
+      const res: UploadResponse = await api.uploadFile(file);
+      if (res.extraction_status === "pending") {
+        setState({ type: "pending", sourceId: res.source_id, filename: res.filename });
+      } else {
+        // Already completed (shouldn't normally happen, but handle gracefully)
+        const source = await api.getSource(res.source_id);
+        setState({ type: "done", result: source });
+      }
     } catch (e: unknown) {
-      setErrMsg(e instanceof Error ? e.message : String(e));
-      setState("error");
+      setState({ type: "error", msg: e instanceof Error ? e.message : String(e) });
     }
   };
+
+  // Poll while in pending state
+  useEffect(() => {
+    if (state.type !== "pending") return;
+    const { sourceId } = state;
+    const interval = setInterval(async () => {
+      try {
+        const source = await api.getSource(sourceId);
+        if (TERMINAL_STATUSES.has(source.extraction_status ?? "")) {
+          clearInterval(interval);
+          setState({ type: "done", result: source });
+        }
+      } catch {
+        // network blip — keep polling
+      }
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [state.type === "pending" ? state.sourceId : null]);
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -37,6 +61,8 @@ export function UploadPage() {
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
   };
+
+  const result = state.type === "done" ? state.result : null;
 
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 24px" }}>
@@ -81,24 +107,43 @@ export function UploadPage() {
         </div>
       </Card>
 
-      {state === "uploading" && (
+      {state.type === "uploading" && (
         <Card style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
           <Loader size={20} color={colors.primary} style={{ animation: "spin 1s linear infinite" }} />
-          <span style={{ fontSize: 14 }}>Parsing and extracting entities…</span>
+          <span style={{ fontSize: 14 }}>Uploading and parsing…</span>
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </Card>
       )}
 
-      {state === "done" && result && (
+      {state.type === "pending" && (
+        <Card style={{ marginTop: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+            <Clock size={20} color={colors.primary} style={{ animation: "spin 2s linear infinite" }} />
+            <span style={{ fontWeight: 600 }}>Extracting entities…</span>
+          </div>
+          <p style={{ fontSize: 13, color: colors.textSecondary, margin: 0 }}>
+            Analysing <strong>{state.filename}</strong> with AI. This usually takes 10–30 seconds.
+          </p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        </Card>
+      )}
+
+      {state.type === "done" && result && (
         <Card style={{ marginTop: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <CheckCircle size={20} color={colors.success} />
-            <span style={{ fontWeight: 600 }}>Upload complete</span>
+            <span style={{ fontWeight: 600 }}>Extraction complete</span>
             {result.extraction_status === "heuristic_fallback" && (
               <span style={{
                 fontSize: 11, background: "#FEF3C7", color: "#92400E",
                 borderRadius: 4, padding: "2px 8px", fontWeight: 600,
               }}>Heuristic fallback</span>
+            )}
+            {result.extraction_status === "failed" && (
+              <span style={{
+                fontSize: 11, background: "#FEE2E2", color: "#991B1B",
+                borderRadius: 4, padding: "2px 8px", fontWeight: 600,
+              }}>Extraction failed</span>
             )}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -106,7 +151,7 @@ export function UploadPage() {
               ["File", result.filename],
               ["Format", result.source_type.toUpperCase()],
               ["Conversations", result.conversation_count],
-              ["Entities extracted", result.entities_extracted],
+              ["Entities extracted", result.entities_extracted ?? 0],
               ["Provider", result.provider_used ?? "—"],
               ["Avg confidence", result.extraction_confidence_avg != null
                 ? `${(result.extraction_confidence_avg * 100).toFixed(0)}%` : "—"],
@@ -142,10 +187,10 @@ export function UploadPage() {
         </Card>
       )}
 
-      {state === "error" && (
+      {state.type === "error" && (
         <Card style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
           <AlertCircle size={20} color={colors.danger} />
-          <span style={{ fontSize: 14, color: colors.danger }}>{errMsg}</span>
+          <span style={{ fontSize: 14, color: colors.danger }}>{state.msg}</span>
         </Card>
       )}
 

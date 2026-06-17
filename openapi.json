@@ -72,6 +72,49 @@
         }
       }
     },
+    "/entities/sources/{source_id}": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Get Source",
+        "description": "Poll extraction status for a specific source after upload.",
+        "operationId": "get_source_entities_sources__source_id__get",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Source Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationSourceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/entities/decisions": {
       "get": {
         "tags": [

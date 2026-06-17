@@ -2,11 +2,12 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { colors } from "../lib/styles";
 import {
-  Upload, Target, GitBranch, HelpCircle, Zap, AlertTriangle, CheckSquare, Brain
+  Upload, Target, GitBranch, HelpCircle, Zap, AlertTriangle, CheckSquare, Brain, Database
 } from "lucide-react";
 
 const nav = [
   { to: "/", label: "Upload", icon: Upload },
+  { to: "/sources", label: "Sources", icon: Database },
   { to: "/decisions", label: "Decisions", icon: GitBranch },
   { to: "/goals", label: "Goals", icon: Target },
   { to: "/questions", label: "Open Questions", icon: HelpCircle },

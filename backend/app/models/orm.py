@@ -41,11 +41,11 @@ class ConversationSource(Base):
     extraction_duration_ms = Column(Integer, nullable=True)
     fallback_chain_json = Column(Text, nullable=True)    # JSON list of {provider, status, error}
 
-    decisions = relationship("Decision", back_populates="source")
-    goals = relationship("Goal", back_populates="source")
-    constraints = relationship("Constraint", back_populates="source")
-    open_questions = relationship("OpenQuestion", back_populates="source")
-    action_items = relationship("ActionItem", back_populates="source")
+    decisions = relationship("Decision", back_populates="source", cascade="all, delete-orphan")
+    goals = relationship("Goal", back_populates="source", cascade="all, delete-orphan")
+    constraints = relationship("Constraint", back_populates="source", cascade="all, delete-orphan")
+    open_questions = relationship("OpenQuestion", back_populates="source", cascade="all, delete-orphan")
+    action_items = relationship("ActionItem", back_populates="source", cascade="all, delete-orphan")
 
 
 class Decision(Base):

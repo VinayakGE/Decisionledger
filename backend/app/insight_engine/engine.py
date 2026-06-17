@@ -1,20 +1,27 @@
 """Insight engine — generates meta-analysis over stored entities."""
+
 import logging
-from typing import List, Optional
 from collections import defaultdict
+from typing import List, Optional
+
 from sqlalchemy.orm import Session
-from app.models.orm import Decision, Goal, OpenQuestion, ActionItem
-from app.models.schemas import (
-    RecurringQuestionGroup, DecisionReversal, BlindSpot, InsightReport,
-    DecisionOut, GoalOut,
-)
+
 from app.config import settings
+from app.models.orm import ActionItem, Decision, Goal, OpenQuestion
+from app.models.schemas import (
+    BlindSpot,
+    DecisionOut,
+    DecisionReversal,
+    GoalOut,
+    InsightReport,
+    RecurringQuestionGroup,
+)
 
 logger = logging.getLogger(__name__)
 
 try:
     from sentence_transformers import SentenceTransformer
-    import numpy as np
+
     _ST_AVAILABLE = True
 except ImportError:
     _ST_AVAILABLE = False
@@ -32,7 +39,9 @@ def _get_model():
         try:
             _model = SentenceTransformer("all-MiniLM-L6-v2")
         except Exception as e:
-            logger.warning("SentenceTransformer model load failed: %s — falling back to word overlap.", e)
+            logger.warning(
+                "SentenceTransformer model load failed: %s — falling back to word overlap.", e
+            )
             _model_load_failed = True
             return None
     return _model
@@ -40,6 +49,7 @@ def _get_model():
 
 def _cosine(a, b) -> float:
     import numpy as np
+
     na, nb = np.linalg.norm(a), np.linalg.norm(b)
     if na == 0 or nb == 0:
         return 0.0
@@ -79,7 +89,6 @@ def _find_recurring_questions(questions: List[OpenQuestion]) -> List[RecurringQu
         # fallback: exact substring grouping
         return _group_by_overlap(texts)
 
-    import numpy as np
     embeddings = model.encode(texts, show_progress_bar=False)
     threshold = settings.similarity_threshold
     used = [False] * len(texts)
@@ -98,11 +107,13 @@ def _find_recurring_questions(questions: List[OpenQuestion]) -> List[RecurringQu
                 used[j] = True
         used[i] = True
         if len(cluster) > 1:
-            groups.append(RecurringQuestionGroup(
-                representative=cluster[0],
-                occurrences=cluster,
-                count=len(cluster),
-            ))
+            groups.append(
+                RecurringQuestionGroup(
+                    representative=cluster[0],
+                    occurrences=cluster,
+                    count=len(cluster),
+                )
+            )
 
     return sorted(groups, key=lambda g: g.count, reverse=True)
 
@@ -125,11 +136,13 @@ def _group_by_overlap(texts: List[str]) -> List[RecurringQuestionGroup]:
                 used[j] = True
         used[i] = True
         if len(cluster) > 1:
-            groups.append(RecurringQuestionGroup(
-                representative=cluster[0],
-                occurrences=cluster,
-                count=len(cluster),
-            ))
+            groups.append(
+                RecurringQuestionGroup(
+                    representative=cluster[0],
+                    occurrences=cluster,
+                    count=len(cluster),
+                )
+            )
     return groups
 
 
@@ -158,11 +171,13 @@ def _find_decision_reversals(decisions: List[Decision]) -> List[DecisionReversal
                 d_i, d_j = decisions[i], decisions[j]
                 if d_i.timestamp and d_j.timestamp and d_i.timestamp != d_j.timestamp:
                     older, newer = (d_i, d_j) if d_i.timestamp < d_j.timestamp else (d_j, d_i)
-                    reversals.append(DecisionReversal(
-                        original=DecisionOut.model_validate(older),
-                        reversal=DecisionOut.model_validate(newer),
-                        similarity=round(sim, 3),
-                    ))
+                    reversals.append(
+                        DecisionReversal(
+                            original=DecisionOut.model_validate(older),
+                            reversal=DecisionOut.model_validate(newer),
+                            similarity=round(sim, 3),
+                        )
+                    )
                     used.add((i, j))
 
     return reversals
@@ -197,12 +212,14 @@ def _find_blind_spots(
         act_count = topic_act.get(topic, 0)
         ratio = act_count / discuss_count if discuss_count else 0.0
         if discuss_count >= 2 and ratio < 0.3:
-            spots.append(BlindSpot(
-                topic=topic,
-                discussion_count=discuss_count,
-                action_count=act_count,
-                ratio=round(ratio, 3),
-            ))
+            spots.append(
+                BlindSpot(
+                    topic=topic,
+                    discussion_count=discuss_count,
+                    action_count=act_count,
+                    ratio=round(ratio, 3),
+                )
+            )
 
     return sorted(spots, key=lambda s: s.discussion_count, reverse=True)[:10]
 

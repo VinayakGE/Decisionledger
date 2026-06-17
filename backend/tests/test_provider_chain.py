@@ -1,15 +1,18 @@
 """Tests for the provider fallback chain and insight engine resilience."""
-import json
-import pytest
-from unittest.mock import patch, MagicMock
-from app.parsers.base import Conversation, Message
-from app.extractor.engine import analyse_conversation, _PROVIDERS
-from app.extractor.providers.heuristic_provider import HeuristicProvider
 
+import json
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from app.extractor.engine import analyse_conversation
+from app.extractor.providers.heuristic_provider import HeuristicProvider
+from app.parsers.base import Conversation, Message
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_conv(title="Test", text="We decided to launch at $29/month."):
     return Conversation(
@@ -20,11 +23,15 @@ def _make_conv(title="Test", text="We decided to launch at $29/month."):
 
 def _ok_result(provider_name="mock"):
     return {
-        "raw": json.dumps({
-            "conversation_name": "Test",
-            "behavioral_pattern": "Data-driven",
-            "entities": [{"type": "decision", "description": "Launch at $29/month", "confidence": 0.9}],
-        }),
+        "raw": json.dumps(
+            {
+                "conversation_name": "Test",
+                "behavioral_pattern": "Data-driven",
+                "entities": [
+                    {"type": "decision", "description": "Launch at $29/month", "confidence": 0.9}
+                ],
+            }
+        ),
         "provider": provider_name,
     }
 
@@ -32,6 +39,7 @@ def _ok_result(provider_name="mock"):
 # ---------------------------------------------------------------------------
 # Provider chain: first provider succeeds
 # ---------------------------------------------------------------------------
+
 
 def test_first_provider_wins():
     """When the first provider succeeds, no fallback is attempted."""
@@ -54,6 +62,7 @@ def test_first_provider_wins():
 # Provider chain: first fails, second succeeds
 # ---------------------------------------------------------------------------
 
+
 def test_fallback_to_second_provider():
     """When primary fails, second provider is tried and its result returned."""
     mock_p1 = MagicMock()
@@ -75,6 +84,7 @@ def test_fallback_to_second_provider():
 # Provider chain: all LLM providers fail → heuristic fallback
 # ---------------------------------------------------------------------------
 
+
 def test_all_llm_providers_fail_falls_to_heuristic():
     """All keyed providers fail; heuristic provider must succeed."""
     failing = MagicMock()
@@ -94,6 +104,7 @@ def test_all_llm_providers_fail_falls_to_heuristic():
 # Provider chain: no API key configured → provider skips cleanly
 # ---------------------------------------------------------------------------
 
+
 def test_no_api_key_skips_keyed_provider():
     """A provider with no API key should raise RuntimeError (not crash the process)
     and the chain should continue to the next provider."""
@@ -110,10 +121,12 @@ def test_no_keys_chain_reaches_heuristic():
     """With no API keys configured anywhere, chain must still return a result via heuristic."""
     from app.config import settings as real_settings
 
-    with patch.object(real_settings, "anthropic_api_key", ""), \
-         patch.object(real_settings, "gemini_api_key", ""), \
-         patch.object(real_settings, "cerebras_api_key", ""), \
-         patch.object(real_settings, "groq_api_key", ""):
+    with (
+        patch.object(real_settings, "anthropic_api_key", ""),
+        patch.object(real_settings, "gemini_api_key", ""),
+        patch.object(real_settings, "cerebras_api_key", ""),
+        patch.object(real_settings, "groq_api_key", ""),
+    ):
         result = analyse_conversation(_make_conv())
 
     assert result is not None
@@ -123,6 +136,7 @@ def test_no_keys_chain_reaches_heuristic():
 # ---------------------------------------------------------------------------
 # Provider chain: malformed JSON from provider → falls back
 # ---------------------------------------------------------------------------
+
 
 def test_malformed_json_triggers_fallback():
     """Provider returning unparseable content causes fallback to next provider."""
@@ -145,6 +159,7 @@ def test_malformed_json_triggers_fallback():
 # Provider chain: all providers fail → returns None (no crash)
 # ---------------------------------------------------------------------------
 
+
 def test_all_providers_fail_returns_none():
     """If every provider in the chain fails, analyse_conversation returns None."""
     failing = MagicMock()
@@ -160,6 +175,7 @@ def test_all_providers_fail_returns_none():
 # ---------------------------------------------------------------------------
 # Provider_used is recorded in analysis output
 # ---------------------------------------------------------------------------
+
 
 def test_provider_used_is_recorded():
     """provider_used field is set on the returned analysis."""
@@ -181,6 +197,7 @@ def test_provider_used_is_recorded():
 # extract_source: provider aggregation across multiple conversations
 # ---------------------------------------------------------------------------
 
+
 def test_extract_source_single_provider():
     """All conversations use same provider → provider_used is that provider name."""
     from app.extractor.engine import extract_source
@@ -201,6 +218,7 @@ def test_extract_source_mixed_providers():
     from app.extractor.engine import extract_source
 
     call_count = [0]
+
     def side_effect(conv):
         call_count[0] += 1
         name = "anthropic" if call_count[0] == 1 else "heuristic"
@@ -239,6 +257,7 @@ def test_extract_source_partial_failure():
     from app.extractor.engine import extract_source
 
     call_count = [0]
+
     def side_effect(conv):
         call_count[0] += 1
         if call_count[0] == 1:

@@ -1,4 +1,5 @@
 """Upload endpoint — parse synchronously, extract asynchronously."""
+
 import json
 import logging
 import os
@@ -30,6 +31,7 @@ async def upload_file(
         raise HTTPException(413, f"File exceeds {settings.max_upload_size_mb} MB limit.")
 
     import io
+
     conversations, source_type = parse_file(file.filename or "upload", io.BytesIO(content))
 
     if not conversations:
@@ -96,7 +98,10 @@ def _extract_and_persist(source_id: int, conversations: list) -> None:
         db.commit()
         logger.info(
             "Extraction complete for source %d: %d entities, provider=%s, status=%s",
-            source_id, total_entities, result.provider_used, result.extraction_status,
+            source_id,
+            total_entities,
+            result.provider_used,
+            result.extraction_status,
         )
     except Exception as e:
         logger.error("Extraction failed for source %d: %s", source_id, e, exc_info=True)

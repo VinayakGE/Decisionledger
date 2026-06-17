@@ -1,8 +1,10 @@
 """Route a file to the correct parser based on name + content sniffing."""
+
 import json
-from typing import List, Tuple, BinaryIO
-from app.parsers.base import Conversation
+from typing import BinaryIO, List, Tuple
+
 from app.parsers import chatgpt, claude_export, markdown, plaintext
+from app.parsers.base import Conversation
 
 
 def detect_type(filename: str, content: bytes) -> str:
@@ -40,6 +42,7 @@ def parse_file(filename: str, file_obj: BinaryIO) -> Tuple[List[Conversation], s
     source_type = detect_type(filename, content)
 
     import io
+
     buf = io.BytesIO(content)
 
     if source_type == "chatgpt":

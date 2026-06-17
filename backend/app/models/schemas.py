@@ -1,11 +1,14 @@
 """Pydantic schemas for API I/O."""
-from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel
-from app.models.orm import GoalStatus, ActionStatus
 
+from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel
+
+from app.models.orm import ActionStatus, GoalStatus
 
 # ── Upload ────────────────────────────────────────────────────────────────────
+
 
 class FallbackStep(BaseModel):
     provider: str
@@ -28,6 +31,7 @@ class UploadResponse(BaseModel):
 
 # ── Reason / Evidence (nested) ────────────────────────────────────────────────
 
+
 class ReasonOut(BaseModel):
     id: int
     description: str
@@ -48,6 +52,7 @@ class EvidenceOut(BaseModel):
 
 # ── Decision ──────────────────────────────────────────────────────────────────
 
+
 class DecisionOut(BaseModel):
     id: int
     title: str
@@ -66,6 +71,7 @@ class DecisionOut(BaseModel):
 
 # ── Goal ──────────────────────────────────────────────────────────────────────
 
+
 class GoalOut(BaseModel):
     id: int
     description: str
@@ -82,6 +88,7 @@ class GoalOut(BaseModel):
 
 # ── Constraint ────────────────────────────────────────────────────────────────
 
+
 class ConstraintOut(BaseModel):
     id: int
     description: str
@@ -94,6 +101,7 @@ class ConstraintOut(BaseModel):
 
 
 # ── OpenQuestion ──────────────────────────────────────────────────────────────
+
 
 class OpenQuestionOut(BaseModel):
     id: int
@@ -108,6 +116,7 @@ class OpenQuestionOut(BaseModel):
 
 # ── ActionItem ────────────────────────────────────────────────────────────────
 
+
 class ActionItemOut(BaseModel):
     id: int
     description: str
@@ -121,6 +130,7 @@ class ActionItemOut(BaseModel):
 
 
 # ── ConversationSource ────────────────────────────────────────────────────────
+
 
 class ConversationSourceOut(BaseModel):
     id: int
@@ -139,6 +149,7 @@ class ConversationSourceOut(BaseModel):
 
 
 # ── Insights ──────────────────────────────────────────────────────────────────
+
 
 class RecurringQuestionGroup(BaseModel):
     representative: str

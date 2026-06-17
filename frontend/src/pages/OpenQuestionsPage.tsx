@@ -11,21 +11,43 @@ import { HelpCircle } from "lucide-react";
 export function OpenQuestionsPage() {
   const { data: questions, loading, error } = useData(() => api.getOpenQuestions());
 
-  if (loading) return <PageShell title="Open Questions"><Spinner /></PageShell>;
-  if (error) return <PageShell title="Open Questions"><ErrorMsg msg={error} /></PageShell>;
-  if (!questions?.length) return (
-    <PageShell title="Open Questions">
-      <EmptyState message="No open questions detected yet." />
-    </PageShell>
-  );
+  if (loading)
+    return (
+      <PageShell title="Open Questions">
+        <Spinner />
+      </PageShell>
+    );
+  if (error)
+    return (
+      <PageShell title="Open Questions">
+        <ErrorMsg msg={error} />
+      </PageShell>
+    );
+  if (!questions?.length)
+    return (
+      <PageShell title="Open Questions">
+        <EmptyState message="No open questions detected yet." />
+      </PageShell>
+    );
 
   return (
     <PageShell title="Open Questions" count={questions.length}>
       {questions.map((q) => (
-        <Card key={q.id} style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}>
+        <Card
+          key={q.id}
+          style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}
+        >
           <HelpCircle size={16} color={colors.warning} style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                flexWrap: "wrap",
+                marginBottom: 4,
+              }}
+            >
               <span style={{ fontSize: 14 }}>{q.description}</span>
               <ConfidenceBadge value={q.confidence} />
             </div>

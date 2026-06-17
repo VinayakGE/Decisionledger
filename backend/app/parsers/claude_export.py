@@ -1,9 +1,12 @@
 """Parser for Claude exported conversations (JSON format)."""
+
 import json
-from datetime import datetime, timezone
-from typing import List, BinaryIO
-from app.parsers.base import Conversation, Message
+from datetime import datetime
+from typing import BinaryIO, List
+
 from dateutil import parser as dateutil_parser
+
+from app.parsers.base import Conversation, Message
 
 
 def parse(file_obj: BinaryIO) -> List[Conversation]:
@@ -24,7 +27,8 @@ def parse(file_obj: BinaryIO) -> List[Conversation]:
             raw_content = turn.get("text") or turn.get("content") or ""
             if isinstance(raw_content, list):
                 text = " ".join(
-                    block.get("text", "") for block in raw_content
+                    block.get("text", "")
+                    for block in raw_content
                     if isinstance(block, dict) and block.get("type") == "text"
                 )
             else:
@@ -35,7 +39,9 @@ def parse(file_obj: BinaryIO) -> List[Conversation]:
             messages.append(Message(role=role, content=text.strip(), timestamp=ts))
 
         if messages:
-            conversations.append(Conversation(title=title, messages=messages, created_at=created_at))
+            conversations.append(
+                Conversation(title=title, messages=messages, created_at=created_at)
+            )
 
     return conversations
 

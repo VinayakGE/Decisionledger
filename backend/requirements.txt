@@ -14,3 +14,7 @@ pytest==8.3.4
 pytest-asyncio==0.24.0
 httpx==0.28.1
 google-genai>=1.0.0,<2.0.0
+
+# Linting
+ruff>=0.5
+black>=24

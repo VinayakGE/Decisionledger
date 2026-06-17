@@ -9,19 +9,19 @@ const BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
 // ── Re-export generated schema types under friendly names ─────────────────────
 
-export type Source         = components["schemas"]["ConversationSourceOut"];
-export type Decision       = components["schemas"]["DecisionOut"];
-export type Reason         = components["schemas"]["ReasonOut"];
-export type Evidence       = components["schemas"]["EvidenceOut"];
-export type Goal           = components["schemas"]["GoalOut"];
-export type Constraint     = components["schemas"]["ConstraintOut"];
-export type OpenQuestion   = components["schemas"]["OpenQuestionOut"];
-export type ActionItem     = components["schemas"]["ActionItemOut"];
-export type InsightReport  = components["schemas"]["InsightReport"];
+export type Source = components["schemas"]["ConversationSourceOut"];
+export type Decision = components["schemas"]["DecisionOut"];
+export type Reason = components["schemas"]["ReasonOut"];
+export type Evidence = components["schemas"]["EvidenceOut"];
+export type Goal = components["schemas"]["GoalOut"];
+export type Constraint = components["schemas"]["ConstraintOut"];
+export type OpenQuestion = components["schemas"]["OpenQuestionOut"];
+export type ActionItem = components["schemas"]["ActionItemOut"];
+export type InsightReport = components["schemas"]["InsightReport"];
 export type UploadResponse = components["schemas"]["UploadResponse"];
 export type RecurringQuestionGroup = components["schemas"]["RecurringQuestionGroup"];
-export type DecisionReversal       = components["schemas"]["DecisionReversal"];
-export type BlindSpot              = components["schemas"]["BlindSpot"];
+export type DecisionReversal = components["schemas"]["DecisionReversal"];
+export type BlindSpot = components["schemas"]["BlindSpot"];
 
 export interface FallbackStep {
   provider: string;
@@ -40,7 +40,11 @@ async function get<T>(path: string): Promise<T> {
 // ── API surface ───────────────────────────────────────────────────────────────
 
 export const TERMINAL_STATUSES = new Set([
-  "completed", "heuristic_fallback", "completed_with_fallback", "partial", "failed",
+  "completed",
+  "heuristic_fallback",
+  "completed_with_fallback",
+  "partial",
+  "failed",
 ]);
 
 export const api = {
@@ -54,21 +58,21 @@ export const api = {
     }
     return r.json();
   },
-  getSources:       () => get<Source[]>("/entities/sources"),
-  getSource:        (id: number) => get<Source>(`/entities/sources/${id}`),
-  deleteSource:     async (id: number): Promise<void> => {
+  getSources: () => get<Source[]>("/entities/sources"),
+  getSource: (id: number) => get<Source>(`/entities/sources/${id}`),
+  deleteSource: async (id: number): Promise<void> => {
     const r = await fetch(`${BASE}/entities/sources/${id}`, { method: "DELETE" });
     if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
   },
-  getDecisions:     (sourceId?: number) =>
+  getDecisions: (sourceId?: number) =>
     get<Decision[]>(`/entities/decisions${sourceId ? `?source_id=${sourceId}` : ""}`),
-  getGoals:         (sourceId?: number) =>
+  getGoals: (sourceId?: number) =>
     get<Goal[]>(`/entities/goals${sourceId ? `?source_id=${sourceId}` : ""}`),
-  getConstraints:   (sourceId?: number) =>
+  getConstraints: (sourceId?: number) =>
     get<Constraint[]>(`/entities/constraints${sourceId ? `?source_id=${sourceId}` : ""}`),
   getOpenQuestions: (sourceId?: number) =>
     get<OpenQuestion[]>(`/entities/open-questions${sourceId ? `?source_id=${sourceId}` : ""}`),
-  getActionItems:   (sourceId?: number) =>
+  getActionItems: (sourceId?: number) =>
     get<ActionItem[]>(`/entities/action-items${sourceId ? `?source_id=${sourceId}` : ""}`),
-  getInsights:      () => get<InsightReport>("/insights"),
+  getInsights: () => get<InsightReport>("/insights"),
 };

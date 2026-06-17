@@ -45,15 +45,26 @@ export function SourcesPage() {
     }
   };
 
-  if (loading) return <Shell><Spinner /></Shell>;
-  if (error) return <Shell><p style={{ color: colors.danger }}>{error}</p></Shell>;
+  if (loading)
+    return (
+      <Shell>
+        <Spinner />
+      </Shell>
+    );
+  if (error)
+    return (
+      <Shell>
+        <p style={{ color: colors.danger }}>{error}</p>
+      </Shell>
+    );
 
   const visible = (sources ?? []).filter((s) => !removed.has(s.id));
-  if (!visible.length) return (
-    <Shell>
-      <EmptyState message="No uploads yet. Go to Upload to add a conversation file." />
-    </Shell>
-  );
+  if (!visible.length)
+    return (
+      <Shell>
+        <EmptyState message="No uploads yet. Go to Upload to add a conversation file." />
+      </Shell>
+    );
 
   return (
     <Shell count={visible.length}>
@@ -68,11 +79,16 @@ export function SourcesPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 600, fontSize: 14 }}>{s.filename}</span>
-                  <span style={{
-                    fontSize: 11, fontWeight: 600, borderRadius: 4, padding: "2px 8px",
-                    background: STATUS_BG[status] ?? "#F3F4F6",
-                    color: STATUS_COLOR[status] ?? colors.muted,
-                  }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      borderRadius: 4,
+                      padding: "2px 8px",
+                      background: STATUS_BG[status] ?? "#F3F4F6",
+                      color: STATUS_COLOR[status] ?? colors.muted,
+                    }}
+                  >
                     {status}
                   </span>
                   <span style={{ fontSize: 11, color: colors.muted }}>
@@ -84,11 +100,16 @@ export function SourcesPage() {
                     ["Conversations", s.conversation_count ?? "—"],
                     ["Entities", s.entities_extracted ?? "—"],
                     ["Provider", s.provider_used ?? "—"],
-                    ["Confidence", s.extraction_confidence_avg != null
-                      ? `${(s.extraction_confidence_avg * 100).toFixed(0)}%` : "—"],
+                    [
+                      "Confidence",
+                      s.extraction_confidence_avg != null
+                        ? `${(s.extraction_confidence_avg * 100).toFixed(0)}%`
+                        : "—",
+                    ],
                   ].map(([label, val]) => (
                     <span key={String(label)} style={{ fontSize: 12, color: colors.textSecondary }}>
-                      <span style={{ color: colors.muted }}>{label}: </span>{val}
+                      <span style={{ color: colors.muted }}>{label}: </span>
+                      {val}
                     </span>
                   ))}
                 </div>
@@ -98,9 +119,13 @@ export function SourcesPage() {
                 disabled={deleting === s.id}
                 title="Delete source and all entities"
                 style={{
-                  background: "none", border: "none", cursor: deleting === s.id ? "wait" : "pointer",
+                  background: "none",
+                  border: "none",
+                  cursor: deleting === s.id ? "wait" : "pointer",
                   color: deleting === s.id ? colors.muted : colors.danger,
-                  padding: 6, borderRadius: 6, flexShrink: 0,
+                  padding: 6,
+                  borderRadius: 6,
+                  flexShrink: 0,
                   opacity: deleting === s.id ? 0.5 : 1,
                 }}
               >
@@ -120,7 +145,9 @@ function Shell({ children, count }: { children: React.ReactNode; count?: number 
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Sources</h1>
         {count != null && (
-          <span style={{ fontSize: 13, color: colors.muted }}>{count} file{count !== 1 ? "s" : ""}</span>
+          <span style={{ fontSize: 13, color: colors.muted }}>
+            {count} file{count !== 1 ? "s" : ""}
+          </span>
         )}
       </div>
       {children}
@@ -131,8 +158,16 @@ function Shell({ children, count }: { children: React.ReactNode; count?: number 
 function Spinner() {
   return (
     <>
-      <div style={{ width: 24, height: 24, border: `2px solid ${colors.border}`,
-        borderTopColor: colors.primary, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div
+        style={{
+          width: 24,
+          height: 24,
+          border: `2px solid ${colors.border}`,
+          borderTopColor: colors.primary,
+          borderRadius: "50%",
+          animation: "spin 0.8s linear infinite",
+        }}
+      />
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </>
   );

@@ -68,10 +68,9 @@ export function UploadPage() {
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 24px" }}>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Upload Conversations</h1>
       <p style={{ color: colors.textSecondary, marginBottom: 32, fontSize: 14 }}>
-        Upload a ChatGPT export, Claude export, Markdown, or plain text file.
-        Parsing and storage happen locally. Entity extraction may call your configured
-        LLM provider using your own API key — if no provider is configured, the
-        heuristic fallback runs entirely locally.
+        Upload a ChatGPT export, Claude export, Markdown, or plain text file. Parsing and storage
+        happen locally. Entity extraction may call your configured LLM provider using your own API
+        key — if no provider is configured, the heuristic fallback runs entirely locally.
       </p>
 
       <Card
@@ -86,7 +85,10 @@ export function UploadPage() {
       >
         <div
           onDrop={onDrop}
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
           onDragLeave={() => setDragOver(false)}
           onClick={() => inputRef.current?.click()}
         >
@@ -109,7 +111,11 @@ export function UploadPage() {
 
       {state.type === "uploading" && (
         <Card style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
-          <Loader size={20} color={colors.primary} style={{ animation: "spin 1s linear infinite" }} />
+          <Loader
+            size={20}
+            color={colors.primary}
+            style={{ animation: "spin 1s linear infinite" }}
+          />
           <span style={{ fontSize: 14 }}>Uploading and parsing…</span>
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </Card>
@@ -118,7 +124,11 @@ export function UploadPage() {
       {state.type === "pending" && (
         <Card style={{ marginTop: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-            <Clock size={20} color={colors.primary} style={{ animation: "spin 2s linear infinite" }} />
+            <Clock
+              size={20}
+              color={colors.primary}
+              style={{ animation: "spin 2s linear infinite" }}
+            />
             <span style={{ fontWeight: 600 }}>Extracting entities…</span>
           </div>
           <p style={{ fontSize: 13, color: colors.textSecondary, margin: 0 }}>
@@ -134,16 +144,32 @@ export function UploadPage() {
             <CheckCircle size={20} color={colors.success} />
             <span style={{ fontWeight: 600 }}>Extraction complete</span>
             {result.extraction_status === "heuristic_fallback" && (
-              <span style={{
-                fontSize: 11, background: "#FEF3C7", color: "#92400E",
-                borderRadius: 4, padding: "2px 8px", fontWeight: 600,
-              }}>Heuristic fallback</span>
+              <span
+                style={{
+                  fontSize: 11,
+                  background: "#FEF3C7",
+                  color: "#92400E",
+                  borderRadius: 4,
+                  padding: "2px 8px",
+                  fontWeight: 600,
+                }}
+              >
+                Heuristic fallback
+              </span>
             )}
             {result.extraction_status === "failed" && (
-              <span style={{
-                fontSize: 11, background: "#FEE2E2", color: "#991B1B",
-                borderRadius: 4, padding: "2px 8px", fontWeight: 600,
-              }}>Extraction failed</span>
+              <span
+                style={{
+                  fontSize: 11,
+                  background: "#FEE2E2",
+                  color: "#991B1B",
+                  borderRadius: 4,
+                  padding: "2px 8px",
+                  fontWeight: 600,
+                }}
+              >
+                Extraction failed
+              </span>
             )}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -153,12 +179,23 @@ export function UploadPage() {
               ["Conversations", result.conversation_count],
               ["Entities extracted", result.entities_extracted ?? 0],
               ["Provider", result.provider_used ?? "—"],
-              ["Avg confidence", result.extraction_confidence_avg != null
-                ? `${(result.extraction_confidence_avg * 100).toFixed(0)}%` : "—"],
-              ["Duration", result.extraction_duration_ms != null
-                ? `${(result.extraction_duration_ms / 1000).toFixed(1)}s` : "—"],
+              [
+                "Avg confidence",
+                result.extraction_confidence_avg != null
+                  ? `${(result.extraction_confidence_avg * 100).toFixed(0)}%`
+                  : "—",
+              ],
+              [
+                "Duration",
+                result.extraction_duration_ms != null
+                  ? `${(result.extraction_duration_ms / 1000).toFixed(1)}s`
+                  : "—",
+              ],
             ].map(([label, value]) => (
-              <div key={String(label)} style={{ background: colors.bg, borderRadius: 8, padding: "12px 16px" }}>
+              <div
+                key={String(label)}
+                style={{ background: colors.bg, borderRadius: 8, padding: "12px 16px" }}
+              >
                 <div style={{ fontSize: 11, color: colors.muted, marginBottom: 4 }}>{label}</div>
                 <div style={{ fontWeight: 600 }}>{value}</div>
               </div>
@@ -168,8 +205,14 @@ export function UploadPage() {
             <button
               onClick={() => navigate("/decisions")}
               style={{
-                background: colors.primary, color: "#fff", border: "none", borderRadius: 8,
-                padding: "10px 20px", cursor: "pointer", fontWeight: 600, fontSize: 14,
+                background: colors.primary,
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 20px",
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: 14,
               }}
             >
               View Decisions
@@ -177,8 +220,14 @@ export function UploadPage() {
             <button
               onClick={() => navigate("/insights")}
               style={{
-                background: "transparent", color: colors.primary, border: `1px solid ${colors.primary}`,
-                borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontWeight: 600, fontSize: 14,
+                background: "transparent",
+                color: colors.primary,
+                border: `1px solid ${colors.primary}`,
+                borderRadius: 8,
+                padding: "10px 20px",
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: 14,
               }}
             >
               View Insights
@@ -195,7 +244,9 @@ export function UploadPage() {
       )}
 
       <Card style={{ marginTop: 32 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: colors.textSecondary }}>
+        <div
+          style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: colors.textSecondary }}
+        >
           HOW TO EXPORT YOUR CONVERSATIONS
         </div>
         {[

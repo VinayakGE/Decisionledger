@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api import entities, insights, upload
 from app.database import init_db
-from app.api import upload, entities, insights
 
 app = FastAPI(
     title="Founder Brain Audit",

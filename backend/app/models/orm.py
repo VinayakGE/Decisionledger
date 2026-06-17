@@ -1,12 +1,13 @@
 """SQLAlchemy ORM models."""
-from datetime import datetime
-from sqlalchemy import (
-    Column, Integer, String, Float, Text, DateTime,
-    ForeignKey, Enum as SAEnum
-)
-from sqlalchemy.orm import relationship
-from app.database import Base
+
 import enum
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy.orm import relationship
+
+from app.database import Base
 
 
 class GoalStatus(str, enum.Enum):
@@ -34,17 +35,21 @@ class ConversationSource(Base):
     conversation_count = Column(Integer, default=0)
 
     # Extraction observability (all nullable — safe on existing DBs without migration)
-    extraction_status = Column(String, nullable=True)   # completed | heuristic_fallback | partial | failed
-    provider_used = Column(String, nullable=True)        # winning provider name
+    extraction_status = Column(
+        String, nullable=True
+    )  # completed | heuristic_fallback | partial | failed
+    provider_used = Column(String, nullable=True)  # winning provider name
     entities_extracted = Column(Integer, nullable=True)
     extraction_confidence_avg = Column(Float, nullable=True)
     extraction_duration_ms = Column(Integer, nullable=True)
-    fallback_chain_json = Column(Text, nullable=True)    # JSON list of {provider, status, error}
+    fallback_chain_json = Column(Text, nullable=True)  # JSON list of {provider, status, error}
 
     decisions = relationship("Decision", back_populates="source", cascade="all, delete-orphan")
     goals = relationship("Goal", back_populates="source", cascade="all, delete-orphan")
     constraints = relationship("Constraint", back_populates="source", cascade="all, delete-orphan")
-    open_questions = relationship("OpenQuestion", back_populates="source", cascade="all, delete-orphan")
+    open_questions = relationship(
+        "OpenQuestion", back_populates="source", cascade="all, delete-orphan"
+    )
     action_items = relationship("ActionItem", back_populates="source", cascade="all, delete-orphan")
 
 

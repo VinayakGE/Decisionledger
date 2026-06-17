@@ -1,12 +1,15 @@
 """Integration tests for API endpoints (in-memory SQLite, no real LLM calls)."""
+
 import io
 import json
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
 from app.database import Base, get_db
 from app.main import app
 
@@ -24,6 +27,7 @@ TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 @pytest.fixture(autouse=True)
 def setup_db():
     from app.models import orm  # noqa
+
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -59,6 +63,7 @@ CHATGPT_FIXTURE = [
 
 def _mock_extraction_result(entities=None):
     from app.extractor.engine import ExtractionResult
+
     return ExtractionResult(
         entities=entities or [],
         provider_used="mock",
@@ -69,6 +74,7 @@ def _mock_extraction_result(entities=None):
 
 
 # ── Upload: async behaviour ───────────────────────────────────────────────────
+
 
 def test_upload_returns_pending_immediately(tmp_path, monkeypatch):
     """Upload responds immediately with status='pending' — extraction runs in background."""
@@ -114,6 +120,7 @@ def test_upload_markdown(tmp_path, monkeypatch):
 
 # ── Background extraction task ────────────────────────────────────────────────
 
+
 def test_extract_and_persist_background_task(tmp_path, monkeypatch):
     """Background task runs extraction and updates source status to completed."""
     monkeypatch.setattr("app.api.upload.settings.upload_dir", str(tmp_path))
@@ -123,27 +130,43 @@ def test_extract_and_persist_background_task(tmp_path, monkeypatch):
 
     db = TestSessionLocal()
     source = ConversationSource(
-        filename="test.md", source_type="markdown",
-        extraction_status="pending", entities_extracted=0,
+        filename="test.md",
+        source_type="markdown",
+        extraction_status="pending",
+        entities_extracted=0,
     )
     db.add(source)
     db.commit()
     source_id = source.id
     db.close()
 
-    conversations = [Conversation(
-        title="Test",
-        messages=[Message(role="user", content="We decided to launch at $29/month.")],
-    )]
+    conversations = [
+        Conversation(
+            title="Test",
+            messages=[Message(role="user", content="We decided to launch at $29/month.")],
+        )
+    ]
 
-    with patch("app.api.upload.extract_source") as mock_extract, \
-         patch("app.api.upload.SessionLocal", TestSessionLocal):
-        mock_extract.return_value = _mock_extraction_result(entities=[{
-            "type": "decision", "title": "Launch at $29", "description": "Launch at $29/month.",
-            "confidence": 0.9, "supporting_snippet": "launch at $29/month",
-            "linked_to": None, "conversation_title": "Test",
-            "conversation_ts": None, "behavioral_pattern": "Data-driven", "provider_used": "mock",
-        }])
+    with (
+        patch("app.api.upload.extract_source") as mock_extract,
+        patch("app.api.upload.SessionLocal", TestSessionLocal),
+    ):
+        mock_extract.return_value = _mock_extraction_result(
+            entities=[
+                {
+                    "type": "decision",
+                    "title": "Launch at $29",
+                    "description": "Launch at $29/month.",
+                    "confidence": 0.9,
+                    "supporting_snippet": "launch at $29/month",
+                    "linked_to": None,
+                    "conversation_title": "Test",
+                    "conversation_ts": None,
+                    "behavioral_pattern": "Data-driven",
+                    "provider_used": "mock",
+                }
+            ]
+        )
         _extract_and_persist(source_id, conversations)
 
     db = TestSessionLocal()
@@ -161,16 +184,20 @@ def test_extract_and_persist_handles_failure(tmp_path, monkeypatch):
 
     db = TestSessionLocal()
     source = ConversationSource(
-        filename="crash.md", source_type="markdown",
-        extraction_status="pending", entities_extracted=0,
+        filename="crash.md",
+        source_type="markdown",
+        extraction_status="pending",
+        entities_extracted=0,
     )
     db.add(source)
     db.commit()
     source_id = source.id
     db.close()
 
-    with patch("app.api.upload.extract_source", side_effect=RuntimeError("boom")), \
-         patch("app.api.upload.SessionLocal", TestSessionLocal):
+    with (
+        patch("app.api.upload.extract_source", side_effect=RuntimeError("boom")),
+        patch("app.api.upload.SessionLocal", TestSessionLocal),
+    ):
         _extract_and_persist(source_id, [])
 
     db = TestSessionLocal()
@@ -181,13 +208,17 @@ def test_extract_and_persist_handles_failure(tmp_path, monkeypatch):
 
 # ── Polling endpoint ──────────────────────────────────────────────────────────
 
+
 def test_get_source_status(tmp_path, monkeypatch):
     """GET /entities/sources/{id} returns current source state for polling."""
     from app.models.orm import ConversationSource
+
     db = TestSessionLocal()
     source = ConversationSource(
-        filename="poll.md", source_type="markdown",
-        extraction_status="completed", entities_extracted=5,
+        filename="poll.md",
+        source_type="markdown",
+        extraction_status="completed",
+        entities_extracted=5,
         provider_used="anthropic",
     )
     db.add(source)
@@ -210,17 +241,22 @@ def test_get_source_status_404():
 
 # ── Startup recovery ──────────────────────────────────────────────────────────
 
+
 def test_stuck_pending_reset_on_startup():
     """_reset_stuck_pending_sources() marks pending sources as failed."""
-    from app.models.orm import ConversationSource
     from app.database import _reset_stuck_pending_sources
+    from app.models.orm import ConversationSource
 
     db = TestSessionLocal()
     stuck = ConversationSource(
-        filename="stuck.md", source_type="markdown", extraction_status="pending",
+        filename="stuck.md",
+        source_type="markdown",
+        extraction_status="pending",
     )
     done = ConversationSource(
-        filename="done.md", source_type="markdown", extraction_status="completed",
+        filename="done.md",
+        source_type="markdown",
+        extraction_status="completed",
     )
     db.add_all([stuck, done])
     db.commit()
@@ -238,6 +274,7 @@ def test_stuck_pending_reset_on_startup():
 
 # ── Other entity endpoints ────────────────────────────────────────────────────
 
+
 def test_list_decisions_empty():
     r = client.get("/entities/decisions")
     assert r.status_code == 200
@@ -252,13 +289,17 @@ def test_insights_empty():
 
 # ── Delete source ─────────────────────────────────────────────────────────────
 
+
 def test_delete_source():
     """DELETE /entities/sources/{id} removes source and returns 204."""
     from app.models.orm import ConversationSource
+
     db = TestSessionLocal()
     source = ConversationSource(
-        filename="todelete.md", source_type="markdown",
-        extraction_status="completed", entities_extracted=0,
+        filename="todelete.md",
+        source_type="markdown",
+        extraction_status="completed",
+        entities_extracted=0,
     )
     db.add(source)
     db.commit()
@@ -276,15 +317,21 @@ def test_delete_source():
 def test_delete_source_cascades_entities():
     """Deleting a source removes all associated decisions."""
     from app.models.orm import ConversationSource, Decision
+
     db = TestSessionLocal()
     source = ConversationSource(
-        filename="cascade.md", source_type="markdown",
-        extraction_status="completed", entities_extracted=1,
+        filename="cascade.md",
+        source_type="markdown",
+        extraction_status="completed",
+        entities_extracted=1,
     )
     db.add(source)
     db.flush()
     decision = Decision(
-        title="Launch at $29", description="desc", confidence=0.9, source_id=source.id,
+        title="Launch at $29",
+        description="desc",
+        confidence=0.9,
+        source_id=source.id,
     )
     db.add(decision)
     db.commit()
@@ -314,8 +361,10 @@ def test_delete_source_removes_raw_file(tmp_path):
 
     db = TestSessionLocal()
     source = ConversationSource(
-        filename="upload.md", source_type="markdown",
-        extraction_status="completed", entities_extracted=0,
+        filename="upload.md",
+        source_type="markdown",
+        extraction_status="completed",
+        entities_extracted=0,
         raw_path=str(raw_file),
     )
     db.add(source)
@@ -335,8 +384,10 @@ def test_delete_source_tolerates_missing_file(tmp_path):
 
     db = TestSessionLocal()
     source = ConversationSource(
-        filename="gone.md", source_type="markdown",
-        extraction_status="completed", entities_extracted=0,
+        filename="gone.md",
+        source_type="markdown",
+        extraction_status="completed",
+        entities_extracted=0,
         raw_path=str(tmp_path / "already_deleted.md"),
     )
     db.add(source)

@@ -1,7 +1,9 @@
 """Parser for ChatGPT exported conversations.json."""
+
 import json
 from datetime import datetime, timezone
-from typing import List, BinaryIO
+from typing import BinaryIO, List
+
 from app.parsers.base import Conversation, Message
 
 
@@ -43,7 +45,9 @@ def parse(file_obj: BinaryIO) -> List[Conversation]:
             messages.append(Message(role=author, content=text.strip(), timestamp=ts))
 
         if messages:
-            conversations.append(Conversation(title=title, messages=messages, created_at=created_at))
+            conversations.append(
+                Conversation(title=title, messages=messages, created_at=created_at)
+            )
 
     return conversations
 

@@ -1,10 +1,10 @@
 """Unit tests for file parsers."""
+
 import io
 import json
-import pytest
+
 from app.parsers import chatgpt, claude_export, markdown, plaintext
 from app.parsers.router import detect_type, parse_file
-
 
 # ── ChatGPT ───────────────────────────────────────────────────────────────────
 
@@ -49,8 +49,16 @@ CLAUDE_FIXTURE = [
         "name": "Pricing strategy",
         "created_at": "2024-01-15T10:00:00Z",
         "chat_messages": [
-            {"sender": "human", "text": "How should I price my SaaS?", "created_at": "2024-01-15T10:00:01Z"},
-            {"sender": "assistant", "text": "Consider value-based pricing.", "created_at": "2024-01-15T10:00:05Z"},
+            {
+                "sender": "human",
+                "text": "How should I price my SaaS?",
+                "created_at": "2024-01-15T10:00:01Z",
+            },
+            {
+                "sender": "assistant",
+                "text": "Consider value-based pricing.",
+                "created_at": "2024-01-15T10:00:05Z",
+            },
         ],
     }
 ]
@@ -91,6 +99,7 @@ def test_markdown_parser():
 
 # ── Plain text ────────────────────────────────────────────────────────────────
 
+
 def test_plaintext_parser():
     buf = io.BytesIO(b"We decided to launch in Q1.")
     convs = plaintext.parse(buf)
@@ -99,6 +108,7 @@ def test_plaintext_parser():
 
 
 # ── Router ────────────────────────────────────────────────────────────────────
+
 
 def test_detect_type_markdown():
     assert detect_type("notes.md", b"") == "markdown"

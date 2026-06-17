@@ -3,12 +3,14 @@
 Uses regex patterns to extract entities from conversation text.
 Lower recall than LLM-based providers but always available.
 """
-import re
+
 import json
 import logging
-from typing import Dict, Any, List
-from app.parsers.base import Conversation
+import re
+from typing import Any, Dict, List
+
 from app.extractor.providers.base import ExtractionProvider
+from app.parsers.base import Conversation
 
 logger = logging.getLogger(__name__)
 
@@ -67,18 +69,20 @@ def _extract_matches(text: str, patterns: List[str], entity_type: str) -> List[D
         for m in re.finditer(pat, text, re.IGNORECASE):
             snippet = m.group(0).strip()
             desc = (m.group(1) if m.lastindex and m.lastindex >= 1 else snippet).strip()
-            desc = re.sub(r'\s+', ' ', desc)[:200]
+            desc = re.sub(r"\s+", " ", desc)[:200]
             key = desc.lower()[:60]
             if key in seen or len(desc) < 8:
                 continue
             seen.add(key)
-            entities.append({
-                "type": entity_type,
-                "description": desc,
-                "confidence": 0.45,
-                "snippet": snippet[:300],
-                "linked_to": None,
-            })
+            entities.append(
+                {
+                    "type": entity_type,
+                    "description": desc,
+                    "confidence": 0.45,
+                    "snippet": snippet[:300],
+                    "linked_to": None,
+                }
+            )
     return entities
 
 

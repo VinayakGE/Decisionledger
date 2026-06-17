@@ -54,7 +54,7 @@ export interface paths {
         post?: never;
         /**
          * Delete Source
-         * @description Delete a source and all its extracted entities (cascade).
+         * @description Delete a source, all its extracted entities (cascade), and the raw uploaded file.
          */
         delete: operations["delete_source_entities_sources__source_id__delete"];
         options?: never;

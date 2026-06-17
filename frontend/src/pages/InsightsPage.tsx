@@ -1,8 +1,8 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
-import { EmptyState } from "../components/EmptyState";
 import { PageShell, Spinner, ErrorMsg } from "./DecisionsPage";
 import { colors } from "../lib/styles";
 import { ConfidenceBadge } from "../components/ConfidenceBadge";
@@ -25,11 +25,14 @@ export function InsightsPage() {
     );
   if (!data) return null;
 
-  const hasAnything =
-    data.recurring_questions.length ||
-    data.decision_reversals.length ||
-    data.top_goals.length ||
-    data.blind_spots.length;
+  const isEmpty =
+    !data.total_decisions &&
+    !data.total_open_questions &&
+    !data.total_action_items &&
+    !data.recurring_questions.length &&
+    !data.decision_reversals.length &&
+    !data.top_goals.length &&
+    !data.blind_spots.length;
 
   return (
     <div style={{ padding: "40px 32px", maxWidth: 900 }}>
@@ -70,20 +73,30 @@ export function InsightsPage() {
           marginBottom: 32,
         }}
       >
-        {[
-          ["Total Decisions", data.total_decisions],
-          ["Open Questions", data.total_open_questions],
-          ["Action Items", data.total_action_items],
-        ].map(([label, value]) => (
-          <Card key={String(label)}>
+        {(
+          [
+            ["Total Decisions", data.total_decisions],
+            ["Open Questions", data.total_open_questions],
+            ["Action Items", data.total_action_items],
+          ] as [string, number][]
+        ).map(([label, value]) => (
+          <Card key={label}>
             <div style={{ fontSize: 11, color: colors.muted, marginBottom: 6 }}>{label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: colors.primary }}>{value}</div>
           </Card>
         ))}
       </div>
 
-      {!hasAnything && (
-        <EmptyState message="No insights generated yet. Upload conversations to begin analysis." />
+      {isEmpty && (
+        <div
+          style={{ textAlign: "center", padding: "48px 24px", color: colors.muted, fontSize: 14 }}
+        >
+          <Eye size={32} color={colors.border} style={{ margin: "0 auto 16px" }} />
+          <p style={{ marginBottom: 12 }}>No insights generated yet.</p>
+          <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
+            Upload a conversation to begin analysis →
+          </Link>
+        </div>
       )}
 
       {/* Recurring Questions */}
@@ -110,13 +123,15 @@ export function InsightsPage() {
                   {g.count}× asked
                 </span>
               </div>
-              <ul style={{ margin: 0, paddingLeft: 16 }}>
-                {g.occurrences.slice(1).map((o, j) => (
-                  <li key={j} style={{ fontSize: 12, color: colors.muted, marginBottom: 2 }}>
-                    {o}
-                  </li>
-                ))}
-              </ul>
+              {g.occurrences.length > 1 && (
+                <ul style={{ margin: 0, paddingLeft: 16 }}>
+                  {g.occurrences.slice(1).map((o, j) => (
+                    <li key={j} style={{ fontSize: 12, color: colors.muted, marginBottom: 2 }}>
+                      {o}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
           ))}
         </Section>
@@ -126,7 +141,8 @@ export function InsightsPage() {
       {data.decision_reversals.length > 0 && (
         <Section icon={<RotateCcw size={18} color={colors.danger} />} title="Decision Reversals">
           <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
-            These decisions appear to have been changed or reversed in later conversations.
+            Potential reversals detected — these decisions appear to contradict earlier ones. Verify
+            before acting.
           </p>
           {data.decision_reversals.map((rev, i) => (
             <Card key={i} style={{ marginBottom: 10 }}>
@@ -139,11 +155,16 @@ export function InsightsPage() {
                       {rev.original.description}
                     </div>
                   )}
+                  {rev.original.source_reference && (
+                    <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>
+                      from: {rev.original.source_reference}
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", color: colors.muted }}>→</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 11, color: colors.danger, marginBottom: 4 }}>
-                    REVERSED
+                    REVERSED BY
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>{rev.reversal.title}</div>
                   {rev.reversal.description && (
@@ -151,10 +172,24 @@ export function InsightsPage() {
                       {rev.reversal.description}
                     </div>
                   )}
+                  {rev.reversal.source_reference && (
+                    <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>
+                      from: {rev.reversal.source_reference}
+                    </div>
+                  )}
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: colors.muted, marginTop: 8 }}>
-                Similarity: {Math.round(rev.similarity * 100)}%
+              <div
+                style={{
+                  fontSize: 11,
+                  color: colors.muted,
+                  marginTop: 10,
+                  paddingTop: 8,
+                  borderTop: `1px solid ${colors.border}`,
+                }}
+              >
+                Similarity score: {Math.round(rev.similarity * 100)}% — candidate reversal, not
+                confirmed
               </div>
             </Card>
           ))}
@@ -177,6 +212,11 @@ export function InsightsPage() {
               </span>
               <div style={{ flex: 1 }}>
                 <span style={{ fontSize: 14 }}>{g.description}</span>
+                {g.source_reference && (
+                  <div style={{ fontSize: 11, color: colors.muted, marginTop: 2 }}>
+                    from: {g.source_reference}
+                  </div>
+                )}
               </div>
               <ConfidenceBadge value={g.confidence} />
               {g.frequency > 1 && (
@@ -194,8 +234,8 @@ export function InsightsPage() {
           title="Potential Blind Spots"
         >
           <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
-            Topics discussed frequently but rarely followed up with action. Low action-to-discussion
-            ratio.
+            Topics discussed frequently but with little follow-through on action. Low
+            action-to-discussion ratio — worth a deliberate review.
           </p>
           {data.blind_spots.map((b, i) => (
             <Card key={i} style={{ marginBottom: 8 }}>
@@ -211,7 +251,6 @@ export function InsightsPage() {
                   </span>
                 </div>
               </div>
-              {/* progress bar */}
               <div style={{ marginTop: 8, background: colors.border, borderRadius: 4, height: 4 }}>
                 <div
                   style={{

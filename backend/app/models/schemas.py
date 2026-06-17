@@ -7,6 +7,12 @@ from app.models.orm import GoalStatus, ActionStatus
 
 # ── Upload ────────────────────────────────────────────────────────────────────
 
+class FallbackStep(BaseModel):
+    provider: str
+    status: str
+    error: Optional[str] = None
+
+
 class UploadResponse(BaseModel):
     source_id: int
     filename: str
@@ -17,7 +23,7 @@ class UploadResponse(BaseModel):
     extraction_status: Optional[str] = None
     extraction_confidence_avg: Optional[float] = None
     extraction_duration_ms: Optional[int] = None
-    fallback_chain: List[dict] = []
+    fallback_chain: List[FallbackStep] = []
 
 
 # ── Reason / Evidence (nested) ────────────────────────────────────────────────

@@ -777,6 +777,35 @@
         ],
         "title": "EvidenceOut"
       },
+      "FallbackStep": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider",
+          "status"
+        ],
+        "title": "FallbackStep"
+      },
       "GoalOut": {
         "properties": {
           "id": {
@@ -1088,8 +1117,7 @@
           },
           "fallback_chain": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/FallbackStep"
             },
             "type": "array",
             "title": "Fallback Chain",

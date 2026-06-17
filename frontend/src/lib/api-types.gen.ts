@@ -283,6 +283,15 @@ export interface components {
             /** Source Reference */
             source_reference: string | null;
         };
+        /** FallbackStep */
+        FallbackStep: {
+            /** Provider */
+            provider: string;
+            /** Status */
+            status: string;
+            /** Error */
+            error?: string | null;
+        };
         /** GoalOut */
         GoalOut: {
             /** Id */
@@ -383,9 +392,7 @@ export interface components {
              * Fallback Chain
              * @default []
              */
-            fallback_chain: {
-                [key: string]: unknown;
-            }[];
+            fallback_chain: components["schemas"]["FallbackStep"][];
         };
         /** ValidationError */
         ValidationError: {

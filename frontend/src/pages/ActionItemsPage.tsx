@@ -1,15 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
 import { ConfidenceBadge } from "../components/ConfidenceBadge";
-import { EmptyState } from "../components/EmptyState";
+import { FilterBar } from "../components/FilterBar";
 import { PageShell, Spinner, ErrorMsg } from "./DecisionsPage";
 import { colors } from "../lib/styles";
 import { CheckSquare, Square } from "lucide-react";
 
 export function ActionItemsPage() {
-  const { data: items, loading, error } = useData(() => api.getActionItems());
+  const [sourceId, setSourceId] = useState<number | null>(null);
+  const [minConfidence, setMinConfidence] = useState(0);
+
+  const { data: sources } = useData(() => api.getSources());
+  const {
+    data: items,
+    loading,
+    error,
+  } = useData(() => api.getActionItems(sourceId ?? undefined), [sourceId]);
+
+  const visible = (items ?? []).filter((i) => (i.confidence ?? 0) >= minConfidence);
 
   if (loading)
     return (
@@ -23,16 +34,35 @@ export function ActionItemsPage() {
         <ErrorMsg msg={error} />
       </PageShell>
     );
-  if (!items?.length)
-    return (
-      <PageShell title="Action Items">
-        <EmptyState message="No action items detected yet." />
-      </PageShell>
-    );
 
   return (
-    <PageShell title="Action Items" count={items.length}>
-      {items.map((item) => (
+    <PageShell title="Action Items" count={visible.length}>
+      <FilterBar
+        sources={sources ?? []}
+        sourceId={sourceId}
+        onSourceChange={setSourceId}
+        minConfidence={minConfidence}
+        onConfidenceChange={setMinConfidence}
+      />
+
+      {!visible.length && (
+        <div
+          style={{ textAlign: "center", padding: "48px 24px", color: colors.muted, fontSize: 14 }}
+        >
+          <p style={{ marginBottom: sourceId || minConfidence > 0 ? 0 : 12 }}>
+            {sourceId || minConfidence > 0
+              ? "No action items match the current filters."
+              : "No action items detected yet."}
+          </p>
+          {!sourceId && minConfidence === 0 && (
+            <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
+              Upload a conversation to get started →
+            </Link>
+          )}
+        </div>
+      )}
+
+      {visible.map((item) => (
         <Card
           key={item.id}
           style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}

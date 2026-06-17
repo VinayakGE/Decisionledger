@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
 import { ConfidenceBadge } from "../components/ConfidenceBadge";
-import { EmptyState } from "../components/EmptyState";
+import { FilterBar } from "../components/FilterBar";
 import { PageShell, Spinner, ErrorMsg } from "./DecisionsPage";
 import { colors } from "../lib/styles";
 
@@ -15,7 +16,17 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export function GoalsPage() {
-  const { data: goals, loading, error } = useData(() => api.getGoals());
+  const [sourceId, setSourceId] = useState<number | null>(null);
+  const [minConfidence, setMinConfidence] = useState(0);
+
+  const { data: sources } = useData(() => api.getSources());
+  const {
+    data: goals,
+    loading,
+    error,
+  } = useData(() => api.getGoals(sourceId ?? undefined), [sourceId]);
+
+  const visible = (goals ?? []).filter((g) => (g.confidence ?? 0) >= minConfidence);
 
   if (loading)
     return (
@@ -29,16 +40,35 @@ export function GoalsPage() {
         <ErrorMsg msg={error} />
       </PageShell>
     );
-  if (!goals?.length)
-    return (
-      <PageShell title="Goals">
-        <EmptyState message="No goals found yet." />
-      </PageShell>
-    );
 
   return (
-    <PageShell title="Goals" count={goals.length}>
-      {goals.map((g) => (
+    <PageShell title="Goals" count={visible.length}>
+      <FilterBar
+        sources={sources ?? []}
+        sourceId={sourceId}
+        onSourceChange={setSourceId}
+        minConfidence={minConfidence}
+        onConfidenceChange={setMinConfidence}
+      />
+
+      {!visible.length && (
+        <div
+          style={{ textAlign: "center", padding: "48px 24px", color: colors.muted, fontSize: 14 }}
+        >
+          <p style={{ marginBottom: sourceId || minConfidence > 0 ? 0 : 12 }}>
+            {sourceId || minConfidence > 0
+              ? "No goals match the current filters."
+              : "No goals found yet."}
+          </p>
+          {!sourceId && minConfidence === 0 && (
+            <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
+              Upload a conversation to get started →
+            </Link>
+          )}
+        </div>
+      )}
+
+      {visible.map((g) => (
         <Card
           key={g.id}
           style={{ marginBottom: 10, display: "flex", gap: 12, alignItems: "flex-start" }}

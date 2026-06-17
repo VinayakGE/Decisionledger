@@ -1,106 +1,27 @@
+/**
+ * Typed API client — all types are derived from the generated api-types.gen.ts.
+ * Run `npm run generate:api` from the frontend directory to regenerate after
+ * backend schema changes.
+ */
+import type { components } from "./api-types.gen";
+
 const BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
-export interface Source {
-  id: number;
-  filename: string;
-  source_type: string;
-  uploaded_at: string;
-  conversation_count: number;
-  extraction_status: string | null;
-  provider_used: string | null;
-  entities_extracted: number | null;
-  extraction_confidence_avg: number | null;
-  extraction_duration_ms: number | null;
-}
+// ── Re-export generated schema types under friendly names ─────────────────────
 
-export interface Decision {
-  id: number;
-  title: string;
-  description: string | null;
-  timestamp: string | null;
-  confidence: number;
-  source_reference: string | null;
-  supporting_snippet: string | null;
-  source_id: number | null;
-  reasons: Reason[];
-  evidence: Evidence[];
-}
-
-export interface Reason {
-  id: number;
-  description: string;
-  confidence: number;
-}
-
-export interface Evidence {
-  id: number;
-  description: string;
-  source_reference: string | null;
-}
-
-export interface Goal {
-  id: number;
-  description: string;
-  status: string;
-  confidence: number;
-  source_reference: string | null;
-  supporting_snippet: string | null;
-  frequency: number;
-}
-
-export interface Constraint {
-  id: number;
-  description: string;
-  confidence: number;
-  source_reference: string | null;
-  supporting_snippet: string | null;
-}
-
-export interface OpenQuestion {
-  id: number;
-  description: string;
-  confidence: number;
-  source_reference: string | null;
-  supporting_snippet: string | null;
-}
-
-export interface ActionItem {
-  id: number;
-  description: string;
-  status: string;
-  confidence: number;
-  source_reference: string | null;
-  supporting_snippet: string | null;
-}
-
-export interface RecurringQuestionGroup {
-  representative: string;
-  occurrences: string[];
-  count: number;
-}
-
-export interface DecisionReversal {
-  original: Decision;
-  reversal: Decision;
-  similarity: number;
-}
-
-export interface BlindSpot {
-  topic: string;
-  discussion_count: number;
-  action_count: number;
-  ratio: number;
-}
-
-export interface InsightReport {
-  recurring_questions: RecurringQuestionGroup[];
-  decision_reversals: DecisionReversal[];
-  top_goals: Goal[];
-  blind_spots: BlindSpot[];
-  total_decisions: number;
-  total_open_questions: number;
-  total_action_items: number;
-}
+export type Source         = components["schemas"]["ConversationSourceOut"];
+export type Decision       = components["schemas"]["DecisionOut"];
+export type Reason         = components["schemas"]["ReasonOut"];
+export type Evidence       = components["schemas"]["EvidenceOut"];
+export type Goal           = components["schemas"]["GoalOut"];
+export type Constraint     = components["schemas"]["ConstraintOut"];
+export type OpenQuestion   = components["schemas"]["OpenQuestionOut"];
+export type ActionItem     = components["schemas"]["ActionItemOut"];
+export type InsightReport  = components["schemas"]["InsightReport"];
+export type UploadResponse = components["schemas"]["UploadResponse"];
+export type RecurringQuestionGroup = components["schemas"]["RecurringQuestionGroup"];
+export type DecisionReversal       = components["schemas"]["DecisionReversal"];
+export type BlindSpot              = components["schemas"]["BlindSpot"];
 
 export interface FallbackStep {
   provider: string;
@@ -108,24 +29,15 @@ export interface FallbackStep {
   error?: string;
 }
 
-export interface UploadResponse {
-  source_id: number;
-  filename: string;
-  source_type: string;
-  conversation_count: number;
-  entities_extracted: number;
-  provider_used: string | null;
-  extraction_status: string | null;
-  extraction_confidence_avg: number | null;
-  extraction_duration_ms: number | null;
-  fallback_chain: FallbackStep[];
-}
+// ── HTTP helpers ──────────────────────────────────────────────────────────────
 
 async function get<T>(path: string): Promise<T> {
   const r = await fetch(BASE + path);
   if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
   return r.json();
 }
+
+// ── API surface ───────────────────────────────────────────────────────────────
 
 export const api = {
   uploadFile: async (file: File): Promise<UploadResponse> => {
@@ -138,16 +50,16 @@ export const api = {
     }
     return r.json();
   },
-  getSources: () => get<Source[]>("/entities/sources"),
-  getDecisions: (sourceId?: number) =>
+  getSources:       () => get<Source[]>("/entities/sources"),
+  getDecisions:     (sourceId?: number) =>
     get<Decision[]>(`/entities/decisions${sourceId ? `?source_id=${sourceId}` : ""}`),
-  getGoals: (sourceId?: number) =>
+  getGoals:         (sourceId?: number) =>
     get<Goal[]>(`/entities/goals${sourceId ? `?source_id=${sourceId}` : ""}`),
-  getConstraints: (sourceId?: number) =>
+  getConstraints:   (sourceId?: number) =>
     get<Constraint[]>(`/entities/constraints${sourceId ? `?source_id=${sourceId}` : ""}`),
   getOpenQuestions: (sourceId?: number) =>
     get<OpenQuestion[]>(`/entities/open-questions${sourceId ? `?source_id=${sourceId}` : ""}`),
-  getActionItems: (sourceId?: number) =>
+  getActionItems:   (sourceId?: number) =>
     get<ActionItem[]>(`/entities/action-items${sourceId ? `?source_id=${sourceId}` : ""}`),
-  getInsights: () => get<InsightReport>("/insights"),
+  getInsights:      () => get<InsightReport>("/insights"),
 };

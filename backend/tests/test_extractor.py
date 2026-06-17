@@ -1,36 +1,35 @@
 """Tests for entity extraction helpers (no API calls)."""
 import pytest
-from app.extractor.engine import _safe_parse, _chunk_text
+from app.extractor.engine import _parse_response
+from app.extractor.providers.base import ExtractionProvider
 from app.extractor.persister import _clamp, _resolve_link
 
 
-def test_safe_parse_valid_json():
-    raw = '{"entities": [{"type": "goal", "description": "Launch MVP"}]}'
-    result = _safe_parse(raw)
+def test_parse_response_valid_json():
+    raw = '{"conversation_name": "Test", "behavioral_pattern": "Cautious", "entities": [{"type": "goal", "description": "Launch MVP"}]}'
+    result = _parse_response(raw)
     assert result["entities"][0]["type"] == "goal"
+    assert result["behavioral_pattern"] == "Cautious"
 
 
-def test_safe_parse_fenced():
-    raw = "```json\n{\"entities\": []}\n```"
-    result = _safe_parse(raw)
-    assert result == {"entities": []}
+def test_parse_response_fenced():
+    raw = '```json\n{"conversation_name": "X", "behavioral_pattern": "B", "entities": []}\n```'
+    result = _parse_response(raw)
+    assert result == {"conversation_name": "X", "behavioral_pattern": "B", "entities": []}
 
 
-def test_safe_parse_garbage():
-    result = _safe_parse("sorry, I cannot help with that")
-    assert result == {"entities": []}
+def test_parse_response_garbage():
+    result = _parse_response("sorry, I cannot help with that")
+    assert result is None
 
 
-def test_chunk_text_short():
-    text = "hello world"
-    chunks = _chunk_text(text, 100)
-    assert chunks == [text]
-
-
-def test_chunk_text_splits():
-    text = "a" * 250
-    chunks = _chunk_text(text, 100)
-    assert len(chunks) == 3
+def test_provider_truncate():
+    from app.extractor.providers.anthropic_provider import AnthropicProvider
+    provider = AnthropicProvider()
+    text = "a" * 200
+    truncated = provider._truncate(text, 100)
+    assert len(truncated) < 200
+    assert "truncated" in truncated
 
 
 def test_clamp():

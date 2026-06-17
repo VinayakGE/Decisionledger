@@ -1,82 +1,104 @@
-"""Entity extraction engine using the Anthropic API."""
+"""Extraction engine — one API call per conversation, provider fallback chain.
+
+Provider order:  Anthropic (primary)  →  Gemini Flash  →  Cerebras (free-tier fallback)
+
+Each conversation produces ONE ConversationAnalysis:
+  - conversation_name
+  - behavioral_pattern  (how the founder reasons, not just what they decided)
+  - entities            (all types, flat list)
+"""
+
 import json
 import logging
+from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-import anthropic
-from app.config import settings
+
 from app.parsers.base import Conversation
-from app.extractor.prompts import SYSTEM_PROMPT, USER_TEMPLATE
+from app.extractor.providers.anthropic_provider import AnthropicProvider
+from app.extractor.providers.gemini_provider import GeminiProvider
+from app.extractor.providers.cerebras_provider import CerebrasProvider
+from app.extractor.providers.groq_provider import GroqProvider
+from app.extractor.providers.heuristic_provider import HeuristicProvider
 
 logger = logging.getLogger(__name__)
 
-# max chars sent per API call to stay within token limits
-CHUNK_SIZE = 12_000
+# Provider chain — tried in order; first success wins
+_PROVIDERS = [AnthropicProvider(), GeminiProvider(), CerebrasProvider(), GroqProvider(), HeuristicProvider()]
+
+
+@dataclass
+class ConversationAnalysis:
+    conversation_name: str
+    behavioral_pattern: str
+    entities: List[Dict[str, Any]] = field(default_factory=list)
+    provider_used: str = "unknown"
+    conversation_ts: Optional[datetime] = None
+    source_title: str = ""
 
 
 def extract_from_conversation(conv: Conversation) -> List[Dict[str, Any]]:
-    """Return raw entity dicts extracted from a single conversation."""
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    full_text = conv.full_text()
-    chunks = _chunk_text(full_text, CHUNK_SIZE)
-    all_entities: List[Dict[str, Any]] = []
+    """Backwards-compatible shim used by the upload API and evaluation runner.
+    Returns a flat list of entity dicts (stamped with conversation metadata).
+    """
+    analysis = analyse_conversation(conv)
+    if analysis is None:
+        return []
 
-    for chunk in chunks:
-        ts_str = conv.created_at.isoformat() if conv.created_at else "unknown"
-        user_msg = USER_TEMPLATE.format(
-            title=conv.title,
-            timestamp=ts_str,
-            text=chunk,
-        )
+    for e in analysis.entities:
+        e["conversation_title"] = analysis.conversation_name
+        e["conversation_ts"] = analysis.conversation_ts
+        e["behavioral_pattern"] = analysis.behavioral_pattern
+        e["provider_used"] = analysis.provider_used
+
+    return analysis.entities
+
+
+def analyse_conversation(conv: Conversation) -> Optional[ConversationAnalysis]:
+    """Return a single ConversationAnalysis for the conversation, or None on total failure."""
+    last_error = None
+
+    for provider in _PROVIDERS:
         try:
-            response = client.messages.create(
-                model=settings.extraction_model,
-                max_tokens=4096,
-                system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_msg}],
-            )
-            raw = response.content[0].text
-            parsed = _safe_parse(raw)
+            logger.info("Trying provider '%s' for conversation '%s'", provider.name, conv.title)
+            result = provider.extract(conv)
+            parsed = _parse_response(result["raw"])
+            if parsed is None:
+                logger.warning("Provider '%s' returned unparseable response.", provider.name)
+                continue
+
             entities = parsed.get("entities", [])
-            # stamp conversation metadata onto each entity
-            for e in entities:
-                e["conversation_title"] = conv.title
-                e["conversation_ts"] = conv.created_at
-            all_entities.extend(entities)
-        except anthropic.AuthenticationError:
-            logger.error("Invalid Anthropic API key — entity extraction skipped.")
-            return []
-        except Exception as exc:
-            logger.warning("Extraction call failed: %s", exc)
+            return ConversationAnalysis(
+                conversation_name=parsed.get("conversation_name") or conv.title,
+                behavioral_pattern=parsed.get("behavioral_pattern") or "Unknown",
+                entities=entities,
+                provider_used=result["provider"],
+                conversation_ts=conv.created_at,
+                source_title=conv.title,
+            )
+        except RuntimeError as e:
+            last_error = e
+            logger.warning("Provider '%s' failed: %s — trying next.", provider.name, e)
+            continue
 
-    return all_entities
+    logger.error("All providers failed for conversation '%s'. Last error: %s", conv.title, last_error)
+    return None
 
 
-def _safe_parse(raw: str) -> Dict:
-    # strip markdown fences if present
+def _parse_response(raw: str) -> Optional[Dict]:
     raw = raw.strip()
+    # strip markdown fences
     if raw.startswith("```"):
         lines = raw.splitlines()
-        raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+        inner = lines[1:-1] if lines[-1].strip() == "```" else lines[1:]
+        raw = "\n".join(inner)
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
-        # try to extract JSON object from the response
-        start = raw.find("{")
-        end = raw.rfind("}") + 1
+        start, end = raw.find("{"), raw.rfind("}") + 1
         if start != -1 and end > start:
             try:
                 return json.loads(raw[start:end])
             except Exception:
                 pass
-    return {"entities": []}
-
-
-def _chunk_text(text: str, size: int) -> List[str]:
-    if len(text) <= size:
-        return [text]
-    chunks = []
-    while text:
-        chunks.append(text[:size])
-        text = text[size:]
-    return chunks
+    return None

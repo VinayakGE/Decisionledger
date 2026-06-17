@@ -1,0 +1,32 @@
+Voice memo transcript — thinking out loud about the company, recorded Nov 18
+
+So I've been going back and forth on the co-founder question for weeks now. I think I need to just make a call. The problem is I keep finding reasons to delay. Like, maybe the right person is just around the corner. But I've been saying that for four months.
+
+I talked to my advisor Lisa and she said something that stuck: "You're not looking for a co-founder, you're looking for an excuse not to make a decision." That's probably true.
+
+Here's what I actually think: I don't need a technical co-founder. I can hire engineers. What I need is someone who can own sales and partnerships while I stay in product. But that's a VP Sales, not a co-founder. So I think I've been confusing myself.
+
+Decision I think I'm making: stop looking for a co-founder, focus on building the team through hires. First hire is a senior engineer in January. Second hire will depend on whether we close the Series A.
+
+The fundraising timeline is another thing I keep avoiding. We're running out of runway in June. That means I need to start Series A conversations in January at the latest — probably sooner. Realistically I need to start in December, which is in 6 weeks. That's terrifying. But I think that's the actual constraint.
+
+I hate the idea of raising before we have stronger metrics. Our MRR is $18k. That's weak for a Series A. Investors will want to see $50k MRR minimum, probably $80k for a clean raise. We're not there. So maybe the right move is a bridge round — $500k from angels to give us 12 more months. That would let us get to $50k MRR organically and raise from strength.
+
+I keep going back and forth. Bridge vs Series A. I don't have a decision yet. I genuinely don't know what's right.
+
+One thing I do know: we are not moving to a PLG model. I've seen three competitors try it and all three are struggling. Our product requires onboarding, it requires hand-holding in month one. Self-serve doesn't work for what we do. That's a constraint, not a choice.
+
+What else. Oh — the enterprise vs SMB question. I've been tempted by enterprise deals. We have two inbound enterprise prospects, one is a Fortune 500. The revenue would be transformative, like $200k ARR from one deal. But enterprise sales cycles are 9-12 months, we need a security audit, we'd probably need to sign a BAA. We don't have time for any of that right now. So I think the constraint is: no enterprise deals this year. Focus on SMB, close fast, build ARR. Revisit enterprise when we're post-Series-A with a proper sales team.
+
+I also keep wondering if we should pivot the product. The current product does workforce planning. But everywhere I go, people keep asking me about performance reviews. It's a bigger market. But we'd be starting over. I don't think it's the right move. We have paying customers, we have a product that works. Pivoting now would kill morale and burn runway chasing a different problem. So no pivot. We stay the course.
+
+Okay I think the things I actually decided today:
+1. Stop looking for a co-founder
+2. No PLG model
+3. No enterprise deals this year
+4. No pivot
+
+Things still open:
+1. Bridge vs Series A
+2. Exact timing of fundraise outreach
+3. Whether to hire engineer before or after starting fundraise

@@ -103,6 +103,16 @@ npm run dev          # starts at http://localhost:3000
 
 ---
 
+## Database
+
+The app uses SQLite with schema auto-creation (`CREATE TABLE IF NOT EXISTS`). There are no Alembic migrations yet. If you change ORM models, the easiest reset is:
+
+```bash
+rm backend/founder_brain_audit.db   # wipe and let the app recreate on next start
+```
+
+---
+
 ## Configuration
 
 | Variable | Default | Description |

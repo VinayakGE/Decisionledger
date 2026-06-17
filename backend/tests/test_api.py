@@ -73,6 +73,8 @@ def test_health():
         "linked_to": None,
         "conversation_title": "Test Conversation",
         "conversation_ts": None,
+        "behavioral_pattern": "Decisive under pressure.",
+        "provider_used": "mock",
     }
 ])
 def test_upload_chatgpt(mock_extract, tmp_path, monkeypatch):

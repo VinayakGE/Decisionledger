@@ -150,8 +150,13 @@ __pycache__/
 venv/
 *.db
 backend/uploads/
+backend/evaluation/results/
 
 # IDE
 .vscode/
 .idea/
 *.swp
+
+# Evaluation outputs
+backend/evaluation/results/
+backend/evaluation/__pycache__/

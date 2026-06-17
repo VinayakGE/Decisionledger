@@ -26,7 +26,11 @@ _model: Optional[object] = None
 def _get_model():
     global _model
     if _model is None and _ST_AVAILABLE:
-        _model = SentenceTransformer("all-MiniLM-L6-v2")
+        try:
+            _model = SentenceTransformer("all-MiniLM-L6-v2")
+        except Exception as e:
+            logger.warning("SentenceTransformer model load failed: %s — falling back to word overlap.", e)
+            return None
     return _model
 
 

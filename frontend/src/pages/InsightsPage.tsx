@@ -6,7 +6,6 @@ import { Card } from "../components/Card";
 import { PageShell, Spinner, ErrorMsg } from "./DecisionsPage";
 import { colors } from "../lib/styles";
 import { ConfidenceBadge } from "../components/ConfidenceBadge";
-import { RefreshCcw, Eye, RotateCcw, HelpCircle, Target, AlertOctagon, Brain } from "lucide-react";
 
 export function InsightsPage() {
   const { data, loading, error, reload } = useData(() => api.getInsights());
@@ -36,313 +35,452 @@ export function InsightsPage() {
     !(data.behavioral_notes ?? []).length;
 
   return (
-    <div style={{ padding: "40px 32px", maxWidth: 900 }}>
+    <div style={{ padding: "48px 40px", maxWidth: 820 }}>
+      {/* Header */}
       <div
         style={{
+          marginBottom: 40,
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-end",
           justifyContent: "space-between",
-          marginBottom: 32,
         }}
       >
-        <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Insight Report</h1>
+        <div>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: colors.muted,
+              marginBottom: 8,
+            }}
+          >
+            Decision Intelligence
+          </div>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 300,
+              letterSpacing: "-0.02em",
+              color: colors.text,
+              margin: 0,
+            }}
+          >
+            Insight Report
+          </h1>
+        </div>
         <button
           onClick={reload}
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
             background: "transparent",
-            border: `1px solid ${colors.border}`,
-            color: colors.textSecondary,
-            borderRadius: 8,
-            padding: "8px 14px",
+            border: `1px solid ${colors.borderStrong}`,
+            color: colors.muted,
+            borderRadius: 6,
+            padding: "7px 14px",
             cursor: "pointer",
-            fontSize: 13,
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
           }}
         >
-          <RefreshCcw size={14} /> Refresh
+          Refresh
         </button>
       </div>
 
       {isEmpty ? (
-        <div
-          style={{ textAlign: "center", padding: "64px 24px", color: colors.muted, fontSize: 14 }}
-        >
-          <Eye size={40} color={colors.border} style={{ margin: "0 auto 20px" }} />
-          <p style={{ fontSize: 18, fontWeight: 600, color: colors.text, marginBottom: 8 }}>
-            No insights yet
+        <div style={{ textAlign: "center", padding: "80px 24px", color: colors.muted }}>
+          <div style={{ fontSize: 48, marginBottom: 24, opacity: 0.2 }}>◎</div>
+          <p
+            style={{ fontSize: 16, fontWeight: 300, color: colors.textSecondary, marginBottom: 8 }}
+          >
+            No signal yet.
           </p>
-          <p style={{ marginBottom: 24, lineHeight: 1.6, maxWidth: 360, margin: "0 auto 24px" }}>
-            Upload a ChatGPT or Claude export and the AI will extract decisions, goals, open
-            questions, and patterns from your conversations.
+          <p
+            style={{
+              fontSize: 13,
+              marginBottom: 28,
+              color: colors.muted,
+              maxWidth: 320,
+              margin: "0 auto 28px",
+            }}
+          >
+            Upload a conversation export and the engine will surface patterns, reversals, and blind
+            spots.
           </p>
           <Link
-            to="/"
+            to="/upload"
             style={{
               display: "inline-block",
               background: colors.primary,
-              color: "#fff",
-              borderRadius: 8,
+              color: "#000",
+              borderRadius: 6,
               padding: "10px 24px",
-              fontWeight: 600,
-              fontSize: 14,
+              fontWeight: 700,
+              fontSize: 12,
               textDecoration: "none",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
             }}
           >
             Upload conversations →
           </Link>
         </div>
       ) : (
-        /* Summary stats */
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 12,
-            marginBottom: 32,
-          }}
-        >
-          {(
-            [
-              ["Total Decisions", data.total_decisions, "/decisions"],
-              ["Open Questions", data.total_open_questions, "/questions"],
-              ["Action Items", data.total_action_items, "/actions"],
-            ] as [string, number, string][]
-          ).map(([label, value, href]) => (
-            <Link key={label} to={href} style={{ textDecoration: "none" }}>
-              <Card style={{ cursor: "pointer", transition: "border-color 0.15s" }}>
-                <div style={{ fontSize: 11, color: colors.muted, marginBottom: 6 }}>{label}</div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: colors.primary }}>{value}</div>
-                <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>View all →</div>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* Behavioral Patterns */}
-      {(data.behavioral_notes ?? []).length > 0 && (
-        <Section icon={<Brain size={18} color={colors.primary} />} title="Decision-Making Patterns">
-          <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
-            How decisions are being made — patterns observed across your conversations by AI
-            analysis.
-          </p>
-          {(data.behavioral_notes ?? []).map((note, i) => (
-            <Card key={i} style={{ marginBottom: 10 }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <>
+          {/* Stats row */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 1,
+              marginBottom: 48,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 8,
+              overflow: "hidden",
+            }}
+          >
+            {(
+              [
+                ["Decisions", data.total_decisions, "/decisions"],
+                ["Open Questions", data.total_open_questions, "/questions"],
+                ["Action Items", data.total_action_items, "/actions"],
+              ] as [string, number, string][]
+            ).map(([label, value, href]) => (
+              <Link key={label} to={href} style={{ textDecoration: "none" }}>
                 <div
                   style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: colors.primary,
-                    flexShrink: 0,
-                    marginTop: 7,
+                    background: colors.surface,
+                    padding: "24px 20px",
+                    cursor: "pointer",
+                    transition: "background 0.12s",
                   }}
-                />
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 14, margin: "0 0 4px", lineHeight: 1.5 }}>{note.pattern}</p>
+                  onMouseEnter={(e) =>
+                    ((e.currentTarget as HTMLDivElement).style.background = colors.surfaceHover)
+                  }
+                  onMouseLeave={(e) =>
+                    ((e.currentTarget as HTMLDivElement).style.background = colors.surface)
+                  }
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: colors.muted,
+                      marginBottom: 10,
+                    }}
+                  >
+                    {label}
+                  </div>
+                  <div
+                    style={{ fontSize: 42, fontWeight: 300, color: colors.primary, lineHeight: 1 }}
+                  >
+                    {value}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: colors.muted,
+                      marginTop: 8,
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    VIEW ALL →
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Behavioral Patterns */}
+          {(data.behavioral_notes ?? []).length > 0 && (
+            <Section label="Pattern" title="Decision-Making Patterns" accent={colors.violet}>
+              <p style={{ fontSize: 13, color: colors.muted, marginBottom: 16, lineHeight: 1.6 }}>
+                How you make decisions — observed by AI across your conversations.
+              </p>
+              {(data.behavioral_notes ?? []).map((note, i) => (
+                <Card
+                  key={i}
+                  style={{
+                    marginBottom: 8,
+                    borderLeft: `2px solid ${colors.violet}`,
+                    borderRadius: "0 8px 8px 0",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: 14,
+                      margin: "0 0 6px",
+                      lineHeight: 1.5,
+                      fontWeight: 300,
+                      color: colors.text,
+                    }}
+                  >
+                    {note.pattern}
+                  </p>
                   <span style={{ fontSize: 11, color: colors.muted }}>
-                    from:{" "}
                     {note.source_filename.length > 40
                       ? note.source_filename.slice(0, 20) + "…" + note.source_filename.slice(-15)
                       : note.source_filename}
                   </span>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </Section>
-      )}
+                </Card>
+              ))}
+            </Section>
+          )}
 
-      {/* Recurring Questions */}
-      {data.recurring_questions.length > 0 && (
-        <Section icon={<HelpCircle size={18} color={colors.warning} />} title="Recurring Questions">
-          <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
-            These questions appear multiple times across your conversations, suggesting unresolved
-            tension.
-          </p>
-          {data.recurring_questions.map((g, i) => (
-            <Card key={i} style={{ marginBottom: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <span style={{ fontWeight: 600, fontSize: 14 }}>{g.representative}</span>
-                <span
-                  style={{
-                    background: `${colors.warning}22`,
-                    color: colors.warning,
-                    borderRadius: 999,
-                    padding: "2px 8px",
-                    fontSize: 12,
-                    fontWeight: 600,
-                  }}
+          {/* Recurring Questions */}
+          {data.recurring_questions.length > 0 && (
+            <Section label="Unresolved" title="Questions That Won't Close" accent={colors.warning}>
+              <p style={{ fontSize: 13, color: colors.muted, marginBottom: 16, lineHeight: 1.6 }}>
+                These questions reappear across conversations — suggesting unresolved tension.
+              </p>
+              {data.recurring_questions.map((g, i) => (
+                <Card key={i} style={{ marginBottom: 8 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      marginBottom: g.occurrences.length > 1 ? 10 : 0,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <span style={{ fontWeight: 500, fontSize: 14, flex: 1 }}>
+                      {g.representative}
+                    </span>
+                    <span
+                      style={{
+                        background: `${colors.warning}18`,
+                        color: colors.warning,
+                        borderRadius: 4,
+                        padding: "2px 8px",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      ×{g.count} asked
+                    </span>
+                  </div>
+                  {g.occurrences.length > 1 && (
+                    <ul style={{ margin: 0, paddingLeft: 16 }}>
+                      {g.occurrences.slice(1).map((o, j) => (
+                        <li key={j} style={{ fontSize: 12, color: colors.muted, marginBottom: 2 }}>
+                          {o}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Card>
+              ))}
+            </Section>
+          )}
+
+          {/* Decision Reversals */}
+          {data.decision_reversals.length > 0 && (
+            <Section label="Candidate" title="Potential Reversals" accent={colors.danger}>
+              <p style={{ fontSize: 13, color: colors.muted, marginBottom: 16, lineHeight: 1.6 }}>
+                Decisions that appear to contradict earlier ones. Verify before acting — these are
+                candidates, not confirmed.
+              </p>
+              {data.decision_reversals.map((rev, i) => (
+                <Card key={i} style={{ marginBottom: 8 }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr auto 1fr",
+                      gap: 12,
+                      alignItems: "start",
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: "0.1em",
+                          color: colors.muted,
+                          marginBottom: 6,
+                        }}
+                      >
+                        ORIGINAL
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>{rev.original.title}</div>
+                      {rev.original.source_reference && (
+                        <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>
+                          {rev.original.source_reference}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ color: colors.muted, paddingTop: 20, fontSize: 16 }}>→</div>
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: "0.1em",
+                          color: colors.danger,
+                          marginBottom: 6,
+                        }}
+                      >
+                        REVERSED BY
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>{rev.reversal.title}</div>
+                      {rev.reversal.source_reference && (
+                        <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>
+                          {rev.reversal.source_reference}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: colors.muted,
+                      marginTop: 12,
+                      paddingTop: 10,
+                      borderTop: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    {Math.round(rev.similarity * 100)}% similarity — candidate only
+                  </div>
+                </Card>
+              ))}
+            </Section>
+          )}
+
+          {/* Top Goals */}
+          {data.top_goals.length > 0 && (
+            <Section label="Goals" title="Most Recurring Goals" accent={colors.success}>
+              <p style={{ fontSize: 13, color: colors.muted, marginBottom: 16, lineHeight: 1.6 }}>
+                Goals ranked by frequency across your conversations.
+              </p>
+              {data.top_goals.map((g, i) => (
+                <Card
+                  key={g.id}
+                  style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 14 }}
                 >
-                  {g.count}× asked
-                </span>
-              </div>
-              {g.occurrences.length > 1 && (
-                <ul style={{ margin: 0, paddingLeft: 16 }}>
-                  {g.occurrences.slice(1).map((o, j) => (
-                    <li key={j} style={{ fontSize: 12, color: colors.muted, marginBottom: 2 }}>
-                      {o}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
-          ))}
-        </Section>
-      )}
-
-      {/* Decision Reversals */}
-      {data.decision_reversals.length > 0 && (
-        <Section icon={<RotateCcw size={18} color={colors.danger} />} title="Decision Reversals">
-          <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
-            Potential reversals detected — these decisions appear to contradict earlier ones. Verify
-            before acting.
-          </p>
-          {data.decision_reversals.map((rev, i) => (
-            <Card key={i} style={{ marginBottom: 10 }}>
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: colors.muted, marginBottom: 4 }}>ORIGINAL</div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{rev.original.title}</div>
-                  {rev.original.description && (
-                    <div style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
-                      {rev.original.description}
-                    </div>
-                  )}
-                  {rev.original.source_reference && (
-                    <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>
-                      from: {rev.original.source_reference}
-                    </div>
-                  )}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", color: colors.muted }}>→</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: colors.danger, marginBottom: 4 }}>
-                    REVERSED BY
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{rev.reversal.title}</div>
-                  {rev.reversal.description && (
-                    <div style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
-                      {rev.reversal.description}
-                    </div>
-                  )}
-                  {rev.reversal.source_reference && (
-                    <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>
-                      from: {rev.reversal.source_reference}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: colors.muted,
-                  marginTop: 10,
-                  paddingTop: 8,
-                  borderTop: `1px solid ${colors.border}`,
-                }}
-              >
-                Similarity score: {Math.round(rev.similarity * 100)}% — candidate reversal, not
-                confirmed
-              </div>
-            </Card>
-          ))}
-        </Section>
-      )}
-
-      {/* Top Goals */}
-      {data.top_goals.length > 0 && (
-        <Section icon={<Target size={18} color={colors.success} />} title="Top Goals by Frequency">
-          <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
-            Goals ranked by how often they appear across your conversations.
-          </p>
-          {data.top_goals.map((g, i) => (
-            <Card
-              key={g.id}
-              style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 14 }}
-            >
-              <span style={{ fontSize: 22, fontWeight: 700, color: colors.muted, width: 28 }}>
-                {i + 1}
-              </span>
-              <div style={{ flex: 1 }}>
-                <span style={{ fontSize: 14 }}>{g.description}</span>
-                {g.source_reference && (
-                  <div style={{ fontSize: 11, color: colors.muted, marginTop: 2 }}>
-                    from: {g.source_reference}
-                  </div>
-                )}
-              </div>
-              <ConfidenceBadge value={g.confidence} />
-              {g.frequency > 1 && (
-                <span style={{ fontSize: 12, color: colors.warning }}>×{g.frequency}</span>
-              )}
-            </Card>
-          ))}
-        </Section>
-      )}
-
-      {/* Blind Spots */}
-      {data.blind_spots.length > 0 && (
-        <Section
-          icon={<AlertOctagon size={18} color={colors.danger} />}
-          title="Potential Blind Spots"
-        >
-          <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
-            Topics discussed frequently but with little follow-through on action. Low
-            action-to-discussion ratio — worth a deliberate review.
-          </p>
-          {data.blind_spots.map((b, i) => (
-            <Card key={i} style={{ marginBottom: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: 14, fontWeight: 500 }}>{b.topic}</span>
-                </div>
-                <div style={{ display: "flex", gap: 16, fontSize: 12, color: colors.muted }}>
-                  <span>{b.discussion_count} discussions</span>
-                  <span>{b.action_count} actions</span>
-                  <span style={{ color: colors.danger }}>
-                    {Math.round(b.ratio * 100)}% acted on
+                  <span
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 300,
+                      color: colors.muted,
+                      width: 28,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {i + 1}
                   </span>
-                </div>
-              </div>
-              <div style={{ marginTop: 8, background: colors.border, borderRadius: 4, height: 4 }}>
-                <div
-                  style={{
-                    width: `${Math.round(b.ratio * 100)}%`,
-                    height: 4,
-                    background: colors.danger,
-                    borderRadius: 4,
-                    minWidth: b.ratio > 0 ? 4 : 0,
-                  }}
-                />
-              </div>
-            </Card>
-          ))}
-        </Section>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: 13 }}>{g.description}</span>
+                    {g.source_reference && (
+                      <div style={{ fontSize: 11, color: colors.muted, marginTop: 2 }}>
+                        {g.source_reference}
+                      </div>
+                    )}
+                  </div>
+                  <ConfidenceBadge value={g.confidence} />
+                  {g.frequency > 1 && (
+                    <span style={{ fontSize: 11, color: colors.warning, fontWeight: 600 }}>
+                      ×{g.frequency}
+                    </span>
+                  )}
+                </Card>
+              ))}
+            </Section>
+          )}
+
+          {/* Blind Spots */}
+          {data.blind_spots.length > 0 && (
+            <Section label="Blind spot" title="Discussed. Never Acted On." accent={colors.danger}>
+              <p style={{ fontSize: 13, color: colors.muted, marginBottom: 16, lineHeight: 1.6 }}>
+                Topics discussed repeatedly with little follow-through. Low action-to-discussion
+                ratio.
+              </p>
+              {data.blind_spots.map((b, i) => (
+                <Card key={i} style={{ marginBottom: 8 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 16,
+                      marginBottom: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>{b.topic}</span>
+                    <div style={{ display: "flex", gap: 12, fontSize: 11, color: colors.muted }}>
+                      <span>{b.discussion_count} discussions</span>
+                      <span>{b.action_count} actions</span>
+                      <span style={{ color: colors.danger, fontWeight: 600 }}>
+                        {Math.round(b.ratio * 100)}% acted on
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ background: colors.border, borderRadius: 2, height: 2 }}>
+                    <div
+                      style={{
+                        width: `${Math.round(b.ratio * 100)}%`,
+                        height: 2,
+                        background: colors.danger,
+                        borderRadius: 2,
+                        minWidth: b.ratio > 0 ? 4 : 0,
+                      }}
+                    />
+                  </div>
+                </Card>
+              ))}
+            </Section>
+          )}
+        </>
       )}
     </div>
   );
 }
 
 function Section({
-  icon,
+  label,
   title,
+  accent,
   children,
 }: {
-  icon: React.ReactNode;
+  label: string;
   title: string;
+  accent: string;
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ marginBottom: 36 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        {icon}
-        <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>{title}</h2>
+    <div style={{ marginBottom: 44 }}>
+      <div style={{ marginBottom: 20 }}>
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            color: accent,
+            marginBottom: 4,
+          }}
+        >
+          {label}
+        </div>
+        <h2
+          style={{
+            fontSize: 18,
+            fontWeight: 300,
+            letterSpacing: "-0.01em",
+            margin: 0,
+            color: colors.text,
+          }}
+        >
+          {title}
+        </h2>
       </div>
       {children}
+      <div style={{ borderTop: `1px solid ${colors.border}`, marginTop: 20 }} />
     </div>
   );
 }

@@ -19,12 +19,13 @@ export function ConfidenceBadge({ value }: Props) {
       title={tooltip}
       style={{
         display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: 999,
-        fontSize: 12,
-        fontWeight: 600,
+        padding: "1px 6px",
+        borderRadius: 3,
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.04em",
         color,
-        border: `1px solid ${color}`,
+        background: `${color}14`,
         whiteSpace: "nowrap",
         cursor: "help",
       }}

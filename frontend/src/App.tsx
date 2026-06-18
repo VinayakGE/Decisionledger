@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 import { Sidebar } from "./components/Sidebar";
+import { DashboardPage } from "./pages/DashboardPage";
 import { UploadPage } from "./pages/UploadPage";
 import { DecisionsPage } from "./pages/DecisionsPage";
 import { GoalsPage } from "./pages/GoalsPage";
@@ -34,7 +35,8 @@ export default function App() {
           <Sidebar />
           <main style={{ flex: 1, overflowY: "auto" }}>
             <Routes>
-              <Route path="/" element={<UploadPage />} />
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/upload" element={<UploadPage />} />
               <Route path="/decisions" element={<DecisionsPage />} />
               <Route path="/goals" element={<GoalsPage />} />
               <Route path="/questions" element={<OpenQuestionsPage />} />

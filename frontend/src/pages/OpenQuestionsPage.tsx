@@ -55,7 +55,7 @@ export function OpenQuestionsPage() {
               : "No open questions detected yet."}
           </p>
           {!sourceId && minConfidence === 0 && (
-            <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
+            <Link to="/upload" style={{ color: colors.primary, fontSize: 13 }}>
               Upload a conversation to get started →
             </Link>
           )}

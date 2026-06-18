@@ -78,6 +78,7 @@ class Decision(Base):
     source = relationship("ConversationSource", back_populates="decisions")
     reasons = relationship("Reason", back_populates="decision", cascade="all, delete-orphan")
     evidence = relationship("Evidence", back_populates="decision", cascade="all, delete-orphan")
+    outcomes = relationship("Outcome", back_populates="decision", cascade="all, delete-orphan")
 
 
 class Reason(Base):
@@ -100,6 +101,22 @@ class Evidence(Base):
     source_reference = Column(String)
 
     decision = relationship("Decision", back_populates="evidence")
+
+
+class Outcome(Base):
+    __tablename__ = "outcomes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    decision_id = Column(Integer, ForeignKey("decisions.id"), nullable=False)
+    expected = Column(Text, nullable=False)  # what founder thought would happen
+    actual = Column(Text, nullable=True)  # what actually happened (null if not yet measured)
+    confidence = Column(Float, default=0.0)  # how confident in this outcome assessment
+    timeframe = Column(String, nullable=True)  # "6 weeks", "3 months", etc
+    impact_statement = Column(Text, nullable=True)  # how the outcome mattered
+    measured_at = Column(DateTime, nullable=True)  # when the outcome was measured
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    decision = relationship("Decision", back_populates="outcomes")
 
 
 class Goal(Base):

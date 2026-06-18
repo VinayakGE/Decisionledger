@@ -50,6 +50,19 @@ class EvidenceOut(BaseModel):
         from_attributes = True
 
 
+class OutcomeOut(BaseModel):
+    id: int
+    expected: str
+    actual: Optional[str] = None
+    confidence: float
+    timeframe: Optional[str] = None
+    impact_statement: Optional[str] = None
+    measured_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 # ── Decision ──────────────────────────────────────────────────────────────────
 
 
@@ -64,6 +77,7 @@ class DecisionOut(BaseModel):
     source_id: Optional[int]
     reasons: List[ReasonOut] = []
     evidence: List[EvidenceOut] = []
+    outcomes: List[OutcomeOut] = []
 
     class Config:
         from_attributes = True

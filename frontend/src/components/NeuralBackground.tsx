@@ -140,6 +140,8 @@ export function NeuralBackground() {
 
       if (!shouldReduceMotion) {
         raf = requestAnimationFrame(render);
+      } else {
+        raf = 0;
       }
     };
 
@@ -153,6 +155,7 @@ export function NeuralBackground() {
     const handleMotionPreferenceChange = (event: MediaQueryListEvent) => {
       shouldReduceMotion = event.matches;
       cancelAnimationFrame(raf);
+      raf = 0;
       render();
     };
 

@@ -27,14 +27,22 @@ const POLL_INTERVAL_MS = 2000;
 export function UploadPage() {
   const [state, setState] = useState<State>({ type: "idle" });
   const [dragOver, setDragOver] = useState(false);
+  const [dupWarning, setDupWarning] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   const { data: settingsData } = useData(() => api.getSettings());
+  const { data: existingSources } = useData(() => api.getSources());
   const providers = settingsData?.providers ?? [];
   const anyConfigured = providers.some((p: ProviderStatus) => p.configured);
 
   const handleFile = async (file: File) => {
+    const dup = (existingSources ?? []).find((s) => s.filename === file.name);
+    if (dup) {
+      setDupWarning(file.name);
+    } else {
+      setDupWarning(null);
+    }
     setState({ type: "uploading" });
     try {
       const res: UploadResponse = await api.uploadFile(file);
@@ -170,6 +178,30 @@ export function UploadPage() {
           />
         </div>
       </Card>
+
+      {dupWarning && state.type === "done" && (
+        <Card
+          style={{
+            marginTop: 16,
+            background: `${colors.warning}12`,
+            border: `1px solid ${colors.warning}44`,
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            padding: "12px 16px",
+          }}
+        >
+          <AlertTriangle size={15} color={colors.warning} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ fontSize: 13, color: colors.warning }}>
+            <strong>{dupWarning}</strong> was already uploaded. A new copy has been added — you can
+            delete the old one from{" "}
+            <Link to="/sources" style={{ color: colors.warning, textDecoration: "underline" }}>
+              Sources
+            </Link>
+            .
+          </span>
+        </Card>
+      )}
 
       {state.type === "uploading" && (
         <Card style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>

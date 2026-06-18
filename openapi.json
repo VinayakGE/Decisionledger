@@ -361,6 +361,58 @@
         }
       }
     },
+    "/entities/constraints/{constraint_id}/status": {
+      "patch": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Update Constraint Status",
+        "operationId": "update_constraint_status_entities_constraints__constraint_id__status_patch",
+        "parameters": [
+          {
+            "name": "constraint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Constraint Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstraintStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstraintOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/entities/open-questions": {
       "get": {
         "tags": [
@@ -724,6 +776,16 @@
               }
             ],
             "title": "Supporting Snippet"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConstraintStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -735,6 +797,26 @@
           "supporting_snippet"
         ],
         "title": "ConstraintOut"
+      },
+      "ConstraintStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "resolved"
+        ],
+        "title": "ConstraintStatus"
+      },
+      "ConstraintStatusUpdate": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ConstraintStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ConstraintStatusUpdate"
       },
       "ConversationSourceOut": {
         "properties": {

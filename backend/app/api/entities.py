@@ -25,6 +25,7 @@ from app.models.orm import (
 from app.models.schemas import (
     ActionItemOut,
     ConstraintOut,
+    ConstraintStatusUpdate,
     ConversationSourceOut,
     DecisionOut,
     GoalOut,
@@ -199,6 +200,21 @@ def list_constraints(
     if source_id is not None:
         q = q.filter(Constraint.source_id == source_id)
     return q.order_by(Constraint.confidence.desc()).all()
+
+
+@router.patch("/constraints/{constraint_id}/status", response_model=ConstraintOut)
+def update_constraint_status(
+    constraint_id: int,
+    body: ConstraintStatusUpdate,
+    db: Session = Depends(get_db),
+):
+    c = db.query(Constraint).filter(Constraint.id == constraint_id).first()
+    if c is None:
+        raise HTTPException(status_code=404, detail="Constraint not found")
+    c.status = body.status
+    db.commit()
+    db.refresh(c)
+    return c
 
 
 @router.get("/open-questions", response_model=List[OpenQuestionOut])

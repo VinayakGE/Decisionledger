@@ -133,6 +133,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/entities/constraints/{constraint_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Constraint Status */
+        patch: operations["update_constraint_status_entities_constraints__constraint_id__status_patch"];
+        trace?: never;
+    };
     "/entities/open-questions": {
         parameters: {
             query?: never;
@@ -284,6 +301,16 @@ export interface components {
             source_reference: string | null;
             /** Supporting Snippet */
             supporting_snippet: string | null;
+            status?: components["schemas"]["ConstraintStatus"] | null;
+        };
+        /**
+         * ConstraintStatus
+         * @enum {string}
+         */
+        ConstraintStatus: "active" | "resolved";
+        /** ConstraintStatusUpdate */
+        ConstraintStatusUpdate: {
+            status: components["schemas"]["ConstraintStatus"];
         };
         /** ConversationSourceOut */
         ConversationSourceOut: {
@@ -750,6 +777,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConstraintOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_constraint_status_entities_constraints__constraint_id__status_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                constraint_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConstraintStatusUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConstraintOut"];
                 };
             };
             /** @description Validation Error */

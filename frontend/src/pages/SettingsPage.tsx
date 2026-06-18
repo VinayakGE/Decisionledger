@@ -62,7 +62,8 @@ export function SettingsPage() {
       </div>
       <p style={{ color: colors.textSecondary, marginBottom: 32, fontSize: 14 }}>
         Configure API keys for entity extraction. Keys are kept in memory until the server restarts
-        — add them as <strong>Replit Secrets</strong> for permanent storage.
+        — for permanent storage, set them as environment variables in your deployment platform
+        (Render dashboard, Docker .env, or local backend/.env).
       </p>
 
       {/* Extraction mode banner */}
@@ -276,11 +277,11 @@ export function SettingsPage() {
           <Info size={16} color={colors.warning} style={{ flexShrink: 0, marginTop: 2 }} />
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: colors.warning }}>
-              Permanent Storage via Replit Secrets
+              Permanent Storage via Environment Variables
             </div>
             <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 10 }}>
-              For keys that survive server restarts, add them in the Replit <strong>Secrets</strong>{" "}
-              panel (lock icon in the sidebar) using these variable names:
+              For keys that survive server restarts, set them as environment variables in your
+              deployment platform (Render dashboard, Docker .env, or local backend/.env):
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {["ANTHROPIC_API_KEY", "GEMINI_API_KEY", "CEREBRAS_API_KEY", "GROQ_API_KEY"].map(

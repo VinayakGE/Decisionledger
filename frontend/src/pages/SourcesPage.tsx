@@ -115,7 +115,11 @@ export function SourcesPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 600, fontSize: 14 }}>{s.filename}</span>
+                  <span style={{ fontWeight: 600, fontSize: 14 }} title={s.filename}>
+                    {s.filename.length > 40
+                      ? s.filename.slice(0, 20) + "…" + s.filename.slice(-15)
+                      : s.filename}
+                  </span>
                   <span
                     style={{
                       fontSize: 11,

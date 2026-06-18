@@ -15,6 +15,13 @@ const STATUS_COLOR: Record<string, string> = {
   unknown: colors.muted,
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  open: "In Progress",
+  achieved: "Achieved",
+  abandoned: "Abandoned",
+  unknown: "Status Unknown",
+};
+
 export function GoalsPage() {
   const [sourceId, setSourceId] = useState<number | null>(null);
   const [minConfidence, setMinConfidence] = useState(0);
@@ -90,11 +97,12 @@ export function GoalsPage() {
                   fontSize: 11,
                   padding: "2px 8px",
                   borderRadius: 999,
+                  fontWeight: 600,
                   color: STATUS_COLOR[g.status] ?? colors.muted,
                   border: `1px solid ${STATUS_COLOR[g.status] ?? colors.muted}`,
                 }}
               >
-                {g.status}
+                {STATUS_LABEL[g.status] ?? g.status}
               </span>
               {g.frequency > 1 && (
                 <span style={{ fontSize: 11, color: colors.warning }}>×{g.frequency} mentions</span>

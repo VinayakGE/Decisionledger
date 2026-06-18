@@ -149,6 +149,49 @@
         }
       }
     },
+    "/entities/sources/{source_id}/reanalyze": {
+      "post": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Reanalyze Source",
+        "description": "Wipe existing entities for a source and re-run extraction in the background.",
+        "operationId": "reanalyze_source_entities_sources__source_id__reanalyze_post",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Source Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationSourceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/entities/decisions": {
       "get": {
         "tags": [
@@ -438,6 +481,67 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InsightReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Get Settings",
+        "operationId": "get_settings_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Update Settings",
+        "description": "Update API keys at runtime (in-memory; resets on server restart).\nFor permanent storage add them as Replit Secrets.",
+        "operationId": "update_settings_settings_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateKeysIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1077,6 +1181,29 @@
         ],
         "title": "OpenQuestionOut"
       },
+      "ProviderStatus": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "configured": {
+            "type": "boolean",
+            "title": "Configured"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "label",
+          "configured"
+        ],
+        "title": "ProviderStatus"
+      },
       "ReasonOut": {
         "properties": {
           "id": {
@@ -1125,6 +1252,82 @@
           "count"
         ],
         "title": "RecurringQuestionGroup"
+      },
+      "SettingsOut": {
+        "properties": {
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderStatus"
+            },
+            "type": "array",
+            "title": "Providers"
+          },
+          "heuristic_always_available": {
+            "type": "boolean",
+            "title": "Heuristic Always Available",
+            "default": true
+          },
+          "llm_enabled": {
+            "type": "boolean",
+            "title": "Llm Enabled",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "providers"
+        ],
+        "title": "SettingsOut"
+      },
+      "UpdateKeysIn": {
+        "properties": {
+          "anthropic_api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anthropic Api Key"
+          },
+          "gemini_api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gemini Api Key"
+          },
+          "cerebras_api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cerebras Api Key"
+          },
+          "groq_api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Groq Api Key"
+          }
+        },
+        "type": "object",
+        "title": "UpdateKeysIn"
       },
       "UploadResponse": {
         "properties": {

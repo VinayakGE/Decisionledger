@@ -50,12 +50,11 @@ _LLM_PROVIDERS = [
     GroqProvider(),
 ]
 _HEURISTIC = HeuristicProvider()
+_PROVIDERS = [*_LLM_PROVIDERS, _HEURISTIC] if _LLM_ENABLED else [_HEURISTIC]
 
 
 def _get_providers() -> List:
-    if _LLM_ENABLED:
-        return [*_LLM_PROVIDERS, _HEURISTIC]
-    return [_HEURISTIC]
+    return _PROVIDERS
 
 
 @dataclass

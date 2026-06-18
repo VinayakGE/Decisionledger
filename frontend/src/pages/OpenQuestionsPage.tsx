@@ -36,7 +36,7 @@ export function OpenQuestionsPage() {
     );
 
   return (
-    <PageShell title="Open Questions" count={visible.length}>
+    <PageShell title="Open Questions" count={visible.length} unit="questions">
       <FilterBar
         sources={sources ?? []}
         sourceId={sourceId}

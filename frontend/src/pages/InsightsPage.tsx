@@ -77,8 +77,8 @@ export function InsightsPage() {
         {(
           [
             ["Total Decisions", data.total_decisions, "/decisions"],
-            ["Open Questions", data.total_open_questions, "/open-questions"],
-            ["Action Items", data.total_action_items, "/action-items"],
+            ["Open Questions", data.total_open_questions, "/questions"],
+            ["Action Items", data.total_action_items, "/actions"],
           ] as [string, number, string][]
         ).map(([label, value, href]) => (
           <Link key={label} to={href} style={{ textDecoration: "none" }}>

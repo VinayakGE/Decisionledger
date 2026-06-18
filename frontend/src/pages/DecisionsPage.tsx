@@ -12,6 +12,7 @@ export function DecisionsPage() {
   const [sourceId, setSourceId] = useState<number | null>(null);
   const [minConfidence, setMinConfidence] = useState(0);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   const { data: sources } = useData(() => api.getSources());
   const {
@@ -60,10 +61,19 @@ export function DecisionsPage() {
       )}
 
       {visible.map((d) => (
-        <Card key={d.id} style={{ marginBottom: 12 }}>
+        <Card
+          key={d.id}
+          style={{
+            marginBottom: 12,
+            transition: "border-color 0.15s",
+            borderColor: hoveredCard === d.id ? colors.primary : undefined,
+          }}
+        >
           <div
             style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer" }}
             onClick={() => setExpanded(expanded === d.id ? null : d.id)}
+            onMouseEnter={() => setHoveredCard(d.id)}
+            onMouseLeave={() => setHoveredCard(null)}
           >
             <div style={{ marginTop: 2, color: colors.muted }}>
               {expanded === d.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -189,7 +199,7 @@ export function PageShell({
 }) {
   return (
     <div style={{ padding: "40px 32px", maxWidth: 820 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>
         {title}
         {count !== undefined && (
           <span style={{ fontSize: 14, fontWeight: 400, color: colors.muted, marginLeft: 10 }}>
@@ -203,7 +213,18 @@ export function PageShell({
 }
 
 export function Spinner() {
-  return <div style={{ color: colors.muted, fontSize: 14 }}>Loading…</div>;
+  return (
+    <div
+      style={{
+        width: 24,
+        height: 24,
+        border: `2px solid ${colors.border}`,
+        borderTopColor: colors.primary,
+        borderRadius: "50%",
+        animation: "spin 0.8s linear infinite",
+      }}
+    />
+  );
 }
 
 export function ErrorMsg({ msg }: { msg: string }) {

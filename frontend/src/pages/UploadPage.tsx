@@ -140,6 +140,9 @@ export function UploadPage() {
         }}
       >
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Upload file — drop here or click to browse"
           onDrop={onDrop}
           onDragOver={(e) => {
             e.preventDefault();
@@ -147,6 +150,12 @@ export function UploadPage() {
           }}
           onDragLeave={() => setDragOver(false)}
           onClick={() => inputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              inputRef.current?.click();
+            }
+          }}
         >
           <Upload size={40} color={colors.primary} style={{ margin: "0 auto 16px" }} />
           <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
@@ -173,7 +182,6 @@ export function UploadPage() {
             style={{ animation: "spin 1s linear infinite" }}
           />
           <span style={{ fontSize: 14 }}>Uploading and parsing…</span>
-          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </Card>
       )}
 
@@ -191,7 +199,6 @@ export function UploadPage() {
             Analysing <strong>{state.filename}</strong> with AI. This usually takes 10–60 seconds
             depending on file size.
           </p>
-          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </Card>
       )}
 
@@ -201,22 +208,22 @@ export function UploadPage() {
             <CheckCircle size={20} color={colors.success} />
             <span style={{ fontWeight: 600 }}>Extraction complete</span>
             {result.extraction_status === "heuristic_fallback" && (
-              <StatusBadge color="#92400E" bg="#FEF3C7">
+              <StatusBadge color={colors.warning} bg={`${colors.warning}1a`}>
                 Heuristic fallback
               </StatusBadge>
             )}
             {result.extraction_status === "completed_with_fallback" && (
-              <StatusBadge color="#065F46" bg="#D1FAE5">
+              <StatusBadge color={colors.success} bg={`${colors.success}1a`}>
                 Completed with fallback
               </StatusBadge>
             )}
             {result.extraction_status === "partial" && (
-              <StatusBadge color="#92400E" bg="#FEF3C7">
+              <StatusBadge color={colors.warning} bg={`${colors.warning}1a`}>
                 Partial
               </StatusBadge>
             )}
             {result.extraction_status === "failed" && (
-              <StatusBadge color="#991B1B" bg="#FEE2E2">
+              <StatusBadge color={colors.danger} bg={`${colors.danger}1a`}>
                 Extraction failed
               </StatusBadge>
             )}

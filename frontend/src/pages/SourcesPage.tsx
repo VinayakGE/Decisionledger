@@ -8,20 +8,29 @@ import { Trash2, RefreshCw } from "lucide-react";
 
 const STATUS_COLOR: Record<string, string> = {
   completed: colors.success,
-  heuristic_fallback: "#92400E",
+  heuristic_fallback: colors.warning,
   completed_with_fallback: colors.success,
-  partial: "#92400E",
+  partial: colors.warning,
   failed: colors.danger,
   pending: colors.muted,
 };
 
 const STATUS_BG: Record<string, string> = {
-  completed: "#D1FAE5",
-  heuristic_fallback: "#FEF3C7",
-  completed_with_fallback: "#D1FAE5",
-  partial: "#FEF3C7",
-  failed: "#FEE2E2",
-  pending: "#F3F4F6",
+  completed: `${colors.success}1a`,
+  heuristic_fallback: `${colors.warning}1a`,
+  completed_with_fallback: `${colors.success}1a`,
+  partial: `${colors.warning}1a`,
+  failed: `${colors.danger}1a`,
+  pending: `${colors.muted}1a`,
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  completed: "Completed",
+  heuristic_fallback: "Heuristic fallback",
+  completed_with_fallback: "Completed (with fallback)",
+  partial: "Partial",
+  failed: "Failed",
+  pending: "Pending",
 };
 
 export function SourcesPage() {
@@ -111,7 +120,7 @@ export function SourcesPage() {
                       fontWeight: 600,
                       borderRadius: 4,
                       padding: "2px 8px",
-                      background: STATUS_BG[status] ?? "#F3F4F6",
+                      background: STATUS_BG[status] ?? `${colors.muted}1a`,
                       color: STATUS_COLOR[status] ?? colors.muted,
                       display: "flex",
                       alignItems: "center",
@@ -131,7 +140,7 @@ export function SourcesPage() {
                         }}
                       />
                     )}
-                    {status}
+                    {STATUS_LABEL[status] ?? status}
                   </span>
                   <span style={{ fontSize: 11, color: colors.muted }}>
                     {s.source_type.toUpperCase()}
@@ -207,14 +216,13 @@ export function SourcesPage() {
           </Card>
         );
       })}
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </Shell>
   );
 }
 
 function Shell({ children, count }: { children: React.ReactNode; count?: number }) {
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 24px" }}>
+    <div style={{ maxWidth: 820, margin: "0 auto", padding: "40px 24px" }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Sources</h1>
         {count != null && (
@@ -230,18 +238,15 @@ function Shell({ children, count }: { children: React.ReactNode; count?: number 
 
 function Spinner() {
   return (
-    <>
-      <div
-        style={{
-          width: 24,
-          height: 24,
-          border: `2px solid ${colors.border}`,
-          borderTopColor: colors.primary,
-          borderRadius: "50%",
-          animation: "spin 0.8s linear infinite",
-        }}
-      />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-    </>
+    <div
+      style={{
+        width: 24,
+        height: 24,
+        border: `2px solid ${colors.border}`,
+        borderTopColor: colors.primary,
+        borderRadius: "50%",
+        animation: "spin 0.8s linear infinite",
+      }}
+    />
   );
 }

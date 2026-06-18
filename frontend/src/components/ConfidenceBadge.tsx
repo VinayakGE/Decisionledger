@@ -21,7 +21,7 @@ export function ConfidenceBadge({ value }: Props) {
         whiteSpace: "nowrap",
       }}
     >
-      {pct}% conf
+      {pct}%
     </span>
   );
 }

@@ -17,6 +17,20 @@ from app.models.orm import (
 )
 
 
+_JUNK_DESCRIPTIONS = {"unknown", "n/a", "none", "null", "tbd", ""}
+
+def _is_quality(e: Dict[str, Any]) -> bool:
+    """Return False for low-quality entities that should not be persisted."""
+    desc = (e.get("description") or "").strip()
+    if desc.lower() in _JUNK_DESCRIPTIONS:
+        return False
+    if len(desc) < 12:
+        return False
+    if _clamp(e.get("confidence", 0.0)) < 0.35:
+        return False
+    return True
+
+
 def persist_entities(
     db: Session,
     entities: List[Dict[str, Any]],
@@ -30,6 +44,11 @@ def persist_entities(
     for e in entities:
         if e.get("type") != "decision":
             continue
+        title = (e.get("title") or "").strip()
+        if not title or title.lower() in _JUNK_DESCRIPTIONS or len(title) < 5:
+            continue
+        if _clamp(e.get("confidence", 0.0)) < 0.35:
+            continue
         d = _make_decision(e, source_id)
         db.add(d)
         db.flush()
@@ -39,6 +58,9 @@ def persist_entities(
     for e in entities:
         entity_type = e.get("type")
         if entity_type == "decision":
+            continue
+
+        if not _is_quality(e):
             continue
 
         linked_id = _resolve_link(e, decision_map)

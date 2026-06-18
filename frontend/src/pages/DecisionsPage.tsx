@@ -10,7 +10,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 
 export function DecisionsPage() {
   const [sourceId, setSourceId] = useState<number | null>(null);
-  const [minConfidence, setMinConfidence] = useState(0);
+  const [minConfidence, setMinConfidence] = useState(0.5);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 

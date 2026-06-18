@@ -110,8 +110,24 @@ export function SourcesPage() {
         const status = s.extraction_status ?? "unknown";
         const isPending = !TERMINAL_STATUSES.has(status);
         const isBusy = deleting === s.id || reanalyzing === s.id || isPending;
+        const lowQuality =
+          s.provider_used === "heuristic" ||
+          (s.extraction_confidence_avg != null && s.extraction_confidence_avg < 0.55);
         return (
           <Card key={s.id} style={{ marginBottom: 12 }}>
+            {lowQuality && !isPending && (
+              <div style={{
+                fontSize: 12,
+                color: colors.warning,
+                background: `${colors.warning}18`,
+                border: `1px solid ${colors.warning}44`,
+                borderRadius: 6,
+                padding: "6px 10px",
+                marginBottom: 10,
+              }}>
+                ⚠️ Low confidence extraction — AI provider may not have been available. Try <strong>Re-analyze</strong> to improve quality.
+              </div>
+            )}
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>

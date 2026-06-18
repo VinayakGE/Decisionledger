@@ -199,9 +199,9 @@ def _find_decision_reversals_heuristic(decisions: List[Decision]) -> List[Decisi
                 used.add((i, j))
                 reversals.append(
                     DecisionReversal(
-                        decision_a=DecisionOut.model_validate(d1),
-                        decision_b=DecisionOut.model_validate(d2),
-                        similarity_score=round(overlap, 3),
+                        original=DecisionOut.model_validate(d1),
+                        reversal=DecisionOut.model_validate(d2),
+                        similarity=round(overlap, 3),
                     )
                 )
     return reversals

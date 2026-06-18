@@ -1,7 +1,7 @@
 """Rule-based heuristic provider — zero-dependency fallback when all API providers fail.
 
-Uses regex patterns to extract entities from conversation text.
-Lower recall than LLM-based providers but always available.
+Conservative by design: better to return nothing than to return noise.
+Only extracts entities when strong signal patterns are present.
 """
 
 import json
@@ -15,50 +15,52 @@ from app.parsers.base import Conversation
 logger = logging.getLogger(__name__)
 
 MAX_CHARS = 800_000
+MIN_DESC_LEN = 20  # Minimum meaningful description length
 
-# Patterns per entity type: (regex, label)
+# High-signal patterns only — require explicit commitment language
 _DECISION_PATTERNS = [
-    r"(?:we|i|team)(?:'ve|'ll)?\s+(?:decided|agreed|resolved|chosen|going)\s+to\s+([^.!?\n]{10,120})",
-    r"decision(?:\s+is)?:\s*([^.\n]{10,120})",
-    r"(?:will|shall)\s+(?:go\s+with|use|adopt|implement|hire|not\s+hire)\s+([^.!?\n]{5,100})",
-    r"(?:no\s+longer|stop(?:ping)?|dropping|cutting)\s+([^.!?\n]{5,80})",
+    r"(?:we|i|the\s+team)\s+(?:have\s+)?decided\s+to\s+([^.!?\n]{20,150})",
+    r"(?:we|i)\s+(?:are\s+going|will\s+go)\s+with\s+([^.!?\n]{15,120})",
+    r"(?:we've|we\s+have)\s+agreed\s+to\s+([^.!?\n]{15,120})",
+    r"(?:the\s+)?decision\s+is\s+(?:to\s+)?([^.!\n]{20,150})",
+    r"(?:we're|we\s+are)\s+(?:going\s+to|committing\s+to)\s+([^.!?\n]{15,120})",
 ]
 
 _GOAL_PATTERNS = [
-    r"(?:goal|target|aim|objective|want)\s+(?:is\s+)?(?:to\s+)?([^.!?\n]{10,120})",
-    r"(?:reach|achieve|get\s+to|grow\s+to)\s+([^.!?\n]{5,80})",
-    r"(?:by|before)\s+(?:end\s+of\s+)?(?:Q[1-4]|january|february|march|april|may|june|july|august|september|october|november|december)[^,.\n]*,\s+([^.!\n]{5,80})",
+    r"(?:our\s+)?(?:goal|target|objective)\s+is\s+(?:to\s+)?([^.!?\n]{20,150})",
+    r"(?:we\s+(?:want|need)\s+to\s+(?:reach|hit|achieve|get\s+to))\s+([^.!?\n]{15,120})",
+    r"(?:aiming|targeting)\s+(?:for\s+)?([^.!?\n]{15,100})\s+by\s+(?:end\s+of\s+)?(?:Q[1-4]|\d{4}|january|february|march|april|may|june|july|august|september|october|november|december)",
 ]
 
 _ACTION_PATTERNS = [
-    r"(?:action|todo|task|next\s+step)s?(?:\s+items?)?[:\-]\s*([^.\n]{5,100})",
-    r"(?:\w+)\s+(?:will|must|needs?\s+to|should)\s+([^.!?\n]{5,100})\s+(?:by|before|this\s+week|today|tomorrow)",
-    r"(?:follow[\s-]up|deliverable)[:\s]+([^.\n]{5,100})",
+    r"(?:i|we|[\w]+)\s+(?:will|must|need\s+to)\s+([^.!?\n]{20,120})\s+(?:by|before|this\s+week|next\s+week|by\s+(?:monday|tuesday|wednesday|thursday|friday))",
+    r"(?:action\s+item|next\s+step|todo)[:\s]+([^.\n]{20,120})",
+    r"(?:i'll|i\s+will)\s+([^.!?\n]{20,100})\s+(?:by|before|this\s+week|today|tomorrow)",
 ]
 
 _CONSTRAINT_PATTERNS = [
-    r"(?:constraint|limit|budget|runway|deadline|blocker)[:\s]+([^.\n]{5,120})",
-    r"(?:only|just)\s+(?:\d+\s+)?(?:months?|weeks?|days?)\s+(?:of\s+)?runway",
-    r"(?:can't|cannot|won't|not\s+able\s+to)\s+([^.!?\n]{5,80})",
-    r"\$[\d,]+[km]?\s+(?:burn|runway|budget|ARR|MRR)",
+    r"(?:we\s+(?:only\s+have|have\s+only))\s+([^.!\n]{15,100})\s+(?:runway|months?|weeks?|budget)",
+    r"(?:hard\s+(?:constraint|limit|deadline|requirement))[:\s]+([^.\n]{15,120})",
+    r"(?:we\s+(?:can't|cannot|won't))\s+([^.!?\n]{15,100})\s+(?:because|due\s+to|until)",
+    r"\$[\d,]+[km]?\s+(?:total\s+)?(?:burn|runway|budget|ARR|MRR)[^.!?\n]{0,80}",
 ]
 
 _EVIDENCE_PATTERNS = [
-    r"(?:customer|user|data|research|study|survey|pilot)\s+(?:said|showed?|found|confirmed|indicated)\s+([^.!?\n]{10,120})",
-    r"(?:\d+)\s+(?:customers?|users?|clients?)\s+(?:said|mentioned|reported|confirmed)\s+([^.!?\n]{10,120})",
-    r"(?:according\s+to|based\s+on)\s+([^,.\n]{5,100})",
+    r"(\d+)\s+(?:of\s+(?:our\s+)?)?(?:customers?|users?|clients?|pilots?)\s+(?:said|mentioned|confirmed|reported)\s+([^.!?\n]{15,150})",
+    r"(?:the\s+data\s+shows?|data\s+shows?|research\s+shows?)\s+(?:that\s+)?([^.!?\n]{20,150})",
+    r"(?:in\s+our\s+)?(?:pilot|survey|research|interviews?)[,:\s]+(?:we\s+found\s+that\s+)?([^.!?\n]{20,150})",
 ]
 
 _QUESTION_PATTERNS = [
-    r"(?:question|wondering|unsure|unclear|open)[:\s]+([^.?\n]{10,120}\??)",
-    r"(?:should\s+we|do\s+we|when\s+should|how\s+do\s+we|what\s+(?:is|are|should))[^.!?\n]{10,100}\?",
-    r"(?:not\s+(?:sure|certain|clear))\s+(?:about|whether|if)\s+([^.!\n]{10,100})",
+    r"(?:open\s+question|key\s+question|big\s+question|main\s+question)[:\s]+([^.?\n]{20,150}\??)",
+    r"(?:still\s+(?:unclear|unsure|undecided|open))[:\s]+(?:whether\s+|how\s+|what\s+|when\s+)?([^.!\n]{20,120})",
+    r"(?:we\s+(?:haven't|have\s+not)\s+(?:decided|figured\s+out|determined))\s+([^.!?\n]{20,120})",
 ]
 
 _REASON_PATTERNS = [
-    r"(?:because|since|as|given\s+that|due\s+to)\s+([^.!?\n]{10,120})",
-    r"(?:reason|rationale|why)[:\s]+([^.\n]{10,120})",
-    r"(?:this\s+(?:makes?|is)\s+(?:sense|better|right))\s+(?:because|since)\s+([^.!\n]{10,100})",
+    r"(?:we\s+decided\s+[^.!?\n]{5,50})\s+because\s+([^.!?\n]{20,150})",
+    r"(?:the\s+reason\s+(?:we|for\s+this)\s+(?:is|was))[:\s]+([^.\n]{20,150})",
+    r"(?:this\s+makes\s+sense\s+because)\s+([^.!\n]{20,120})",
 ]
 
 
@@ -67,22 +69,24 @@ def _extract_matches(text: str, patterns: List[str], entity_type: str) -> List[D
     seen = set()
     for pat in patterns:
         for m in re.finditer(pat, text, re.IGNORECASE):
-            snippet = m.group(0).strip()
-            desc = (m.group(1) if m.lastindex and m.lastindex >= 1 else snippet).strip()
+            # Use the last capture group if available, otherwise full match
+            if m.lastindex and m.lastindex >= 1:
+                desc = m.group(m.lastindex).strip()
+            else:
+                desc = m.group(0).strip()
             desc = re.sub(r"\s+", " ", desc)[:200]
-            key = desc.lower()[:60]
-            if key in seen or len(desc) < 8:
+            key = desc.lower()[:80]
+            if key in seen or len(desc) < MIN_DESC_LEN:
                 continue
             seen.add(key)
-            entities.append(
-                {
-                    "type": entity_type,
-                    "description": desc,
-                    "confidence": 0.45,
-                    "snippet": snippet[:300],
-                    "linked_to": None,
-                }
-            )
+            snippet = m.group(0).strip()[:200]
+            entities.append({
+                "type": entity_type,
+                "description": desc,
+                "confidence": 0.52,  # Honest: heuristic is low-confidence
+                "supporting_snippet": snippet,
+                "linked_to": None,
+            })
     return entities
 
 
@@ -101,13 +105,12 @@ class HeuristicProvider(ExtractionProvider):
         entities += _extract_matches(text, _QUESTION_PATTERNS, "open_question")
         entities += _extract_matches(text, _REASON_PATTERNS, "reason")
 
-        # Derive a minimal conversation name and behavioral pattern
         title = conv.title or "Conversation"
-        pattern = f"Rule-based extraction from '{title}' — {len(entities)} entities found via pattern matching."
+        quality_note = f"Heuristic extraction from '{title}' — {len(entities)} entities found. Confidence is approximate; verify against source."
 
         result = {
             "conversation_name": title,
-            "behavioral_pattern": pattern,
+            "behavioral_pattern": quality_note,
             "entities": entities,
         }
         return {"raw": json.dumps(result), "provider": self.name}

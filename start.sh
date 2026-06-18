@@ -10,12 +10,16 @@ npm install --silent
 npm run build
 cd ..
 
-# ── Backend setup ──────────────────────────────────────────────────────────────
-echo "[2/3] Setting up backend..."
-mkdir -p /home/runner/workspace/uploads
-export UPLOAD_DIR=/home/runner/workspace/uploads
+# ── Backend dependencies ───────────────────────────────────────────────────────
+echo "[2/3] Installing backend dependencies..."
+cd backend
+pip install -r requirements.txt -q
+
+# Create upload directory
+mkdir -p /tmp/uploads
+export UPLOAD_DIR=/tmp/uploads
 
 # ── Start server ───────────────────────────────────────────────────────────────
-echo "[3/3] Starting server on port 8000..."
-cd backend
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+PORT=${PORT:-8000}
+echo "[3/3] Starting server on port $PORT..."
+exec uvicorn app.main:app --host 0.0.0.0 --port "$PORT"

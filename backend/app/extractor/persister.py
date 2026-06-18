@@ -18,7 +18,6 @@ from app.models.orm import (
     Reason,
 )
 
-
 _JUNK_DESCRIPTIONS = {"unknown", "n/a", "none", "null", "tbd", ""}
 
 def _is_quality(e: Dict[str, Any]) -> bool:

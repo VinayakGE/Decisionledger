@@ -1,5 +1,6 @@
 """Insight engine — generates meta-analysis over stored entities."""
 
+import json
 import logging
 from collections import defaultdict
 from typing import List, Optional
@@ -7,8 +8,6 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.config import settings
-import json
-
 from app.models.orm import ActionItem, ConversationSource, Decision, Goal, OpenQuestion
 from app.models.schemas import (
     BehavioralNote,

@@ -54,14 +54,32 @@ export function NeuralBackground() {
     const nodes = createNodes();
     let frame = 0;
     let raf = 0;
+    const shouldReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let backgroundGradient: CanvasGradient | null = null;
 
     const setSize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
       const dpr = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO);
-      canvas.width = Math.floor(window.innerWidth * dpr);
-      canvas.height = Math.floor(window.innerHeight * dpr);
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const cx = width / 2;
+      const cy = height / 2;
+      backgroundGradient = ctx.createRadialGradient(
+        cx,
+        cy,
+        120,
+        cx,
+        cy,
+        Math.max(width, height) * 0.75
+      );
+      backgroundGradient.addColorStop(0, GRADIENT_CENTER_COLOR);
+      backgroundGradient.addColorStop(0.45, colors.bg);
+      backgroundGradient.addColorStop(1, GRADIENT_EDGE_COLOR);
     };
 
     const render = () => {
@@ -72,18 +90,7 @@ export function NeuralBackground() {
       const cy = height / 2;
       const projected: Array<{ x: number; y: number; alpha: number; size: number }> = [];
 
-      const gradient = ctx.createRadialGradient(
-        cx,
-        cy,
-        120,
-        cx,
-        cy,
-        Math.max(width, height) * 0.75
-      );
-      gradient.addColorStop(0, GRADIENT_CENTER_COLOR);
-      gradient.addColorStop(0.45, colors.bg);
-      gradient.addColorStop(1, GRADIENT_EDGE_COLOR);
-      ctx.fillStyle = gradient;
+      ctx.fillStyle = backgroundGradient ?? colors.bg;
       ctx.fillRect(0, 0, width, height);
 
       for (const node of nodes) {
@@ -130,8 +137,9 @@ export function NeuralBackground() {
         ctx.fill();
       }
 
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (!reduceMotion) raf = requestAnimationFrame(render);
+      if (!shouldReduceMotion) {
+        raf = requestAnimationFrame(render);
+      }
     };
 
     setSize();

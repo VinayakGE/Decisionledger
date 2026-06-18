@@ -70,7 +70,7 @@ def generate_insights(db: Session) -> InsightReport:
     return InsightReport(
         recurring_questions=recurring,
         decision_reversals=reversals,
-        top_goals=[GoalOut.model_validate(g) for g in top_goals[:10]],
+        top_goals=[GoalOut.model_validate(g) for g in top_goals[:10] if g.description],
         blind_spots=blind_spots,
         total_decisions=len(decisions),
         total_open_questions=len(questions),
@@ -154,7 +154,7 @@ def _find_decision_reversals(decisions: List[Decision]) -> List[DecisionReversal
     model = _get_model()
 
     if model is None or not _ST_AVAILABLE:
-        return []
+        return _find_decision_reversals_heuristic(decisions)
 
     embeddings = model.encode(texts, show_progress_bar=False)
     threshold = settings.similarity_threshold
@@ -180,6 +180,30 @@ def _find_decision_reversals(decisions: List[Decision]) -> List[DecisionReversal
                     )
                     used.add((i, j))
 
+    return reversals
+
+
+def _find_decision_reversals_heuristic(decisions: List[Decision]) -> List[DecisionReversal]:
+    """Word-overlap fallback for when SentenceTransformer is unavailable."""
+    reversals = []
+    used = set()
+    for i, d1 in enumerate(decisions):
+        words_i = set((f"{d1.title} {d1.description or ''}").lower().split())
+        for j in range(i + 1, len(decisions)):
+            if (i, j) in used:
+                continue
+            d2 = decisions[j]
+            words_j = set((f"{d2.title} {d2.description or ''}").lower().split())
+            overlap = len(words_i & words_j) / max(len(words_i | words_j), 1)
+            if overlap >= 0.5:
+                used.add((i, j))
+                reversals.append(
+                    DecisionReversal(
+                        decision_a=DecisionOut.model_validate(d1),
+                        decision_b=DecisionOut.model_validate(d2),
+                        similarity_score=round(overlap, 3),
+                    )
+                )
     return reversals
 
 

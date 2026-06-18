@@ -179,7 +179,7 @@ def analyse_conversation(conv: Conversation) -> Optional[ConversationAnalysis]:
                 source_title=conv.title,
                 fallback_chain=chain,
             )
-        except RuntimeError as e:
+        except Exception as e:
             last_error = e
             chain.append({"provider": provider.name, "status": "failed", "error": str(e)[:120]})
             logger.warning("Provider '%s' failed: %s — trying next.", provider.name, e)

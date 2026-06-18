@@ -6,7 +6,7 @@ import { Card } from "../components/Card";
 import { PageShell, Spinner, ErrorMsg } from "./DecisionsPage";
 import { colors } from "../lib/styles";
 import { ConfidenceBadge } from "../components/ConfidenceBadge";
-import { RefreshCcw, Eye, RotateCcw, HelpCircle, Target, AlertOctagon } from "lucide-react";
+import { RefreshCcw, Eye, RotateCcw, HelpCircle, Target, AlertOctagon, Brain } from "lucide-react";
 
 export function InsightsPage() {
   const { data, loading, error, reload } = useData(() => api.getInsights());
@@ -32,7 +32,8 @@ export function InsightsPage() {
     !data.recurring_questions.length &&
     !data.decision_reversals.length &&
     !data.top_goals.length &&
-    !data.blind_spots.length;
+    !data.blind_spots.length &&
+    !(data.behavioral_notes ?? []).length;
 
   return (
     <div style={{ padding: "40px 32px", maxWidth: 900 }}>
@@ -75,15 +76,18 @@ export function InsightsPage() {
       >
         {(
           [
-            ["Total Decisions", data.total_decisions],
-            ["Open Questions", data.total_open_questions],
-            ["Action Items", data.total_action_items],
-          ] as [string, number][]
-        ).map(([label, value]) => (
-          <Card key={label}>
-            <div style={{ fontSize: 11, color: colors.muted, marginBottom: 6 }}>{label}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: colors.primary }}>{value}</div>
-          </Card>
+            ["Total Decisions", data.total_decisions, "/decisions"],
+            ["Open Questions", data.total_open_questions, "/questions"],
+            ["Action Items", data.total_action_items, "/actions"],
+          ] as [string, number, string][]
+        ).map(([label, value, href]) => (
+          <Link key={label} to={href} style={{ textDecoration: "none" }}>
+            <Card style={{ cursor: "pointer", transition: "border-color 0.15s" }}>
+              <div style={{ fontSize: 11, color: colors.muted, marginBottom: 6 }}>{label}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: colors.primary }}>{value}</div>
+              <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>View all →</div>
+            </Card>
+          </Link>
         ))}
       </div>
 
@@ -97,6 +101,41 @@ export function InsightsPage() {
             Upload a conversation to begin analysis →
           </Link>
         </div>
+      )}
+
+      {/* Behavioral Patterns */}
+      {(data.behavioral_notes ?? []).length > 0 && (
+        <Section icon={<Brain size={18} color={colors.primary} />} title="Decision-Making Patterns">
+          <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
+            How decisions are being made — patterns observed across your conversations by AI
+            analysis.
+          </p>
+          {(data.behavioral_notes ?? []).map((note, i) => (
+            <Card key={i} style={{ marginBottom: 10 }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: colors.primary,
+                    flexShrink: 0,
+                    marginTop: 7,
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 14, margin: "0 0 4px", lineHeight: 1.5 }}>{note.pattern}</p>
+                  <span style={{ fontSize: 11, color: colors.muted }}>
+                    from:{" "}
+                    {note.source_filename.length > 40
+                      ? note.source_filename.slice(0, 20) + "…" + note.source_filename.slice(-15)
+                      : note.source_filename}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </Section>
       )}
 
       {/* Recurring Questions */}

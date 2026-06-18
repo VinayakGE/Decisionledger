@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Upload,
-  FileText,
   CheckCircle,
   AlertCircle,
   Loader,
@@ -78,11 +77,10 @@ export function UploadPage() {
 
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 24px" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Upload Conversations</h1>
-      <p style={{ color: colors.textSecondary, marginBottom: 24, fontSize: 14 }}>
-        Upload a ChatGPT or Claude export (ZIP or JSON), Markdown, or plain text file. Entities are
-        extracted using your configured AI provider — or the local heuristic fallback if no keys are
-        set.
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Analyse Your Conversations</h1>
+      <p style={{ color: colors.textSecondary, marginBottom: 24, fontSize: 14, lineHeight: 1.6 }}>
+        Upload a ChatGPT or Claude export and get an instant intelligence report — decisions made,
+        goals tracked, open questions, action items, and patterns in how you think.
       </p>
 
       {/* Provider banner */}
@@ -258,9 +256,9 @@ export function UploadPage() {
               </div>
             ))}
           </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+          <div style={{ display: "flex", gap: 12, marginTop: 20, flexWrap: "wrap" }}>
             <button
-              onClick={() => navigate("/decisions")}
+              onClick={() => navigate("/insights")}
               style={{
                 background: colors.primary,
                 color: "#fff",
@@ -272,10 +270,10 @@ export function UploadPage() {
                 fontSize: 14,
               }}
             >
-              View Decisions
+              View Insight Report →
             </button>
             <button
-              onClick={() => navigate("/insights")}
+              onClick={() => navigate("/decisions")}
               style={{
                 background: "transparent",
                 color: colors.primary,
@@ -287,7 +285,7 @@ export function UploadPage() {
                 fontSize: 14,
               }}
             >
-              View Insights
+              Browse Decisions
             </button>
             <button
               onClick={() => setState({ type: "idle" })}
@@ -337,26 +335,49 @@ export function UploadPage() {
 
       <Card style={{ marginTop: 32 }}>
         <div
-          style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: colors.textSecondary }}
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            marginBottom: 14,
+            color: colors.text,
+            letterSpacing: 0.3,
+          }}
         >
-          HOW TO EXPORT YOUR CONVERSATIONS
+          How to export your conversations
         </div>
-        {[
-          ["ChatGPT ZIP", "Settings → Data Controls → Export Data → upload the .zip directly"],
-          ["Claude ZIP", "claude.ai → Settings → Export Data → upload the .zip directly"],
-          ["ChatGPT JSON", "Extract conversations.json from the ChatGPT export zip"],
-          ["Claude JSON", "Extract conversations.json from the Claude export zip"],
-          ["Markdown", "Any .md file with **User:** / **Assistant:** speaker labels"],
-          ["Plain text", "Any .txt file with notes, decisions, or meeting transcripts"],
-        ].map(([src, hint]) => (
-          <div key={String(src)} style={{ display: "flex", gap: 12, marginBottom: 10 }}>
-            <FileText size={14} color={colors.muted} style={{ flexShrink: 0, marginTop: 2 }} />
-            <div>
-              <span style={{ fontWeight: 600, fontSize: 13 }}>{src}: </span>
-              <span style={{ fontSize: 13, color: colors.textSecondary }}>{hint}</span>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+          {[
+            ["ChatGPT export", "Settings → Data Controls → Export Data → upload .zip"],
+            ["Claude export", "claude.ai → Settings → Export Data → upload .zip"],
+            ["Markdown", ".md file with **User:** / **Assistant:** labels"],
+            ["Plain text", ".txt notes, decisions, or meeting transcripts"],
+          ].map(([src, hint]) => (
+            <div
+              key={String(src)}
+              style={{ background: colors.bg, borderRadius: 8, padding: "10px 12px" }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 3 }}>{src}</div>
+              <div style={{ fontSize: 12, color: colors.muted, lineHeight: 1.4 }}>{hint}</div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 12,
+            color: colors.muted,
+            borderTop: `1px solid ${colors.border}`,
+            paddingTop: 12,
+          }}
+        >
+          <span>🔒</span>
+          <span>
+            Your files are processed locally and sent only to your configured AI provider for
+            extraction. Nothing is stored remotely.
+          </span>
+        </div>
       </Card>
     </div>
   );

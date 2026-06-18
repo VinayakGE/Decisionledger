@@ -49,7 +49,7 @@ export function GoalsPage() {
     );
 
   return (
-    <PageShell title="Goals" count={visible.length}>
+    <PageShell title="Goals" count={visible.length} unit="goals">
       <FilterBar
         sources={sources ?? []}
         sourceId={sourceId}

@@ -36,7 +36,7 @@ export function ConstraintsPage() {
     );
 
   return (
-    <PageShell title="Constraints" count={visible.length}>
+    <PageShell title="Constraints" count={visible.length} unit="constraints">
       <FilterBar
         sources={sources ?? []}
         sourceId={sourceId}
@@ -82,8 +82,20 @@ export function ConstraintsPage() {
               <ConfidenceBadge value={c.confidence} />
             </div>
             {c.supporting_snippet && (
-              <p style={{ fontSize: 12, color: colors.muted, fontStyle: "italic", margin: 0 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: colors.muted,
+                  fontStyle: "italic",
+                  margin: "0 0 4px",
+                }}
+              >
                 "{c.supporting_snippet}"
+              </p>
+            )}
+            {c.source_reference && (
+              <p style={{ fontSize: 11, color: colors.muted, margin: 0 }}>
+                From: {c.source_reference}
               </p>
             )}
           </div>

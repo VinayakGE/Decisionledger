@@ -37,7 +37,7 @@ export function DecisionsPage() {
     );
 
   return (
-    <PageShell title="Decisions" count={visible.length}>
+    <PageShell title="Decisions" count={visible.length} unit="decisions">
       <FilterBar
         sources={sources ?? []}
         sourceId={sourceId}
@@ -99,6 +99,36 @@ export function DecisionsPage() {
                 >
                   {d.description}
                 </p>
+              )}
+              {(d.reasons.length > 0 || d.evidence.length > 0) && expanded !== d.id && (
+                <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                  {d.reasons.length > 0 && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: colors.primary,
+                        background: `${colors.primary}18`,
+                        borderRadius: 4,
+                        padding: "2px 7px",
+                      }}
+                    >
+                      {d.reasons.length} reason{d.reasons.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                  {d.evidence.length > 0 && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: colors.success,
+                        background: `${colors.success}18`,
+                        borderRadius: 4,
+                        padding: "2px 7px",
+                      }}
+                    >
+                      {d.evidence.length} evidence
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -191,19 +221,22 @@ function EmptyState({ message, showUploadLink }: { message: string; showUploadLi
 export function PageShell({
   title,
   count,
+  unit,
   children,
 }: {
   title: string;
   count?: number;
+  unit?: string;
   children: React.ReactNode;
 }) {
+  const label = unit ?? "items";
   return (
     <div style={{ padding: "40px 32px", maxWidth: 820 }}>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>
         {title}
         {count !== undefined && (
           <span style={{ fontSize: 14, fontWeight: 400, color: colors.muted, marginLeft: 10 }}>
-            {count} items
+            {count} {count === 1 ? label.replace(/s$/, "") : label}
           </span>
         )}
       </h1>

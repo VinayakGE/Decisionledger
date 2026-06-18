@@ -246,6 +246,13 @@ export interface components {
          * @enum {string}
          */
         ActionStatus: "pending" | "done" | "cancelled" | "unknown";
+        /** BehavioralNote */
+        BehavioralNote: {
+            /** Pattern */
+            pattern: string;
+            /** Source Filename */
+            source_filename: string;
+        };
         /** BlindSpot */
         BlindSpot: {
             /** Topic */
@@ -396,6 +403,11 @@ export interface components {
             top_goals: components["schemas"]["GoalOut"][];
             /** Blind Spots */
             blind_spots: components["schemas"]["BlindSpot"][];
+            /**
+             * Behavioral Notes
+             * @default []
+             */
+            behavioral_notes: components["schemas"]["BehavioralNote"][];
             /** Total Decisions */
             total_decisions: number;
             /** Total Open Questions */

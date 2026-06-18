@@ -7,7 +7,14 @@ import { ConfidenceBadge } from "../components/ConfidenceBadge";
 import { FilterBar } from "../components/FilterBar";
 import { PageShell, Spinner, ErrorMsg } from "./DecisionsPage";
 import { colors } from "../lib/styles";
-import { CheckSquare, Square } from "lucide-react";
+import { CheckSquare, Square, XCircle } from "lucide-react";
+
+const STATUS_LABEL: Record<string, string> = {
+  done: "Done",
+  pending: "Pending",
+  cancelled: "Cancelled",
+  unknown: "Open",
+};
 
 export function ActionItemsPage() {
   const [sourceId, setSourceId] = useState<number | null>(null);
@@ -36,7 +43,7 @@ export function ActionItemsPage() {
     );
 
   return (
-    <PageShell title="Action Items" count={visible.length}>
+    <PageShell title="Action Items" count={visible.length} unit="items">
       <FilterBar
         sources={sources ?? []}
         sourceId={sourceId}
@@ -62,48 +69,68 @@ export function ActionItemsPage() {
         </div>
       )}
 
-      {visible.map((item) => (
-        <Card
-          key={item.id}
-          style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}
-        >
-          {item.status === "done" ? (
-            <CheckSquare size={16} color={colors.success} style={{ flexShrink: 0, marginTop: 2 }} />
-          ) : (
-            <Square size={16} color={colors.muted} style={{ flexShrink: 0, marginTop: 2 }} />
-          )}
-          <div style={{ flex: 1 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                flexWrap: "wrap",
-                marginBottom: 4,
-              }}
-            >
-              <span style={{ fontSize: 14 }}>{item.description}</span>
-              <ConfidenceBadge value={item.confidence} />
-              <span
+      {visible.map((item) => {
+        const statusColor =
+          item.status === "done"
+            ? colors.success
+            : item.status === "cancelled"
+              ? colors.danger
+              : colors.muted;
+        return (
+          <Card
+            key={item.id}
+            style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}
+          >
+            {item.status === "done" ? (
+              <CheckSquare
+                size={16}
+                color={colors.success}
+                style={{ flexShrink: 0, marginTop: 2 }}
+              />
+            ) : item.status === "cancelled" ? (
+              <XCircle size={16} color={colors.danger} style={{ flexShrink: 0, marginTop: 2 }} />
+            ) : (
+              <Square size={16} color={colors.muted} style={{ flexShrink: 0, marginTop: 2 }} />
+            )}
+            <div style={{ flex: 1 }}>
+              <div
                 style={{
-                  fontSize: 11,
-                  padding: "2px 8px",
-                  borderRadius: 999,
-                  color: colors.muted,
-                  border: `1px solid ${colors.border}`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  marginBottom: 4,
                 }}
               >
-                {item.status}
-              </span>
+                <span style={{ fontSize: 14 }}>{item.description}</span>
+                <ConfidenceBadge value={item.confidence} />
+                <span
+                  style={{
+                    fontSize: 11,
+                    padding: "2px 8px",
+                    borderRadius: 999,
+                    color: statusColor,
+                    border: `1px solid ${statusColor}`,
+                    fontWeight: 500,
+                  }}
+                >
+                  {STATUS_LABEL[item.status] ?? item.status}
+                </span>
+              </div>
+              {item.supporting_snippet && (
+                <p style={{ fontSize: 12, color: colors.muted, fontStyle: "italic", margin: 0 }}>
+                  "{item.supporting_snippet}"
+                </p>
+              )}
+              {item.source_reference && (
+                <p style={{ fontSize: 11, color: colors.muted, margin: "4px 0 0" }}>
+                  From: {item.source_reference}
+                </p>
+              )}
             </div>
-            {item.supporting_snippet && (
-              <p style={{ fontSize: 12, color: colors.muted, fontStyle: "italic", margin: 0 }}>
-                "{item.supporting_snippet}"
-              </p>
-            )}
-          </div>
-        </Card>
-      ))}
+          </Card>
+        );
+      })}
     </PageShell>
   );
 }

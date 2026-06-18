@@ -629,6 +629,24 @@
         ],
         "title": "ActionStatus"
       },
+      "BehavioralNote": {
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "title": "Pattern"
+          },
+          "source_filename": {
+            "type": "string",
+            "title": "Source Filename"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pattern",
+          "source_filename"
+        ],
+        "title": "BehavioralNote"
+      },
       "BlindSpot": {
         "properties": {
           "topic": {
@@ -1108,6 +1126,14 @@
             },
             "type": "array",
             "title": "Blind Spots"
+          },
+          "behavioral_notes": {
+            "items": {
+              "$ref": "#/components/schemas/BehavioralNote"
+            },
+            "type": "array",
+            "title": "Behavioral Notes",
+            "default": []
           },
           "total_decisions": {
             "type": "integer",

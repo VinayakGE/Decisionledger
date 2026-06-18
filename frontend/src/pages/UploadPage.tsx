@@ -334,7 +334,15 @@ export function UploadPage() {
       )}
 
       <Card style={{ marginTop: 32 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, color: colors.text, letterSpacing: 0.3 }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            marginBottom: 14,
+            color: colors.text,
+            letterSpacing: 0.3,
+          }}
+        >
           How to export your conversations
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
@@ -344,15 +352,31 @@ export function UploadPage() {
             ["Markdown", ".md file with **User:** / **Assistant:** labels"],
             ["Plain text", ".txt notes, decisions, or meeting transcripts"],
           ].map(([src, hint]) => (
-            <div key={String(src)} style={{ background: colors.bg, borderRadius: 8, padding: "10px 12px" }}>
+            <div
+              key={String(src)}
+              style={{ background: colors.bg, borderRadius: 8, padding: "10px 12px" }}
+            >
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 3 }}>{src}</div>
               <div style={{ fontSize: 12, color: colors.muted, lineHeight: 1.4 }}>{hint}</div>
             </div>
           ))}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: colors.muted, borderTop: `1px solid ${colors.border}`, paddingTop: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 12,
+            color: colors.muted,
+            borderTop: `1px solid ${colors.border}`,
+            paddingTop: 12,
+          }}
+        >
           <span>🔒</span>
-          <span>Your files are processed locally and sent only to your configured AI provider for extraction. Nothing is stored remotely.</span>
+          <span>
+            Your files are processed locally and sent only to your configured AI provider for
+            extraction. Nothing is stored remotely.
+          </span>
         </div>
       </Card>
     </div>

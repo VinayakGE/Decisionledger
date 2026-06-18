@@ -69,22 +69,41 @@ export function OpenQuestionsPage() {
         >
           <HelpCircle size={16} color={colors.warning} style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.8, color: colors.warning, marginBottom: 4, textTransform: "uppercase" }}>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: 0.8,
+                color: colors.warning,
+                marginBottom: 4,
+                textTransform: "uppercase",
+              }}
+            >
               Unresolved Question
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 10,
+                flexWrap: "wrap",
+                marginBottom: 6,
+              }}
+            >
               <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>{q.description}</span>
               <ConfidenceBadge value={q.confidence} />
             </div>
             {q.supporting_snippet && (
-              <p style={{
-                fontSize: 12,
-                color: colors.textSecondary,
-                fontStyle: "italic",
-                margin: "0 0 4px",
-                paddingLeft: 10,
-                borderLeft: `2px solid ${colors.warning}`,
-              }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: colors.textSecondary,
+                  fontStyle: "italic",
+                  margin: "0 0 4px",
+                  paddingLeft: 10,
+                  borderLeft: `2px solid ${colors.warning}`,
+                }}
+              >
                 "{q.supporting_snippet}"
               </p>
             )}

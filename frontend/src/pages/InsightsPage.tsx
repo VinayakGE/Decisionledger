@@ -107,7 +107,8 @@ export function InsightsPage() {
       {(data.behavioral_notes ?? []).length > 0 && (
         <Section icon={<Brain size={18} color={colors.primary} />} title="Decision-Making Patterns">
           <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
-            How decisions are being made — patterns observed across your conversations by AI analysis.
+            How decisions are being made — patterns observed across your conversations by AI
+            analysis.
           </p>
           {(data.behavioral_notes ?? []).map((note, i) => (
             <Card key={i} style={{ marginBottom: 10 }}>
@@ -125,7 +126,8 @@ export function InsightsPage() {
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: 14, margin: "0 0 4px", lineHeight: 1.5 }}>{note.pattern}</p>
                   <span style={{ fontSize: 11, color: colors.muted }}>
-                    from: {note.source_filename.length > 40
+                    from:{" "}
+                    {note.source_filename.length > 40
                       ? note.source_filename.slice(0, 20) + "…" + note.source_filename.slice(-15)
                       : note.source_filename}
                   </span>

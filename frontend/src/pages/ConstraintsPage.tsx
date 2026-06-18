@@ -82,7 +82,14 @@ export function ConstraintsPage() {
               <ConfidenceBadge value={c.confidence} />
             </div>
             {c.supporting_snippet && (
-              <p style={{ fontSize: 12, color: colors.muted, fontStyle: "italic", margin: "0 0 4px" }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: colors.muted,
+                  fontStyle: "italic",
+                  margin: "0 0 4px",
+                }}
+              >
                 "{c.supporting_snippet}"
               </p>
             )}

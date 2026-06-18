@@ -103,12 +103,28 @@ export function DecisionsPage() {
               {(d.reasons.length > 0 || d.evidence.length > 0) && expanded !== d.id && (
                 <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
                   {d.reasons.length > 0 && (
-                    <span style={{ fontSize: 11, color: colors.primary, background: `${colors.primary}18`, borderRadius: 4, padding: "2px 7px" }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: colors.primary,
+                        background: `${colors.primary}18`,
+                        borderRadius: 4,
+                        padding: "2px 7px",
+                      }}
+                    >
                       {d.reasons.length} reason{d.reasons.length !== 1 ? "s" : ""}
                     </span>
                   )}
                   {d.evidence.length > 0 && (
-                    <span style={{ fontSize: 11, color: colors.success, background: `${colors.success}18`, borderRadius: 4, padding: "2px 7px" }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: colors.success,
+                        background: `${colors.success}18`,
+                        borderRadius: 4,
+                        padding: "2px 7px",
+                      }}
+                    >
                       {d.evidence.length} evidence
                     </span>
                   )}

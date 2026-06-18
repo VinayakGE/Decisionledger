@@ -116,16 +116,19 @@ export function SourcesPage() {
         return (
           <Card key={s.id} style={{ marginBottom: 12 }}>
             {lowQuality && !isPending && (
-              <div style={{
-                fontSize: 12,
-                color: colors.warning,
-                background: `${colors.warning}18`,
-                border: `1px solid ${colors.warning}44`,
-                borderRadius: 6,
-                padding: "6px 10px",
-                marginBottom: 10,
-              }}>
-                ⚠️ Low confidence extraction — AI provider may not have been available. Try <strong>Re-analyze</strong> to improve quality.
+              <div
+                style={{
+                  fontSize: 12,
+                  color: colors.warning,
+                  background: `${colors.warning}18`,
+                  border: `1px solid ${colors.warning}44`,
+                  borderRadius: 6,
+                  padding: "6px 10px",
+                  marginBottom: 10,
+                }}
+              >
+                ⚠️ Low confidence extraction — AI provider may not have been available. Try{" "}
+                <strong>Re-analyze</strong> to improve quality.
               </div>
             )}
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

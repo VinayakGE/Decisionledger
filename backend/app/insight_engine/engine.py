@@ -26,6 +26,7 @@ try:
 
     _ST_AVAILABLE = True
 except ImportError:
+    SentenceTransformer = None  # type: ignore[assignment,misc]
     _ST_AVAILABLE = False
     logger.warning("sentence-transformers not available — semantic similarity disabled.")
 

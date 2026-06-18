@@ -71,16 +71,22 @@ export function ActionItemsPage() {
 
       {visible.map((item) => {
         const statusColor =
-          item.status === "done" ? colors.success :
-          item.status === "cancelled" ? colors.danger :
-          colors.muted;
+          item.status === "done"
+            ? colors.success
+            : item.status === "cancelled"
+              ? colors.danger
+              : colors.muted;
         return (
           <Card
             key={item.id}
             style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}
           >
             {item.status === "done" ? (
-              <CheckSquare size={16} color={colors.success} style={{ flexShrink: 0, marginTop: 2 }} />
+              <CheckSquare
+                size={16}
+                color={colors.success}
+                style={{ flexShrink: 0, marginTop: 2 }}
+              />
             ) : item.status === "cancelled" ? (
               <XCircle size={16} color={colors.danger} style={{ flexShrink: 0, marginTop: 2 }} />
             ) : (

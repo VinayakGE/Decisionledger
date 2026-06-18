@@ -109,8 +109,22 @@ export function GoalsPage() {
               )}
             </div>
             {g.supporting_snippet && (
-              <p style={{ fontSize: 12, color: colors.muted, fontStyle: "italic", margin: 0 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: colors.textSecondary,
+                  fontStyle: "italic",
+                  margin: "0 0 4px",
+                  paddingLeft: 10,
+                  borderLeft: `2px solid ${colors.success}`,
+                }}
+              >
                 "{g.supporting_snippet}"
+              </p>
+            )}
+            {g.source_reference && (
+              <p style={{ fontSize: 11, color: colors.muted, margin: "4px 0 0" }}>
+                From: {g.source_reference}
               </p>
             )}
           </div>

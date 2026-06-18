@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { colors } from "../lib/styles";
+import { api } from "../lib/api";
+import { useData } from "../hooks/useData";
 import {
   Upload,
   Target,
@@ -15,14 +17,14 @@ import {
 } from "lucide-react";
 
 const nav = [
-  { to: "/", label: "Upload", icon: Upload },
-  { to: "/sources", label: "Sources", icon: Database },
-  { to: "/decisions", label: "Decisions", icon: GitBranch },
-  { to: "/goals", label: "Goals", icon: Target },
-  { to: "/questions", label: "Open Questions", icon: HelpCircle },
-  { to: "/actions", label: "Action Items", icon: CheckSquare },
-  { to: "/constraints", label: "Constraints", icon: AlertTriangle },
-  { to: "/insights", label: "Insights", icon: Zap },
+  { to: "/", label: "Upload", icon: Upload, countKey: null },
+  { to: "/sources", label: "Sources", icon: Database, countKey: null },
+  { to: "/decisions", label: "Decisions", icon: GitBranch, countKey: "total_decisions" },
+  { to: "/goals", label: "Goals", icon: Target, countKey: null },
+  { to: "/questions", label: "Open Questions", icon: HelpCircle, countKey: "total_open_questions" },
+  { to: "/actions", label: "Action Items", icon: CheckSquare, countKey: "total_action_items" },
+  { to: "/constraints", label: "Constraints", icon: AlertTriangle, countKey: null },
+  { to: "/insights", label: "Insights", icon: Zap, countKey: null },
 ];
 
 function NavItem({
@@ -30,11 +32,13 @@ function NavItem({
   label,
   icon: Icon,
   end,
+  count,
 }: {
   to: string;
   label: string;
   icon: React.ElementType;
   end?: boolean;
+  count?: number | null;
 }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -62,13 +66,35 @@ function NavItem({
       })}
     >
       <Icon size={16} />
-      {label}
+      <span style={{ flex: 1 }}>{label}</span>
+      {count != null && count > 0 && (
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            background: `${colors.primary}22`,
+            color: colors.primary,
+            borderRadius: 999,
+            padding: "1px 7px",
+            minWidth: 20,
+            textAlign: "center",
+          }}
+        >
+          {count}
+        </span>
+      )}
     </NavLink>
   );
 }
 
 export function Sidebar() {
   const [settingsHovered, setSettingsHovered] = useState(false);
+  const { data: insights } = useData(() => api.getInsights());
+  const counts: Record<string, number> = {
+    total_decisions: insights?.total_decisions ?? 0,
+    total_open_questions: insights?.total_open_questions ?? 0,
+    total_action_items: insights?.total_action_items ?? 0,
+  };
   return (
     <nav
       style={{
@@ -104,8 +130,15 @@ export function Sidebar() {
       </div>
 
       <div style={{ flex: 1 }}>
-        {nav.map(({ to, label, icon }) => (
-          <NavItem key={to} to={to} label={label} icon={icon} end={to === "/"} />
+        {nav.map(({ to, label, icon, countKey }) => (
+          <NavItem
+            key={to}
+            to={to}
+            label={label}
+            icon={icon}
+            end={to === "/"}
+            count={countKey ? counts[countKey] : null}
+          />
         ))}
       </div>
 

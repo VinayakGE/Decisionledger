@@ -65,41 +65,59 @@ export function InsightsPage() {
         </button>
       </div>
 
-      {/* Summary stats */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 12,
-          marginBottom: 32,
-        }}
-      >
-        {(
-          [
-            ["Total Decisions", data.total_decisions, "/decisions"],
-            ["Open Questions", data.total_open_questions, "/questions"],
-            ["Action Items", data.total_action_items, "/actions"],
-          ] as [string, number, string][]
-        ).map(([label, value, href]) => (
-          <Link key={label} to={href} style={{ textDecoration: "none" }}>
-            <Card style={{ cursor: "pointer", transition: "border-color 0.15s" }}>
-              <div style={{ fontSize: 11, color: colors.muted, marginBottom: 6 }}>{label}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: colors.primary }}>{value}</div>
-              <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>View all →</div>
-            </Card>
-          </Link>
-        ))}
-      </div>
-
-      {isEmpty && (
+      {isEmpty ? (
         <div
-          style={{ textAlign: "center", padding: "48px 24px", color: colors.muted, fontSize: 14 }}
+          style={{ textAlign: "center", padding: "64px 24px", color: colors.muted, fontSize: 14 }}
         >
-          <Eye size={32} color={colors.border} style={{ margin: "0 auto 16px" }} />
-          <p style={{ marginBottom: 12 }}>No insights generated yet.</p>
-          <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
-            Upload a conversation to begin analysis →
+          <Eye size={40} color={colors.border} style={{ margin: "0 auto 20px" }} />
+          <p style={{ fontSize: 18, fontWeight: 600, color: colors.text, marginBottom: 8 }}>
+            No insights yet
+          </p>
+          <p style={{ marginBottom: 24, lineHeight: 1.6, maxWidth: 360, margin: "0 auto 24px" }}>
+            Upload a ChatGPT or Claude export and the AI will extract decisions, goals, open
+            questions, and patterns from your conversations.
+          </p>
+          <Link
+            to="/"
+            style={{
+              display: "inline-block",
+              background: colors.primary,
+              color: "#fff",
+              borderRadius: 8,
+              padding: "10px 24px",
+              fontWeight: 600,
+              fontSize: 14,
+              textDecoration: "none",
+            }}
+          >
+            Upload conversations →
           </Link>
+        </div>
+      ) : (
+        /* Summary stats */
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 12,
+            marginBottom: 32,
+          }}
+        >
+          {(
+            [
+              ["Total Decisions", data.total_decisions, "/decisions"],
+              ["Open Questions", data.total_open_questions, "/questions"],
+              ["Action Items", data.total_action_items, "/actions"],
+            ] as [string, number, string][]
+          ).map(([label, value, href]) => (
+            <Link key={label} to={href} style={{ textDecoration: "none" }}>
+              <Card style={{ cursor: "pointer", transition: "border-color 0.15s" }}>
+                <div style={{ fontSize: 11, color: colors.muted, marginBottom: 6 }}>{label}</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: colors.primary }}>{value}</div>
+                <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>View all →</div>
+              </Card>
+            </Link>
+          ))}
         </div>
       )}
 

@@ -73,8 +73,12 @@ def reanalyze_source(
         row[0] for row in db.query(Decision.id).filter(Decision.source_id == source_id).all()
     ]
     if decision_ids:
-        db.query(Evidence).filter(Evidence.linked_decision_id.in_(decision_ids)).delete(synchronize_session=False)
-        db.query(Reason).filter(Reason.linked_decision_id.in_(decision_ids)).delete(synchronize_session=False)
+        db.query(Evidence).filter(Evidence.linked_decision_id.in_(decision_ids)).delete(
+            synchronize_session=False
+        )
+        db.query(Reason).filter(Reason.linked_decision_id.in_(decision_ids)).delete(
+            synchronize_session=False
+        )
     for model in (Decision, Goal, Constraint, OpenQuestion, ActionItem):
         db.query(model).filter(model.source_id == source_id).delete(synchronize_session=False)
 
@@ -127,7 +131,10 @@ def _reextract_and_persist(source_id: int, conversations: list) -> None:
         db.commit()
         logger.info(
             "Re-extraction complete for source %d: %d entities, provider=%s, status=%s",
-            source_id, total_entities, result.provider_used, result.extraction_status,
+            source_id,
+            total_entities,
+            result.provider_used,
+            result.extraction_status,
         )
     except Exception as e:
         logger.error("Re-extraction failed for source %d: %s", source_id, e, exc_info=True)

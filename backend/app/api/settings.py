@@ -12,10 +12,20 @@ from app.extractor.engine import _LLM_ENABLED
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 _PROVIDERS = [
-    {"name": "anthropic", "label": "Anthropic (Claude)", "attr": "anthropic_api_key", "env": "ANTHROPIC_API_KEY"},
-    {"name": "gemini",    "label": "Google Gemini",      "attr": "gemini_api_key",    "env": "GEMINI_API_KEY"},
-    {"name": "cerebras",  "label": "Cerebras",           "attr": "cerebras_api_key",  "env": "CEREBRAS_API_KEY"},
-    {"name": "groq",      "label": "Groq",               "attr": "groq_api_key",       "env": "GROQ_API_KEY"},
+    {
+        "name": "anthropic",
+        "label": "Anthropic (Claude)",
+        "attr": "anthropic_api_key",
+        "env": "ANTHROPIC_API_KEY",
+    },
+    {"name": "gemini", "label": "Google Gemini", "attr": "gemini_api_key", "env": "GEMINI_API_KEY"},
+    {
+        "name": "cerebras",
+        "label": "Cerebras",
+        "attr": "cerebras_api_key",
+        "env": "CEREBRAS_API_KEY",
+    },
+    {"name": "groq", "label": "Groq", "attr": "groq_api_key", "env": "GROQ_API_KEY"},
 ]
 
 
@@ -42,7 +52,9 @@ def _provider_statuses() -> List[ProviderStatus]:
     result = []
     for p in _PROVIDERS:
         val = getattr(settings, p["attr"], "") or ""
-        result.append(ProviderStatus(name=p["name"], label=p["label"], configured=bool(val.strip())))
+        result.append(
+            ProviderStatus(name=p["name"], label=p["label"], configured=bool(val.strip()))
+        )
     return result
 
 

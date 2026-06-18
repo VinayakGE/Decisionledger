@@ -175,3 +175,4 @@ attached_assets/
 # Python lock/build files
 pyproject.toml
 .claude/
+design-preview.html

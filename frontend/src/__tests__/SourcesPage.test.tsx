@@ -84,8 +84,7 @@ describe("SourcesPage", () => {
     await waitFor(() => expect(screen.getByText(/no uploads yet/i)).toBeInTheDocument());
   });
 
-  it("deletes a source and removes it from the list immediately", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
+  it("deletes a source after inline confirmation", async () => {
     vi.mocked(api.getSources)
       .mockResolvedValueOnce(mockSources as any)
       .mockResolvedValueOnce([mockSources[1]] as any);
@@ -94,8 +93,14 @@ describe("SourcesPage", () => {
     renderSourcesPage();
     await waitFor(() => expect(screen.getByText("conversations.json")).toBeInTheDocument());
 
+    // Step 1: click trash icon — shows inline confirmation, does NOT delete yet
     const deleteButtons = screen.getAllByTitle("Delete source and all entities");
     await user.click(deleteButtons[0]);
+    expect(vi.mocked(api.deleteSource)).not.toHaveBeenCalled();
+
+    // Step 2: click the red "Delete" confirm button
+    const confirmButton = screen.getByRole("button", { name: /^delete$/i });
+    await user.click(confirmButton);
 
     expect(vi.mocked(api.deleteSource)).toHaveBeenCalledWith(1);
 
@@ -105,30 +110,36 @@ describe("SourcesPage", () => {
   });
 
   it("shows error when delete fails", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     vi.mocked(api.deleteSource).mockRejectedValue(new Error("404 Not Found"));
 
     const user = userEvent.setup();
     renderSourcesPage();
     await waitFor(() => expect(screen.getByText("conversations.json")).toBeInTheDocument());
 
+    // Open inline confirmation then confirm
     const deleteButtons = screen.getAllByTitle("Delete source and all entities");
     await user.click(deleteButtons[0]);
+    const confirmButton = screen.getByRole("button", { name: /^delete$/i });
+    await user.click(confirmButton);
 
     await waitFor(() => expect(screen.getByText("404 Not Found")).toBeInTheDocument());
     // Card still present on failure
     expect(screen.getByText("conversations.json")).toBeInTheDocument();
   });
 
-  it("does not delete when confirm is cancelled", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(false);
-
+  it("does not delete when inline confirmation is cancelled", async () => {
     const user = userEvent.setup();
     renderSourcesPage();
     await waitFor(() => expect(screen.getByText("conversations.json")).toBeInTheDocument());
 
+    // Open inline confirmation
     const deleteButtons = screen.getAllByTitle("Delete source and all entities");
     await user.click(deleteButtons[0]);
+    expect(vi.mocked(api.deleteSource)).not.toHaveBeenCalled();
+
+    // Click Cancel
+    const cancelButton = screen.getByRole("button", { name: /cancel/i });
+    await user.click(cancelButton);
 
     expect(vi.mocked(api.deleteSource)).not.toHaveBeenCalled();
     expect(screen.getByText("conversations.json")).toBeInTheDocument();

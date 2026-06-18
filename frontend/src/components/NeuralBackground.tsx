@@ -54,7 +54,8 @@ export function NeuralBackground() {
     const nodes = createNodes();
     let frame = 0;
     let raf = 0;
-    const shouldReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const motionMediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let shouldReduceMotion = motionMediaQuery.matches;
     let backgroundGradient: CanvasGradient | null = null;
 
     const setSize = () => {
@@ -142,13 +143,28 @@ export function NeuralBackground() {
       }
     };
 
+    const handleResize = () => {
+      setSize();
+      if (shouldReduceMotion) {
+        render();
+      }
+    };
+
+    const handleMotionPreferenceChange = (event: MediaQueryListEvent) => {
+      shouldReduceMotion = event.matches;
+      cancelAnimationFrame(raf);
+      render();
+    };
+
     setSize();
     render();
-    window.addEventListener("resize", setSize);
+    window.addEventListener("resize", handleResize);
+    motionMediaQuery.addEventListener("change", handleMotionPreferenceChange);
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", setSize);
+      window.removeEventListener("resize", handleResize);
+      motionMediaQuery.removeEventListener("change", handleMotionPreferenceChange);
     };
   }, []);
 

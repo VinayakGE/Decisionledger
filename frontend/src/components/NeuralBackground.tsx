@@ -140,8 +140,6 @@ export function NeuralBackground() {
 
       if (!shouldReduceMotion) {
         raf = requestAnimationFrame(render);
-      } else {
-        raf = 0;
       }
     };
 

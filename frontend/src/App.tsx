@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Sidebar } from "./components/Sidebar";
 import { UploadPage } from "./pages/UploadPage";
 import { DecisionsPage } from "./pages/DecisionsPage";
@@ -45,6 +46,7 @@ export default function App() {
           </main>
         </div>
       </div>
+      <SpeedInsights />
     </BrowserRouter>
   );
 }

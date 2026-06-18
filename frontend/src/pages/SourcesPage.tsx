@@ -1,89 +1,48 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { api, Source, TERMINAL_STATUSES } from "../lib/api";
+import React, { useState } from "react";
+import { api, Source } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
+import { EmptyState } from "../components/EmptyState";
 import { colors } from "../lib/styles";
-import { Trash2, RefreshCw } from "lucide-react";
-
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
+import { Trash2 } from "lucide-react";
 
 const STATUS_COLOR: Record<string, string> = {
   completed: colors.success,
-  heuristic_fallback: colors.warning,
+  heuristic_fallback: "#92400E",
   completed_with_fallback: colors.success,
-  partial: colors.warning,
+  partial: "#92400E",
   failed: colors.danger,
   pending: colors.muted,
 };
 
-const DEFAULT_STATUS_BG = `${colors.muted}1a`;
-
 const STATUS_BG: Record<string, string> = {
-  completed: `${colors.success}1a`,
-  heuristic_fallback: `${colors.warning}1a`,
-  completed_with_fallback: `${colors.success}1a`,
-  partial: `${colors.warning}1a`,
-  failed: `${colors.danger}1a`,
-  pending: DEFAULT_STATUS_BG,
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  completed: "Completed",
-  heuristic_fallback: "Heuristic fallback",
-  completed_with_fallback: "Completed (with fallback)",
-  partial: "Partial",
-  failed: "Failed",
-  pending: "Pending",
+  completed: "#D1FAE5",
+  heuristic_fallback: "#FEF3C7",
+  completed_with_fallback: "#D1FAE5",
+  partial: "#FEF3C7",
+  failed: "#FEE2E2",
+  pending: "#F3F4F6",
 };
 
 export function SourcesPage() {
   const { data: sources, loading, error, reload } = useData(() => api.getSources());
   const [deleting, setDeleting] = useState<number | null>(null);
-  const [reanalyzing, setReanalyzing] = useState<number | null>(null);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
-
-  // Poll every 3 s while any source is pending
-  useEffect(() => {
-    const hasPending = (sources ?? []).some(
-      (s) => !TERMINAL_STATUSES.has(s.extraction_status ?? "")
-    );
-    if (!hasPending) return;
-    const id = setInterval(reload, 3000);
-    return () => clearInterval(id);
-  }, [sources, reload]);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDelete = async (source: Source) => {
+    if (!window.confirm(`Delete "${source.filename}" and all its extracted entities?`))
+      return;
     setDeleting(source.id);
-    setActionError(null);
+    setDeleteError(null);
     try {
       await api.deleteSource(source.id);
       setRemoved((prev) => new Set(prev).add(source.id));
       reload();
     } catch (e: unknown) {
-      setActionError(e instanceof Error ? e.message : String(e));
+      setDeleteError(e instanceof Error ? e.message : String(e));
     } finally {
       setDeleting(null);
-      setConfirmDelete(null);
-    }
-  };
-
-  const handleReanalyze = async (source: Source) => {
-    setReanalyzing(source.id);
-    setActionError(null);
-    try {
-      await api.reanalyzeSource(source.id);
-      reload();
-    } catch (e: unknown) {
-      setActionError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setReanalyzing(null);
     }
   };
 
@@ -104,218 +63,82 @@ export function SourcesPage() {
   if (!visible.length)
     return (
       <Shell>
-        <div
-          style={{ textAlign: "center", padding: "60px 24px", color: colors.muted, fontSize: 14 }}
-        >
-          <p style={{ marginBottom: 16 }}>No uploads yet.</p>
-          <Link
-            to="/"
-            style={{
-              display: "inline-block",
-              background: colors.primary,
-              color: "#fff",
-              borderRadius: 8,
-              padding: "9px 20px",
-              fontWeight: 600,
-              fontSize: 13,
-              textDecoration: "none",
-            }}
-          >
-            Upload a conversation →
-          </Link>
-        </div>
+        <EmptyState message="No uploads yet. Go to Upload to add a conversation file." />
       </Shell>
     );
 
   return (
     <Shell count={visible.length}>
-      {actionError && (
-        <p style={{ color: colors.danger, marginBottom: 12, fontSize: 13 }}>{actionError}</p>
+      {deleteError && (
+        <p style={{ color: colors.danger, marginBottom: 12, fontSize: 13 }}>{deleteError}</p>
       )}
       {visible.map((s) => {
         const status = s.extraction_status ?? "unknown";
-        const isPending = !TERMINAL_STATUSES.has(status);
-        const isBusy = deleting === s.id || reanalyzing === s.id || isPending;
-        const lowQuality =
-          s.provider_used === "heuristic" ||
-          (s.extraction_confidence_avg != null && s.extraction_confidence_avg < 0.55);
         return (
           <Card key={s.id} style={{ marginBottom: 12 }}>
-            {lowQuality && !isPending && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: colors.warning,
-                  background: `${colors.warning}18`,
-                  border: `1px solid ${colors.warning}44`,
-                  borderRadius: 6,
-                  padding: "6px 10px",
-                  marginBottom: 10,
-                }}
-              >
-                ⚠️ Low confidence extraction — AI provider may not have been available. Try{" "}
-                <strong>Re-analyze</strong> to improve quality.
-              </div>
-            )}
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 600, fontSize: 14 }} title={s.filename}>
-                    {s.filename.length > 40
-                      ? s.filename.slice(0, 20) + "…" + s.filename.slice(-15)
-                      : s.filename}
-                  </span>
+                  <span style={{ fontWeight: 600, fontSize: 14 }}>{s.filename}</span>
                   <span
                     style={{
                       fontSize: 11,
                       fontWeight: 600,
                       borderRadius: 4,
                       padding: "2px 8px",
-                      background: STATUS_BG[status] ?? DEFAULT_STATUS_BG,
+                      background: STATUS_BG[status] ?? "#F3F4F6",
                       color: STATUS_COLOR[status] ?? colors.muted,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
                     }}
                   >
-                    {isPending && (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          border: `1.5px solid ${colors.muted}`,
-                          borderTopColor: "transparent",
-                          animation: "spin 0.8s linear infinite",
-                        }}
-                      />
-                    )}
-                    {STATUS_LABEL[status] ?? status}
+                    {status}
                   </span>
                   <span style={{ fontSize: 11, color: colors.muted }}>
                     {s.source_type.toUpperCase()}
                   </span>
                 </div>
                 <div style={{ marginTop: 6, display: "flex", gap: 20, flexWrap: "wrap" }}>
-                  {[
-                    ["Uploaded", formatDate(s.uploaded_at)],
-                    ["Conversations", s.conversation_count ?? "—"],
-                    ["Entities", s.entities_extracted ?? "—"],
-                    ["Provider", s.provider_used ?? "—"],
+                  {
                     [
-                      "Confidence",
-                      s.extraction_confidence_avg != null
-                        ? `${(s.extraction_confidence_avg * 100).toFixed(0)}%`
-                        : "—",
-                    ],
-                  ].map(([label, val]) => (
-                    <span key={String(label)} style={{ fontSize: 12, color: colors.textSecondary }}>
+                      ["Conversations", s.conversation_count ?? "—"],
+                      ["Entities", s.entities_extracted ?? "—"],
+                      ["Provider", s.provider_used ?? "—"],
+                      [
+                        "Confidence",
+                        s.extraction_confidence_avg != null
+                          ? `${(s.extraction_confidence_avg * 100).toFixed(0)}%`
+                          : "—",
+                      ],
+                    ] as const
+                  }.map(([label, val]) => (
+                    <span
+                      key={String(label)}
+                      style={{ fontSize: 12, color: colors.textSecondary }}
+                    >
                       <span style={{ color: colors.muted }}>{label}: </span>
                       {val}
                     </span>
-                  ))}
+                  ))
+                }
                 </div>
               </div>
-
-              {/* Re-analyze button */}
               <button
-                onClick={() => handleReanalyze(s)}
-                disabled={isBusy}
-                title={isPending ? "Extraction in progress…" : "Re-analyze with AI"}
-                style={{
-                  background: "none",
-                  border: `1px solid ${isBusy ? colors.border : colors.primary}`,
-                  cursor: isBusy ? "not-allowed" : "pointer",
-                  color: isBusy ? colors.muted : colors.primary,
-                  padding: "5px 10px",
-                  borderRadius: 6,
-                  flexShrink: 0,
-                  opacity: isBusy ? 0.5 : 1,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  fontSize: 12,
-                  fontWeight: 500,
-                }}
-              >
-                <RefreshCw
-                  size={13}
-                  style={reanalyzing === s.id ? { animation: "spin 0.8s linear infinite" } : {}}
-                />
-                Re-analyze
-              </button>
-
-              {/* Delete button */}
-              <button
-                onClick={() => setConfirmDelete(s.id)}
-                disabled={isBusy}
+                onClick={() => handleDelete(s)}
+                disabled={deleting === s.id}
                 title="Delete source and all entities"
                 style={{
                   background: "none",
                   border: "none",
-                  cursor: isBusy ? "not-allowed" : "pointer",
-                  color: isBusy ? colors.muted : colors.danger,
+                  cursor: deleting === s.id ? "wait" : "pointer",
+                  color: deleting === s.id ? colors.muted : colors.danger,
                   padding: 6,
                   borderRadius: 6,
                   flexShrink: 0,
-                  opacity: isBusy ? 0.5 : 1,
+                  opacity: deleting === s.id ? 0.5 : 1,
                 }}
               >
                 <Trash2 size={16} />
               </button>
             </div>
-
-            {/* Inline delete confirmation bar */}
-            {confirmDelete === s.id && (
-              <div
-                style={{
-                  marginTop: 10,
-                  background: `${colors.danger}12`,
-                  borderRadius: 6,
-                  padding: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  fontSize: 13,
-                }}
-              >
-                <span style={{ flex: 1, color: colors.danger }}>
-                  Delete this source and all its data?
-                </span>
-                <button
-                  onClick={() => handleDelete(s)}
-                  disabled={deleting === s.id}
-                  style={{
-                    background: colors.danger,
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 5,
-                    padding: "4px 12px",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: deleting === s.id ? "not-allowed" : "pointer",
-                    opacity: deleting === s.id ? 0.6 : 1,
-                  }}
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={() => setConfirmDelete(null)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: colors.muted,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    padding: "4px 4px",
-                    textDecoration: "underline",
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
           </Card>
         );
       })}
@@ -325,7 +148,7 @@ export function SourcesPage() {
 
 function Shell({ children, count }: { children: React.ReactNode; count?: number }) {
   return (
-    <div style={{ maxWidth: 820, margin: "0 auto", padding: "40px 24px" }}>
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 24px" }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Sources</h1>
         {count != null && (
@@ -341,15 +164,18 @@ function Shell({ children, count }: { children: React.ReactNode; count?: number 
 
 function Spinner() {
   return (
-    <div
-      style={{
-        width: 24,
-        height: 24,
-        border: `2px solid ${colors.border}`,
-        borderTopColor: colors.primary,
-        borderRadius: "50%",
-        animation: "spin 0.8s linear infinite",
-      }}
-    />
+    <>
+      <div
+        style={{
+          width: 24,
+          height: 24,
+          border: `2px solid ${colors.border}`,
+          borderTopColor: colors.primary,
+          borderRadius: "50%",
+          animation: "spin 0.8s linear infinite",
+        }}
+      />
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+    </>
   );
 }

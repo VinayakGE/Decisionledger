@@ -36,7 +36,7 @@ export function OpenQuestionsPage() {
     );
 
   return (
-    <PageShell title="Open Questions" count={visible.length} unit="questions">
+    <PageShell title="Open Questions" count={visible.length}>
       <FilterBar
         sources={sources ?? []}
         sourceId={sourceId}
@@ -47,7 +47,12 @@ export function OpenQuestionsPage() {
 
       {!visible.length && (
         <div
-          style={{ textAlign: "center", padding: "48px 24px", color: colors.muted, fontSize: 14 }}
+          style={{
+            textAlign: "center",
+            padding: "48px 24px",
+            color: colors.muted,
+            fontSize: 14,
+          }}
         >
           <p style={{ marginBottom: sourceId || minConfidence > 0 ? 0 : 12 }}>
             {sourceId || minConfidence > 0
@@ -55,7 +60,7 @@ export function OpenQuestionsPage() {
               : "No open questions detected yet."}
           </p>
           {!sourceId && minConfidence === 0 && (
-            <Link to="/upload" style={{ color: colors.primary, fontSize: 13 }}>
+            <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
               Upload a conversation to get started →
             </Link>
           )}
@@ -67,49 +72,32 @@ export function OpenQuestionsPage() {
           key={q.id}
           style={{ marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}
         >
-          <HelpCircle size={16} color={colors.warning} style={{ flexShrink: 0, marginTop: 2 }} />
+          <HelpCircle
+            size={16}
+            color={colors.warning}
+            style={{ flexShrink: 0, marginTop: 2 }}
+          />
           <div style={{ flex: 1 }}>
             <div
               style={{
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: 0.8,
-                color: colors.warning,
-                marginBottom: 4,
-                textTransform: "uppercase",
-              }}
-            >
-              Unresolved Question
-            </div>
-            <div
-              style={{
                 display: "flex",
-                alignItems: "flex-start",
+                alignItems: "center",
                 gap: 10,
                 flexWrap: "wrap",
-                marginBottom: 6,
+                marginBottom: 4,
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>{q.description}</span>
+              <span style={{ fontSize: 14 }}>{q.description}</span>
               <ConfidenceBadge value={q.confidence} />
             </div>
             {q.supporting_snippet && (
-              <p
-                style={{
-                  fontSize: 12,
-                  color: colors.textSecondary,
-                  fontStyle: "italic",
-                  margin: "0 0 4px",
-                  paddingLeft: 10,
-                  borderLeft: `2px solid ${colors.warning}`,
-                }}
-              >
+              <p style={{ fontSize: 12, color: colors.muted, fontStyle: "italic", margin: 0 }}>
                 "{q.supporting_snippet}"
               </p>
             )}
             {q.source_reference && (
               <p style={{ fontSize: 11, color: colors.muted, margin: "4px 0 0" }}>
-                From: {q.source_reference}
+                Source: {q.source_reference}
               </p>
             )}
           </div>

@@ -1120,6 +1120,14 @@
           "total_action_items": {
             "type": "integer",
             "title": "Total Action Items"
+          },
+          "behavioral_notes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BehavioralNote"
+            },
+            "title": "Behavioral Notes",
+            "type": "array"
           }
         },
         "type": "object",
@@ -1446,6 +1454,24 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "BehavioralNote": {
+        "properties": {
+          "pattern": {
+            "title": "Pattern",
+            "type": "string"
+          },
+          "source_filename": {
+            "title": "Source Filename",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pattern",
+          "source_filename"
+        ],
+        "title": "BehavioralNote",
+        "type": "object"
       }
     }
   }

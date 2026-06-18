@@ -80,13 +80,15 @@ def _extract_matches(text: str, patterns: List[str], entity_type: str) -> List[D
                 continue
             seen.add(key)
             snippet = m.group(0).strip()[:200]
-            entities.append({
-                "type": entity_type,
-                "description": desc,
-                "confidence": 0.52,  # Honest: heuristic is low-confidence
-                "supporting_snippet": snippet,
-                "linked_to": None,
-            })
+            entities.append(
+                {
+                    "type": entity_type,
+                    "description": desc,
+                    "confidence": 0.52,  # Honest: heuristic is low-confidence
+                    "supporting_snippet": snippet,
+                    "linked_to": None,
+                }
+            )
     return entities
 
 

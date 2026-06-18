@@ -20,6 +20,7 @@ from app.models.orm import (
 
 _JUNK_DESCRIPTIONS = {"unknown", "n/a", "none", "null", "tbd", ""}
 
+
 def _is_quality(e: Dict[str, Any]) -> bool:
     """Return False for low-quality entities that should not be persisted."""
     desc = (e.get("description") or "").strip()

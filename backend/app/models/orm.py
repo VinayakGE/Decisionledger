@@ -45,7 +45,9 @@ class ConversationSource(Base):
     fallback_chain_json = Column(Text, nullable=True)  # JSON list of {provider, status, error}
 
     # Nullable — safe to add without migration on existing DBs
-    behavioral_notes_json = Column(Text, nullable=True)  # JSON list of per-conversation pattern strings
+    behavioral_notes_json = Column(
+        Text, nullable=True
+    )  # JSON list of per-conversation pattern strings
 
     decisions = relationship("Decision", back_populates="source", cascade="all, delete-orphan")
     goals = relationship("Goal", back_populates="source", cascade="all, delete-orphan")

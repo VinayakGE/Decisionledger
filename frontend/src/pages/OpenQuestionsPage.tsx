@@ -11,7 +11,7 @@ import { HelpCircle } from "lucide-react";
 
 export function OpenQuestionsPage() {
   const [sourceId, setSourceId] = useState<number | null>(null);
-  const [minConfidence, setMinConfidence] = useState(0.5);
+  const [minConfidence, setMinConfidence] = useState(0);
 
   const { data: sources } = useData(() => api.getSources());
   const {

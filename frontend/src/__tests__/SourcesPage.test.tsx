@@ -11,6 +11,13 @@ vi.mock("../lib/api", () => ({
     getSources: vi.fn(),
     deleteSource: vi.fn(),
   },
+  TERMINAL_STATUSES: new Set([
+    "completed",
+    "heuristic_fallback",
+    "completed_with_fallback",
+    "partial",
+    "failed",
+  ]),
 }));
 
 const mockSources = [
@@ -67,8 +74,8 @@ describe("SourcesPage", () => {
   it("shows status badges", async () => {
     renderSourcesPage();
     await waitFor(() => expect(screen.getByText("conversations.json")).toBeInTheDocument());
-    expect(screen.getByText("completed")).toBeInTheDocument();
-    expect(screen.getByText("heuristic_fallback")).toBeInTheDocument();
+    expect(screen.getByText("Completed")).toBeInTheDocument();
+    expect(screen.getByText("Heuristic fallback")).toBeInTheDocument();
   });
 
   it("shows empty state when no sources", async () => {

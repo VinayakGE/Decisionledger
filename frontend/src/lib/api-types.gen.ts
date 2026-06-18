@@ -62,6 +62,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/entities/sources/{source_id}/reanalyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reanalyze Source
+         * @description Wipe existing entities for a source and re-run extraction in the background.
+         */
+        post: operations["reanalyze_source_entities_sources__source_id__reanalyze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/entities/decisions": {
         parameters: {
             query?: never;
@@ -158,6 +178,28 @@ export interface paths {
         get: operations["get_insights_insights_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings */
+        get: operations["get_settings_settings_get"];
+        put?: never;
+        /**
+         * Update Settings
+         * @description Update API keys at runtime (in-memory; resets on server restart).
+         *     For permanent storage add them as Replit Secrets.
+         */
+        post: operations["update_settings_settings_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -374,6 +416,15 @@ export interface components {
             /** Supporting Snippet */
             supporting_snippet: string | null;
         };
+        /** ProviderStatus */
+        ProviderStatus: {
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+            /** Configured */
+            configured: boolean;
+        };
         /** ReasonOut */
         ReasonOut: {
             /** Id */
@@ -391,6 +442,32 @@ export interface components {
             occurrences: string[];
             /** Count */
             count: number;
+        };
+        /** SettingsOut */
+        SettingsOut: {
+            /** Providers */
+            providers: components["schemas"]["ProviderStatus"][];
+            /**
+             * Heuristic Always Available
+             * @default true
+             */
+            heuristic_always_available: boolean;
+            /**
+             * Llm Enabled
+             * @default false
+             */
+            llm_enabled: boolean;
+        };
+        /** UpdateKeysIn */
+        UpdateKeysIn: {
+            /** Anthropic Api Key */
+            anthropic_api_key?: string | null;
+            /** Gemini Api Key */
+            gemini_api_key?: string | null;
+            /** Cerebras Api Key */
+            cerebras_api_key?: string | null;
+            /** Groq Api Key */
+            groq_api_key?: string | null;
         };
         /** UploadResponse */
         UploadResponse: {
@@ -537,6 +614,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reanalyze_source_entities_sources__source_id__reanalyze_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationSourceOut"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -721,6 +829,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InsightReport"];
+                };
+            };
+        };
+    };
+    get_settings_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsOut"];
+                };
+            };
+        };
+    };
+    update_settings_settings_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateKeysIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

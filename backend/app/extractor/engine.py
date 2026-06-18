@@ -30,14 +30,16 @@ logger = logging.getLogger(__name__)
 # explicitly enabled via ENABLE_LLM_EXTRACTION=true. This prevents burning
 # API tokens during local development and testing.
 _LLM_ENABLED = bool(
-    os.environ.get("REPLIT_DEPLOYMENT") or
-    os.environ.get("ENABLE_LLM_EXTRACTION", "").lower() in ("1", "true", "yes")
+    os.environ.get("REPLIT_DEPLOYMENT")
+    or os.environ.get("ENABLE_LLM_EXTRACTION", "").lower() in ("1", "true", "yes")
 )
 
 if _LLM_ENABLED:
     logger.info("LLM extraction ENABLED (production mode) — full provider chain active.")
 else:
-    logger.info("LLM extraction DISABLED (dev mode) — heuristic only. Set ENABLE_LLM_EXTRACTION=true to override.")
+    logger.info(
+        "LLM extraction DISABLED (dev mode) — heuristic only. Set ENABLE_LLM_EXTRACTION=true to override."
+    )
 
 # Provider chain — tried in order; first success wins.
 # In dev mode, LLM providers are excluded to avoid spending API tokens.
@@ -48,11 +50,11 @@ _LLM_PROVIDERS = [
     GroqProvider(),
 ]
 _HEURISTIC = HeuristicProvider()
+_PROVIDERS = [*_LLM_PROVIDERS, _HEURISTIC] if _LLM_ENABLED else [_HEURISTIC]
+
 
 def _get_providers() -> List:
-    if _LLM_ENABLED:
-        return [*_LLM_PROVIDERS, _HEURISTIC]
-    return [_HEURISTIC]
+    return _PROVIDERS
 
 
 @dataclass

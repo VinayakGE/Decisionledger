@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: decisionledger-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: ENABLE_LLM_EXTRACTION
+        value: "true"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CEREBRAS_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: decisionledger-db
+          property: connectionString
+      - key: UPLOAD_DIR
+        value: /tmp/uploads
+
+databases:
+  - name: decisionledger-db
+    plan: free
+    databaseName: decisionledger
+    user: decisionledger

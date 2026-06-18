@@ -18,3 +18,4 @@ google-genai>=1.0.0,<2.0.0
 # Linting
 ruff>=0.5
 black>=24
+psycopg2-binary==2.9.10

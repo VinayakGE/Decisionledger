@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { colors } from "../lib/styles";
 import {
@@ -25,7 +25,50 @@ const nav = [
   { to: "/insights", label: "Insights", icon: Zap },
 ];
 
+function NavItem({
+  to,
+  label,
+  icon: Icon,
+  end,
+}: {
+  to: string;
+  label: string;
+  icon: React.ElementType;
+  end?: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={({ isActive }) => ({
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "10px 20px",
+        textDecoration: "none",
+        color: isActive ? colors.primary : hovered ? colors.text : colors.textSecondary,
+        background: isActive
+          ? `${colors.primary}18`
+          : hovered
+            ? `${colors.primary}0d`
+            : "transparent",
+        borderLeft: isActive ? `3px solid ${colors.primary}` : "3px solid transparent",
+        fontWeight: isActive ? 600 : 400,
+        fontSize: 14,
+        transition: "all 0.15s",
+      })}
+    >
+      <Icon size={16} />
+      {label}
+    </NavLink>
+  );
+}
+
 export function Sidebar() {
+  const [settingsHovered, setSettingsHovered] = useState(false);
   return (
     <nav
       style={{
@@ -51,50 +94,38 @@ export function Sidebar() {
       >
         <Brain size={22} color={colors.primary} />
         <div>
-          <div style={{ fontWeight: 700, fontSize: 14, color: colors.text, lineHeight: 1.2 }}>
-            Founder Brain
+          <div style={{ fontWeight: 700, fontSize: 15, color: colors.text, lineHeight: 1.2 }}>
+            Decisionledger
           </div>
-          <div style={{ fontSize: 11, color: colors.muted, lineHeight: 1.2 }}>Audit</div>
+          <div style={{ fontSize: 11, color: colors.muted, lineHeight: 1.2 }}>
+            Decision Intelligence
+          </div>
         </div>
       </div>
 
       <div style={{ flex: 1 }}>
-        {nav.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === "/"}
-            style={({ isActive }) => ({
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 20px",
-              textDecoration: "none",
-              color: isActive ? colors.primary : colors.textSecondary,
-              background: isActive ? `${colors.primary}18` : "transparent",
-              borderLeft: isActive ? `3px solid ${colors.primary}` : "3px solid transparent",
-              fontWeight: isActive ? 600 : 400,
-              fontSize: 14,
-              transition: "all 0.15s",
-            })}
-          >
-            <Icon size={16} />
-            {label}
-          </NavLink>
+        {nav.map(({ to, label, icon }) => (
+          <NavItem key={to} to={to} label={label} icon={icon} end={to === "/"} />
         ))}
       </div>
 
       <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 8, paddingBottom: 16 }}>
         <NavLink
           to="/settings"
+          onMouseEnter={() => setSettingsHovered(true)}
+          onMouseLeave={() => setSettingsHovered(false)}
           style={({ isActive }) => ({
             display: "flex",
             alignItems: "center",
             gap: 10,
             padding: "10px 20px",
             textDecoration: "none",
-            color: isActive ? colors.primary : colors.textSecondary,
-            background: isActive ? `${colors.primary}18` : "transparent",
+            color: isActive ? colors.primary : settingsHovered ? colors.text : colors.textSecondary,
+            background: isActive
+              ? `${colors.primary}18`
+              : settingsHovered
+                ? `${colors.primary}0d`
+                : "transparent",
             borderLeft: isActive ? `3px solid ${colors.primary}` : "3px solid transparent",
             fontWeight: isActive ? 600 : 400,
             fontSize: 14,

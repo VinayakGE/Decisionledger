@@ -44,7 +44,7 @@ export function InsightsPage() {
           marginBottom: 32,
         }}
       >
-        <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Insight Report</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Insight Report</h1>
         <button
           onClick={reload}
           style={{

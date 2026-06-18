@@ -97,7 +97,7 @@ export function SourcesPage() {
                   </span>
                 </div>
                 <div style={{ marginTop: 6, display: "flex", gap: 20, flexWrap: "wrap" }}>
-                  {
+                  {(
                     [
                       ["Conversations", s.conversation_count ?? "—"],
                       ["Entities", s.entities_extracted ?? "—"],
@@ -109,7 +109,7 @@ export function SourcesPage() {
                           : "—",
                       ],
                     ] as const
-                  }.map(([label, val]) => (
+                  ).map(([label, val]) => (
                     <span
                       key={String(label)}
                       style={{ fontSize: 12, color: colors.textSecondary }}

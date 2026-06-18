@@ -47,6 +47,7 @@ export function SourcesPage() {
   const [reanalyzing, setReanalyzing] = useState<number | null>(null);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
   const [actionError, setActionError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   // Poll every 3 s while any source is pending
   useEffect(() => {
@@ -59,7 +60,6 @@ export function SourcesPage() {
   }, [sources, reload]);
 
   const handleDelete = async (source: Source) => {
-    if (!window.confirm(`Delete "${source.filename}" and all its extracted entities?`)) return;
     setDeleting(source.id);
     setActionError(null);
     try {
@@ -70,6 +70,7 @@ export function SourcesPage() {
       setActionError(e instanceof Error ? e.message : String(e));
     } finally {
       setDeleting(null);
+      setConfirmDelete(null);
     }
   };
 
@@ -247,7 +248,7 @@ export function SourcesPage() {
 
               {/* Delete button */}
               <button
-                onClick={() => handleDelete(s)}
+                onClick={() => setConfirmDelete(s.id)}
                 disabled={isBusy}
                 title="Delete source and all entities"
                 style={{
@@ -264,6 +265,57 @@ export function SourcesPage() {
                 <Trash2 size={16} />
               </button>
             </div>
+
+            {/* Inline delete confirmation bar */}
+            {confirmDelete === s.id && (
+              <div
+                style={{
+                  marginTop: 10,
+                  background: `${colors.danger}12`,
+                  borderRadius: 6,
+                  padding: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  fontSize: 13,
+                }}
+              >
+                <span style={{ flex: 1, color: colors.danger }}>
+                  Delete this source and all its data?
+                </span>
+                <button
+                  onClick={() => handleDelete(s)}
+                  disabled={deleting === s.id}
+                  style={{
+                    background: colors.danger,
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 5,
+                    padding: "4px 12px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: deleting === s.id ? "not-allowed" : "pointer",
+                    opacity: deleting === s.id ? 0.6 : 1,
+                  }}
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(null)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: colors.muted,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    padding: "4px 4px",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </Card>
         );
       })}

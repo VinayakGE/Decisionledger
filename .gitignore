@@ -159,3 +159,18 @@ backend/evaluation/results/
 
 # Evaluation outputs
 backend/evaluation/results/
+
+# Replit
+.replit
+replit.nix
+uv.lock
+
+# Uploads and attachments (user data — never commit)
+uploads/
+attached_assets/
+
+# Claude Code internals
+.agents/
+
+# Python lock/build files
+pyproject.toml

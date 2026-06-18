@@ -9,9 +9,20 @@ type Node3D = {
   phase: number;
 };
 
-const NODE_COUNT = 92;
+const NODE_COUNT = 72;
 const DEPTH = 560;
 const BASE_RADIUS = 180;
+const MAX_DEVICE_PIXEL_RATIO = 2;
+const MAX_CONNECTION_DISTANCE = 115;
+const MAX_CONNECTION_DISTANCE_SQ = MAX_CONNECTION_DISTANCE * MAX_CONNECTION_DISTANCE;
+const PULSE_FREQUENCY = 3;
+const PULSE_AMPLITUDE = 0.06;
+const PERSPECTIVE_FOCAL_LENGTH = 360;
+const PERSPECTIVE_DEPTH_SCALE = 0.6;
+const GRADIENT_CENTER_COLOR = "#141b2e";
+const GRADIENT_EDGE_COLOR = "#08090d";
+const CONNECTION_COLOR_RGB = "99, 102, 241";
+const NODE_COLOR_RGB = "129, 140, 248";
 
 function createNodes(): Node3D[] {
   return Array.from({ length: NODE_COUNT }, (_, i) => {
@@ -45,7 +56,7 @@ export function NeuralBackground() {
     let raf = 0;
 
     const setSize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO);
       canvas.width = Math.floor(window.innerWidth * dpr);
       canvas.height = Math.floor(window.innerHeight * dpr);
       canvas.style.width = `${window.innerWidth}px`;
@@ -61,10 +72,17 @@ export function NeuralBackground() {
       const cy = height / 2;
       const projected: Array<{ x: number; y: number; alpha: number; size: number }> = [];
 
-      const gradient = ctx.createRadialGradient(cx, cy, 120, cx, cy, Math.max(width, height) * 0.75);
-      gradient.addColorStop(0, "#141b2e");
+      const gradient = ctx.createRadialGradient(
+        cx,
+        cy,
+        120,
+        cx,
+        cy,
+        Math.max(width, height) * 0.75
+      );
+      gradient.addColorStop(0, GRADIENT_CENTER_COLOR);
       gradient.addColorStop(0.45, colors.bg);
-      gradient.addColorStop(1, "#08090d");
+      gradient.addColorStop(1, GRADIENT_EDGE_COLOR);
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
 
@@ -74,9 +92,10 @@ export function NeuralBackground() {
         const cosA = Math.cos(angle);
         const rx = node.x * cosA - node.z * sinA;
         const rz = node.x * sinA + node.z * cosA;
-        const pulse = 1 + Math.sin(frame * 3 + node.phase) * 0.06;
+        const pulse = 1 + Math.sin(frame * PULSE_FREQUENCY + node.phase) * PULSE_AMPLITUDE;
         const depth = (rz + DEPTH) / (DEPTH * 2);
-        const perspective = 360 / (360 + rz * 0.6);
+        const perspective =
+          PERSPECTIVE_FOCAL_LENGTH / (PERSPECTIVE_FOCAL_LENGTH + rz * PERSPECTIVE_DEPTH_SCALE);
         const x = cx + rx * perspective * pulse;
         const y = cy + node.y * perspective;
         const alpha = Math.max(0.12, 0.85 * depth);
@@ -90,11 +109,13 @@ export function NeuralBackground() {
         for (let j = i + 1; j < projected.length; j++) {
           const dx = projected[i].x - projected[j].x;
           const dy = projected[i].y - projected[j].y;
-          const dist = Math.hypot(dx, dy);
-          if (dist > 115) continue;
+          const distSq = dx * dx + dy * dy;
+          if (distSq > MAX_CONNECTION_DISTANCE_SQ) continue;
 
-          const alpha = ((1 - dist / 115) * (projected[i].alpha + projected[j].alpha)) / 2;
-          ctx.strokeStyle = `rgba(99, 102, 241, ${Math.min(0.28, alpha * 0.55)})`;
+          const dist = Math.sqrt(distSq);
+          const alpha =
+            ((1 - dist / MAX_CONNECTION_DISTANCE) * (projected[i].alpha + projected[j].alpha)) / 2;
+          ctx.strokeStyle = `rgba(${CONNECTION_COLOR_RGB}, ${Math.min(0.28, alpha * 0.55)})`;
           ctx.beginPath();
           ctx.moveTo(projected[i].x, projected[i].y);
           ctx.lineTo(projected[j].x, projected[j].y);
@@ -103,7 +124,7 @@ export function NeuralBackground() {
       }
 
       for (const p of projected) {
-        ctx.fillStyle = `rgba(129, 140, 248, ${Math.min(0.95, p.alpha)})`;
+        ctx.fillStyle = `rgba(${NODE_COLOR_RGB}, ${Math.min(0.95, p.alpha)})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();

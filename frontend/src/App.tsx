@@ -16,9 +16,19 @@ import { NeuralBackground } from "./components/NeuralBackground";
 export default function App() {
   return (
     <BrowserRouter>
-      <div style={{ display: "flex", minHeight: "100vh", background: colors.bg, position: "relative" }}>
+      <div
+        style={{ display: "flex", minHeight: "100vh", background: colors.bg, position: "relative" }}
+      >
         <NeuralBackground />
-        <div style={{ display: "flex", minHeight: "100vh", width: "100%", position: "relative", zIndex: 1, backdropFilter: "blur(0.6px)" }}>
+        <div
+          style={{
+            display: "flex",
+            minHeight: "100vh",
+            width: "100%",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
           <Sidebar />
           <main style={{ flex: 1, overflowY: "auto" }}>
             <Routes>

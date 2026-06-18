@@ -24,6 +24,11 @@ class ActionStatus(str, enum.Enum):
     unknown = "unknown"
 
 
+class ConstraintStatus(str, enum.Enum):
+    active = "active"
+    resolved = "resolved"
+
+
 class ConversationSource(Base):
     __tablename__ = "conversation_sources"
 
@@ -123,6 +128,8 @@ class Constraint(Base):
     supporting_snippet = Column(Text)
     timestamp = Column(DateTime, nullable=True)
     source_id = Column(Integer, ForeignKey("conversation_sources.id"))
+    # Nullable — safe to add without migration on existing DBs
+    status = Column(SAEnum(ConstraintStatus), nullable=True, default=ConstraintStatus.active)
 
     source = relationship("ConversationSource", back_populates="constraints")
 

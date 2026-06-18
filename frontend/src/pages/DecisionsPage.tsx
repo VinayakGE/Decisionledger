@@ -10,7 +10,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 
 export function DecisionsPage() {
   const [sourceId, setSourceId] = useState<number | null>(null);
-  const [minConfidence, setMinConfidence] = useState(0.5);
+  const [minConfidence, setMinConfidence] = useState(0);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
@@ -210,7 +210,7 @@ function EmptyState({ message, showUploadLink }: { message: string; showUploadLi
     >
       <p style={{ marginBottom: showUploadLink ? 12 : 0 }}>{message}</p>
       {showUploadLink && (
-        <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
+        <Link to="/upload" style={{ color: colors.primary, fontSize: 13 }}>
           Upload a conversation to get started →
         </Link>
       )}
@@ -231,16 +231,38 @@ export function PageShell({
 }) {
   const label = unit ?? "items";
   return (
-    <div style={{ padding: "40px 32px", maxWidth: 820 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>
-        {title}
-        {count !== undefined && (
-          <span style={{ fontSize: 14, fontWeight: 400, color: colors.muted, marginLeft: 10 }}>
-            {count} {count === 1 ? label.replace(/s$/, "") : label}
-          </span>
-        )}
-      </h1>
-      <div style={{ marginTop: 24 }}>{children}</div>
+    <div style={{ padding: "48px 40px", maxWidth: 820 }}>
+      <div style={{ marginBottom: 32 }}>
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            color: colors.muted,
+            marginBottom: 8,
+          }}
+        >
+          Decision Intelligence
+        </div>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 300,
+            letterSpacing: "-0.02em",
+            color: colors.text,
+            margin: 0,
+          }}
+        >
+          {title}
+          {count !== undefined && (
+            <span style={{ fontSize: 14, fontWeight: 400, color: colors.muted, marginLeft: 12 }}>
+              {count} {count === 1 ? label.replace(/s$/, "") : label}
+            </span>
+          )}
+        </h1>
+      </div>
+      {children}
     </div>
   );
 }
@@ -249,12 +271,12 @@ export function Spinner() {
   return (
     <div
       style={{
-        width: 24,
-        height: 24,
-        border: `2px solid ${colors.border}`,
+        width: 20,
+        height: 20,
+        border: `1.5px solid ${colors.border}`,
         borderTopColor: colors.primary,
         borderRadius: "50%",
-        animation: "spin 0.8s linear infinite",
+        animation: "spin 0.7s linear infinite",
       }}
     />
   );

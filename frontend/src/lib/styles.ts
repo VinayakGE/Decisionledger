@@ -1,21 +1,67 @@
-/** Shared design tokens as JS constants (avoids Tailwind dependency). */
+/** Design system — Decisionledger */
+
 export const colors = {
-  bg: "#0f0f12",
-  surface: "#1a1a24",
-  surfaceHover: "#22222f",
-  border: "#2d2d3d",
-  primary: "#6366f1",
-  primaryHover: "#4f52d9",
-  success: "#22c55e",
-  warning: "#f59e0b",
-  danger: "#ef4444",
-  muted: "#64748b",
-  text: "#e2e8f0",
-  textSecondary: "#94a3b8",
+  // Backgrounds
+  bg: "#06060A",
+  surface: "#0D0D16",
+  surfaceHover: "#12121E",
+  surfaceElevated: "#161624",
+
+  // Borders
+  border: "#1A1A2E",
+  borderStrong: "#26263E",
+
+  // Typography
+  text: "#EDEAF8",
+  textSecondary: "#8B88AA",
+  muted: "#4A4868",
+
+  // Signature accent — amber gold
+  primary: "#E8A020",
+  primaryHover: "#F0B030",
+  primaryDim: "#1C1400",
+
+  // Semantic
+  success: "#34D399",
+  danger: "#F87171",
+  warning: "#FB923C",
+
+  // Insight elements
+  violet: "#A78BFA",
+};
+
+export const type = {
+  label: {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.15em",
+    textTransform: "uppercase" as const,
+    color: colors.muted,
+  },
+  labelBright: {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.15em",
+    textTransform: "uppercase" as const,
+    color: colors.textSecondary,
+  },
+  stat: {
+    fontSize: 52,
+    fontWeight: 700,
+    letterSpacing: "-0.04em",
+    lineHeight: 1,
+    color: colors.primary,
+  },
+  quote: {
+    fontSize: 15,
+    fontStyle: "italic" as const,
+    lineHeight: 1.7,
+    color: colors.textSecondary,
+  },
 };
 
 export const confidence = (score: number): string => {
-  if (score >= 0.8) return colors.success;
+  if (score >= 0.75) return colors.success;
   if (score >= 0.5) return colors.warning;
   return colors.danger;
 };

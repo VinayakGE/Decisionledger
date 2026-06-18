@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from app.models.orm import ActionStatus, GoalStatus
+from app.models.orm import ActionStatus, ConstraintStatus, GoalStatus
 
 # ── Upload ────────────────────────────────────────────────────────────────────
 
@@ -89,12 +89,17 @@ class GoalOut(BaseModel):
 # ── Constraint ────────────────────────────────────────────────────────────────
 
 
+class ConstraintStatusUpdate(BaseModel):
+    status: ConstraintStatus
+
+
 class ConstraintOut(BaseModel):
     id: int
     description: str
     confidence: float
     source_reference: Optional[str]
     supporting_snippet: Optional[str]
+    status: Optional[ConstraintStatus] = None
 
     class Config:
         from_attributes = True

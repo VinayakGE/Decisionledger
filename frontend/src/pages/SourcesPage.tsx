@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, Source, TERMINAL_STATUSES } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
-import { EmptyState } from "../components/EmptyState";
 import { colors } from "../lib/styles";
 import { Trash2, RefreshCw } from "lucide-react";
+
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
 
 const STATUS_COLOR: Record<string, string> = {
   completed: colors.success,
@@ -41,6 +47,7 @@ export function SourcesPage() {
   const [reanalyzing, setReanalyzing] = useState<number | null>(null);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
   const [actionError, setActionError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   // Poll every 3 s while any source is pending
   useEffect(() => {
@@ -53,7 +60,6 @@ export function SourcesPage() {
   }, [sources, reload]);
 
   const handleDelete = async (source: Source) => {
-    if (!window.confirm(`Delete "${source.filename}" and all its extracted entities?`)) return;
     setDeleting(source.id);
     setActionError(null);
     try {
@@ -64,6 +70,7 @@ export function SourcesPage() {
       setActionError(e instanceof Error ? e.message : String(e));
     } finally {
       setDeleting(null);
+      setConfirmDelete(null);
     }
   };
 
@@ -97,7 +104,26 @@ export function SourcesPage() {
   if (!visible.length)
     return (
       <Shell>
-        <EmptyState message="No uploads yet. Go to Upload to add a conversation file." />
+        <div
+          style={{ textAlign: "center", padding: "60px 24px", color: colors.muted, fontSize: 14 }}
+        >
+          <p style={{ marginBottom: 16 }}>No uploads yet.</p>
+          <Link
+            to="/"
+            style={{
+              display: "inline-block",
+              background: colors.primary,
+              color: "#fff",
+              borderRadius: 8,
+              padding: "9px 20px",
+              fontWeight: 600,
+              fontSize: 13,
+              textDecoration: "none",
+            }}
+          >
+            Upload a conversation →
+          </Link>
+        </div>
       </Shell>
     );
 
@@ -173,6 +199,7 @@ export function SourcesPage() {
                 </div>
                 <div style={{ marginTop: 6, display: "flex", gap: 20, flexWrap: "wrap" }}>
                   {[
+                    ["Uploaded", formatDate(s.uploaded_at)],
                     ["Conversations", s.conversation_count ?? "—"],
                     ["Entities", s.entities_extracted ?? "—"],
                     ["Provider", s.provider_used ?? "—"],
@@ -221,7 +248,7 @@ export function SourcesPage() {
 
               {/* Delete button */}
               <button
-                onClick={() => handleDelete(s)}
+                onClick={() => setConfirmDelete(s.id)}
                 disabled={isBusy}
                 title="Delete source and all entities"
                 style={{
@@ -238,6 +265,57 @@ export function SourcesPage() {
                 <Trash2 size={16} />
               </button>
             </div>
+
+            {/* Inline delete confirmation bar */}
+            {confirmDelete === s.id && (
+              <div
+                style={{
+                  marginTop: 10,
+                  background: `${colors.danger}12`,
+                  borderRadius: 6,
+                  padding: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  fontSize: 13,
+                }}
+              >
+                <span style={{ flex: 1, color: colors.danger }}>
+                  Delete this source and all its data?
+                </span>
+                <button
+                  onClick={() => handleDelete(s)}
+                  disabled={deleting === s.id}
+                  style={{
+                    background: colors.danger,
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 5,
+                    padding: "4px 12px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: deleting === s.id ? "not-allowed" : "pointer",
+                    opacity: deleting === s.id ? 0.6 : 1,
+                  }}
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(null)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: colors.muted,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    padding: "4px 4px",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </Card>
         );
       })}

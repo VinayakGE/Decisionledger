@@ -1,40 +1,33 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { colors } from "../lib/styles";
-import {
-  Upload,
-  Target,
-  GitBranch,
-  HelpCircle,
-  Zap,
-  AlertTriangle,
-  CheckSquare,
-  Brain,
-  Database,
-  Settings,
-} from "lucide-react";
+import { api } from "../lib/api";
+import { useData } from "../hooks/useData";
 
-const nav = [
-  { to: "/", label: "Upload", icon: Upload },
-  { to: "/sources", label: "Sources", icon: Database },
-  { to: "/decisions", label: "Decisions", icon: GitBranch },
-  { to: "/goals", label: "Goals", icon: Target },
-  { to: "/questions", label: "Open Questions", icon: HelpCircle },
-  { to: "/actions", label: "Action Items", icon: CheckSquare },
-  { to: "/constraints", label: "Constraints", icon: AlertTriangle },
-  { to: "/insights", label: "Insights", icon: Zap },
+const entityNav = [
+  { to: "/decisions", label: "Decisions", countKey: "total_decisions" },
+  { to: "/goals", label: "Goals", countKey: null },
+  { to: "/questions", label: "Questions", countKey: "total_open_questions" },
+  { to: "/actions", label: "Actions", countKey: "total_action_items" },
+  { to: "/constraints", label: "Constraints", countKey: null },
+];
+
+const mainNav = [
+  { to: "/", label: "Dashboard", end: true },
+  { to: "/upload", label: "Upload" },
+  { to: "/sources", label: "Sources" },
 ];
 
 function NavItem({
   to,
   label,
-  icon: Icon,
   end,
+  count,
 }: {
   to: string;
   label: string;
-  icon: React.ElementType;
   end?: boolean;
+  count?: number | null;
 }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -46,95 +39,132 @@ function NavItem({
       style={({ isActive }) => ({
         display: "flex",
         alignItems: "center",
-        gap: 10,
-        padding: "10px 20px",
+        justifyContent: "space-between",
+        padding: "7px 24px",
         textDecoration: "none",
-        color: isActive ? colors.primary : hovered ? colors.text : colors.textSecondary,
-        background: isActive
-          ? `${colors.primary}18`
-          : hovered
-            ? `${colors.primary}0d`
-            : "transparent",
-        borderLeft: isActive ? `3px solid ${colors.primary}` : "3px solid transparent",
+        fontSize: 13,
         fontWeight: isActive ? 600 : 400,
-        fontSize: 14,
-        transition: "all 0.15s",
+        color: isActive ? colors.primary : hovered ? colors.text : colors.textSecondary,
+        background: isActive ? `${colors.primary}0A` : "transparent",
+        borderLeft: isActive ? `2px solid ${colors.primary}` : "2px solid transparent",
+        letterSpacing: isActive ? "-0.01em" : 0,
+        transition: "all 0.12s",
       })}
     >
-      <Icon size={16} />
-      {label}
+      <span>{label}</span>
+      {count != null && count > 0 && (
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            color: colors.muted,
+            marginRight: 4,
+          }}
+        >
+          {count}
+        </span>
+      )}
     </NavLink>
   );
 }
 
 export function Sidebar() {
-  const [settingsHovered, setSettingsHovered] = useState(false);
+  const { data: insights } = useData(() => api.getInsights());
+  const counts: Record<string, number> = {
+    total_decisions: insights?.total_decisions ?? 0,
+    total_open_questions: insights?.total_open_questions ?? 0,
+    total_action_items: insights?.total_action_items ?? 0,
+  };
+
   return (
     <nav
       style={{
-        width: 220,
+        width: 200,
         minHeight: "100vh",
-        background: colors.surface,
+        background: colors.bg,
         borderRight: `1px solid ${colors.border}`,
         display: "flex",
         flexDirection: "column",
-        padding: "24px 0 0",
         flexShrink: 0,
       }}
     >
+      {/* Wordmark */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "0 20px 24px",
+          padding: "28px 24px 24px",
           borderBottom: `1px solid ${colors.border}`,
-          marginBottom: 16,
         }}
       >
-        <Brain size={22} color={colors.primary} />
-        <div>
-          <div style={{ fontWeight: 700, fontSize: 15, color: colors.text, lineHeight: 1.2 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: colors.primary,
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: colors.text,
+            }}
+          >
             Decisionledger
-          </div>
-          <div style={{ fontSize: 11, color: colors.muted, lineHeight: 1.2 }}>
-            Decision Intelligence
-          </div>
+          </span>
+        </div>
+        <div
+          style={{
+            fontSize: 10,
+            letterSpacing: "0.08em",
+            color: colors.muted,
+            marginTop: 4,
+            paddingLeft: 14,
+          }}
+        >
+          Decision Intelligence
         </div>
       </div>
 
-      <div style={{ flex: 1 }}>
-        {nav.map(({ to, label, icon }) => (
-          <NavItem key={to} to={to} label={label} icon={icon} end={to === "/"} />
+      {/* Main nav */}
+      <div style={{ paddingTop: 16, paddingBottom: 8 }}>
+        {mainNav.map(({ to, label, end }) => (
+          <NavItem key={to} to={to} label={label} end={end} />
         ))}
       </div>
 
-      <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 8, paddingBottom: 16 }}>
-        <NavLink
-          to="/settings"
-          onMouseEnter={() => setSettingsHovered(true)}
-          onMouseLeave={() => setSettingsHovered(false)}
-          style={({ isActive }) => ({
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "10px 20px",
-            textDecoration: "none",
-            color: isActive ? colors.primary : settingsHovered ? colors.text : colors.textSecondary,
-            background: isActive
-              ? `${colors.primary}18`
-              : settingsHovered
-                ? `${colors.primary}0d`
-                : "transparent",
-            borderLeft: isActive ? `3px solid ${colors.primary}` : "3px solid transparent",
-            fontWeight: isActive ? 600 : 400,
-            fontSize: 14,
-            transition: "all 0.15s",
-          })}
-        >
-          <Settings size={16} />
-          Settings
-        </NavLink>
+      {/* Divider */}
+      <div style={{ margin: "8px 24px", borderTop: `1px solid ${colors.border}` }} />
+
+      {/* Entity nav */}
+      <div style={{ paddingTop: 8, paddingBottom: 8 }}>
+        {entityNav.map(({ to, label, countKey }) => (
+          <NavItem key={to} to={to} label={label} count={countKey ? counts[countKey] : null} />
+        ))}
+      </div>
+
+      {/* Divider */}
+      <div style={{ margin: "8px 24px", borderTop: `1px solid ${colors.border}` }} />
+
+      {/* Insights */}
+      <div style={{ paddingTop: 8 }}>
+        <NavItem to="/insights" label="Insights" />
+      </div>
+
+      {/* Bottom — settings */}
+      <div
+        style={{
+          marginTop: "auto",
+          borderTop: `1px solid ${colors.border}`,
+          paddingTop: 8,
+          paddingBottom: 20,
+        }}
+      >
+        <NavItem to="/settings" label="Settings" />
       </div>
     </nav>
   );

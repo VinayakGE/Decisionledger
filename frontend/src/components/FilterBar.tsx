@@ -64,9 +64,11 @@ export function FilterBar({
       {/* Confidence slider */}
       {showConfidence && (
         <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-          <span style={{ color: colors.muted, whiteSpace: "nowrap" }}>
+          <span style={{ color: colors.muted, whiteSpace: "nowrap", fontSize: 12 }}>
             Min confidence:{" "}
-            <strong style={{ color: colors.text }}>{Math.round(minConfidence * 100)}%</strong>
+            <strong style={{ color: colors.muted, fontSize: 12 }}>
+              {minConfidence === 0 ? "All" : `${Math.round(minConfidence * 100)}%`}
+            </strong>
           </span>
           <input
             type="range"

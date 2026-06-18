@@ -24,7 +24,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function GoalsPage() {
   const [sourceId, setSourceId] = useState<number | null>(null);
-  const [minConfidence, setMinConfidence] = useState(0.5);
+  const [minConfidence, setMinConfidence] = useState(0);
 
   const { data: sources } = useData(() => api.getSources());
   const {
@@ -68,7 +68,7 @@ export function GoalsPage() {
               : "No goals found yet."}
           </p>
           {!sourceId && minConfidence === 0 && (
-            <Link to="/" style={{ color: colors.primary, fontSize: 13 }}>
+            <Link to="/upload" style={{ color: colors.primary, fontSize: 13 }}>
               Upload a conversation to get started →
             </Link>
           )}
@@ -109,8 +109,22 @@ export function GoalsPage() {
               )}
             </div>
             {g.supporting_snippet && (
-              <p style={{ fontSize: 12, color: colors.muted, fontStyle: "italic", margin: 0 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: colors.textSecondary,
+                  fontStyle: "italic",
+                  margin: "0 0 4px",
+                  paddingLeft: 10,
+                  borderLeft: `2px solid ${colors.success}`,
+                }}
+              >
                 "{g.supporting_snippet}"
+              </p>
+            )}
+            {g.source_reference && (
+              <p style={{ fontSize: 11, color: colors.muted, margin: "4px 0 0" }}>
+                From: {g.source_reference}
               </p>
             )}
           </div>

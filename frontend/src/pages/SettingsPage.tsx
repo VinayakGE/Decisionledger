@@ -173,12 +173,63 @@ export function SettingsPage() {
         )}
       </Card>
 
+      {/* Permanent storage instructions */}
+      <Card style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <Info size={16} color={colors.warning} style={{ flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: colors.warning }}>
+              Permanent Storage via Environment Variables
+            </div>
+            <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 10 }}>
+              For persistent keys, set environment variables — these survive server restarts.
+            </p>
+            <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 10 }}>
+              Set them in your deployment platform (Render dashboard, Docker .env, or local
+              backend/.env):
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {["ANTHROPIC_API_KEY", "GEMINI_API_KEY", "CEREBRAS_API_KEY", "GROQ_API_KEY"].map(
+                (name) => (
+                  <code
+                    key={name}
+                    style={{
+                      fontSize: 12,
+                      background: colors.bg,
+                      color: colors.primary,
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      display: "inline-block",
+                      width: "fit-content",
+                    }}
+                  >
+                    {name}
+                  </code>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+      </Card>
+
       {/* Key input */}
       <Card style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
           <KeyRound size={14} color={colors.primary} />
           <span style={{ fontSize: 13, fontWeight: 600, color: colors.textSecondary }}>
             SET API KEYS (SESSION)
+          </span>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: colors.warning,
+              background: `${colors.warning}18`,
+              borderRadius: 4,
+              padding: "2px 8px",
+            }}
+          >
+            ⚡ Session only — lost on restart
           </span>
         </div>
         <p style={{ fontSize: 12, color: colors.muted, marginBottom: 16 }}>
@@ -269,42 +320,6 @@ export function SettingsPage() {
         >
           {saving ? "Saving…" : "Apply Keys"}
         </button>
-      </Card>
-
-      {/* Permanent storage instructions */}
-      <Card>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-          <Info size={16} color={colors.warning} style={{ flexShrink: 0, marginTop: 2 }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: colors.warning }}>
-              Permanent Storage via Environment Variables
-            </div>
-            <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 10 }}>
-              For keys that survive server restarts, set them as environment variables in your
-              deployment platform (Render dashboard, Docker .env, or local backend/.env):
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {["ANTHROPIC_API_KEY", "GEMINI_API_KEY", "CEREBRAS_API_KEY", "GROQ_API_KEY"].map(
-                (name) => (
-                  <code
-                    key={name}
-                    style={{
-                      fontSize: 12,
-                      background: colors.bg,
-                      color: colors.primary,
-                      padding: "3px 8px",
-                      borderRadius: 4,
-                      display: "inline-block",
-                      width: "fit-content",
-                    }}
-                  >
-                    {name}
-                  </code>
-                )
-              )}
-            </div>
-          </div>
-        </div>
       </Card>
     </div>
   );

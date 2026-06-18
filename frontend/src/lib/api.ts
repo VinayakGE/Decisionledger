@@ -110,6 +110,9 @@ export const api = {
 
   getInsights: () => get<InsightReport>("/insights"),
 
+  patchConstraintStatus: (id: number, status: "active" | "resolved") =>
+    post<Constraint>(`/entities/constraints/${id}/status`, { status }),
+
   reanalyzeSource: (id: number) => post<Source>(`/entities/sources/${id}/reanalyze`, {}),
 
   getSettings: () => get<SettingsResponse>("/settings"),

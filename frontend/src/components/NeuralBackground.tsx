@@ -19,10 +19,10 @@ const PULSE_FREQUENCY = 3;
 const PULSE_AMPLITUDE = 0.02;
 const PERSPECTIVE_FOCAL_LENGTH = 360;
 const PERSPECTIVE_DEPTH_SCALE = 0.6;
-const GRADIENT_CENTER_COLOR = "#141b2e";
-const GRADIENT_EDGE_COLOR = "#08090d";
-const CONNECTION_COLOR_RGB = "99, 102, 241";
-const NODE_COLOR_RGB = "129, 140, 248";
+const GRADIENT_CENTER_COLOR = "#0E0C06";
+const GRADIENT_EDGE_COLOR = "#04040A";
+const CONNECTION_COLOR_RGB = "232, 160, 32";
+const NODE_COLOR_RGB = "240, 176, 48";
 
 function createNodes(): Node3D[] {
   return Array.from({ length: NODE_COUNT }, (_, i) => {

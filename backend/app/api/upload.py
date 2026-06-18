@@ -113,7 +113,7 @@ def _extract_and_persist(source_id: int, conversations: list) -> None:
             if source:
                 source.extraction_status = "failed"
                 db.commit()
-        except Exception:
-            pass
+        except Exception as db_err:
+            logger.error("Failed to mark source %d as failed: %s", source_id, db_err)
     finally:
         db.close()

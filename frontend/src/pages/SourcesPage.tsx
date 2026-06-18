@@ -15,13 +15,15 @@ const STATUS_COLOR: Record<string, string> = {
   pending: colors.muted,
 };
 
+const DEFAULT_STATUS_BG = `${colors.muted}1a`;
+
 const STATUS_BG: Record<string, string> = {
   completed: `${colors.success}1a`,
   heuristic_fallback: `${colors.warning}1a`,
   completed_with_fallback: `${colors.success}1a`,
   partial: `${colors.warning}1a`,
   failed: `${colors.danger}1a`,
-  pending: `${colors.muted}1a`,
+  pending: DEFAULT_STATUS_BG,
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -120,7 +122,7 @@ export function SourcesPage() {
                       fontWeight: 600,
                       borderRadius: 4,
                       padding: "2px 8px",
-                      background: STATUS_BG[status] ?? `${colors.muted}1a`,
+                      background: STATUS_BG[status] ?? DEFAULT_STATUS_BG,
                       color: STATUS_COLOR[status] ?? colors.muted,
                       display: "flex",
                       alignItems: "center",

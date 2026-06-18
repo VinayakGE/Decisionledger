@@ -98,7 +98,7 @@ export function Sidebar() {
             Decisionledger
           </div>
           <div style={{ fontSize: 11, color: colors.muted, lineHeight: 1.2 }}>
-            Founder Brain Audit
+            Decision Intelligence
           </div>
         </div>
       </div>

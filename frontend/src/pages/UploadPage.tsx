@@ -151,10 +151,9 @@ export function UploadPage() {
           onDragLeave={() => setDragOver(false)}
           onClick={() => inputRef.current?.click()}
           onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              inputRef.current?.click();
-            }
+            if (e.key !== "Enter" && e.key !== " ") return;
+            e.preventDefault();
+            inputRef.current?.click();
           }}
         >
           <Upload size={40} color={colors.primary} style={{ margin: "0 auto 16px" }} />

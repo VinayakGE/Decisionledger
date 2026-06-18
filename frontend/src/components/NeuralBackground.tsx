@@ -130,7 +130,8 @@ export function NeuralBackground() {
         ctx.fill();
       }
 
-      raf = requestAnimationFrame(render);
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!reduceMotion) raf = requestAnimationFrame(render);
     };
 
     setSize();

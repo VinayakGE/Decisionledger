@@ -3,944 +3,781 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Decisionledger — Neural Map</title>
+<title>Decisionledger — Neural Map v2</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #06060A;
-    --surface: #0D0D16;
-    --border: #1A1A2E;
-    --text: #EDEAF8;
-    --text-secondary: #8B88AA;
-    --muted: #4A4868;
-    --primary: #E8A020;
-    --success: #34D399;
-    --danger: #F87171;
-    --warning: #FB923C;
-    --violet: #A78BFA;
+    --bg: #0a0a0b;
+    --amber: #E8A020;
+    --amber-dim: #E8A02033;
+    --amber-glow: #E8A02018;
+    --text: #e8e6e0;
+    --muted: #5a5855;
+    --border: #1e1d1b;
+    --panel: #111110;
+    --violet: #7c6fff;
+    --violet-dim: #7c6fff22;
+    --red: #e05555;
+    --red-dim: #e0555522;
+    --green: #4caf7d;
+    --green-dim: #4caf7d22;
   }
 
-  html, body {
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: 'SF Pro Display', -apple-system, sans-serif; }
+
+  #canvas-bg { position: fixed; inset: 0; z-index: 0; }
+
+  #map { position: fixed; inset: 0; z-index: 1; }
+
+  #edges-svg {
+    position: fixed; inset: 0; z-index: 2;
     width: 100%; height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
-    overflow: hidden;
-    user-select: none;
-  }
-
-  /* ── Background canvas ── */
-  #bg-canvas {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
     pointer-events: none;
+    overflow: visible;
   }
 
-  /* ── SVG connections layer ── */
-  #connections-svg {
-    position: fixed;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* ── Top bar ── */
-  #topbar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 52px;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 28px;
-    background: rgba(6,6,10,0.85);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .amber-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--primary);
-    box-shadow: 0 0 8px var(--primary);
-    animation: dotPulse 2.5s ease-in-out infinite;
-  }
-
-  @keyframes dotPulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--primary); }
-    50% { opacity: 0.7; box-shadow: 0 0 16px var(--primary); }
-  }
-
-  .wordmark {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    color: var(--text);
-    text-transform: uppercase;
-  }
-
-  .topbar-right {
-    font-size: 12px;
-    color: var(--text-secondary);
-    letter-spacing: 0.04em;
-  }
-
-  /* ── Interactive nodes ── */
-  #nodes-layer {
-    position: fixed;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-  }
-
-  .node-wrapper {
+  .node {
     position: absolute;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    pointer-events: all;
-    cursor: pointer;
-    transform: translate(-50%, -50%);
-    --pulse-offset: 0ms;
-  }
-
-  .node-circle {
     border-radius: 50%;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: filter 0.2s ease, transform 0.15s ease;
-    animation: nodePulse 4s ease-in-out infinite;
-    animation-delay: var(--pulse-offset);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.6s ease;
+    z-index: 10;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    will-change: transform;
   }
 
-  @keyframes nodePulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.055); }
-  }
-
-  .node-wrapper:hover .node-circle {
-    animation: none;
-    transform: scale(1.12);
-  }
+  .node.visible { opacity: 1; }
 
   .node-inner {
+    width: 100%; height: 100%;
     border-radius: 50%;
-    width: 60%;
-    height: 60%;
-    position: absolute;
-    opacity: 0.25;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    transition: box-shadow 0.3s ease;
   }
 
   .node-label {
-    margin-top: 8px;
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    letter-spacing: 0.03em;
-    text-align: center;
-    max-width: 90px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%; transform: translateX(-50%);
     white-space: nowrap;
-    line-height: 1.3;
-    transition: color 0.2s;
-  }
-
-  .node-wrapper:hover .node-label { color: var(--text); }
-
-  .node-wrapper.dimmed .node-circle { opacity: 0.12; filter: none !important; }
-  .node-wrapper.dimmed .node-label { opacity: 0.12; }
-
-  /* ── Tooltip ── */
-  #tooltip {
-    position: fixed;
-    z-index: 20;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 12px;
-    color: var(--text);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-    max-width: 200px;
-    line-height: 1.4;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+    text-align: center;
+    max-width: 120px;
+    white-space: normal;
+    line-height: 1.3;
   }
 
-  #tooltip.visible { opacity: 1; }
+  .node-verdict {
+    position: absolute;
+    top: calc(100% + 32px);
+    left: 50%; transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
 
-  /* ── Side panel ── */
-  #side-panel {
+  /* Side panel */
+  #panel {
     position: fixed;
-    top: 0; right: 0;
-    width: 380px;
-    height: 100%;
-    background: var(--surface);
+    right: 0; top: 0; bottom: 0;
+    width: 320px;
+    background: var(--panel);
     border-left: 1px solid var(--border);
-    z-index: 30;
+    z-index: 100;
     transform: translateX(100%);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     overflow-y: auto;
     padding: 28px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
   }
 
-  #side-panel.open { transform: translateX(0); }
+  #panel.open { transform: translateX(0); }
 
-  .panel-close {
-    position: absolute;
-    top: 20px; right: 20px;
-    width: 28px; height: 28px;
-    border-radius: 6px;
-    background: var(--border);
-    border: none;
-    color: var(--text-secondary);
-    font-size: 16px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s, color 0.15s;
-  }
-  .panel-close:hover { background: var(--muted); color: var(--text); }
-
-  .panel-type-badge {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-bottom: 4px;
+  .panel-type {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
   }
 
   .panel-title {
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.35;
-    margin-bottom: 4px;
+    font-size: 17px; font-weight: 300; color: var(--text);
+    line-height: 1.4; margin-bottom: 20px;
   }
 
-  .panel-description {
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-  }
-
-  .confidence-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--text-secondary);
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 4px 10px;
-  }
-
-  .confidence-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--success);
+  .panel-meta {
+    font-size: 11px; color: var(--muted); margin-bottom: 6px;
   }
 
   .panel-snippet {
-    border-left: 3px solid var(--muted);
-    padding: 10px 14px;
-    background: rgba(255,255,255,0.03);
-    border-radius: 0 6px 6px 0;
-    font-size: 12px;
-    color: var(--text-secondary);
+    font-size: 12px; color: #8a8580;
+    border-left: 2px solid var(--amber-dim);
+    padding-left: 12px; line-height: 1.6;
+    margin: 16px 0;
     font-style: italic;
-    line-height: 1.6;
   }
 
-  .panel-divider {
-    height: 1px;
-    background: var(--border);
+  .outcome-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 16px;
   }
 
-  .panel-section-title {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
+  .outcome-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
   }
 
-  .panel-related-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  .outcome-text {
+    font-size: 12px; color: var(--text); line-height: 1.5; margin-bottom: 12px;
   }
 
-  .panel-related-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
+  .outcome-actual-label { color: var(--green); }
+  .outcome-pending-label { color: var(--amber); }
 
-  .related-dot {
+  .connected-list { margin-top: 20px; }
+  .connected-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+    cursor: pointer;
+  }
+  .connected-dot {
     width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
   }
 
-  .panel-view-all {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--primary);
-    text-decoration: none;
-    cursor: pointer;
-    margin-top: auto;
-    padding-top: 8px;
-    border: none;
-    background: none;
-    font-family: inherit;
+  #panel-close {
+    position: absolute; top: 16px; right: 16px;
+    background: none; border: none; color: var(--muted);
+    font-size: 18px; cursor: pointer; padding: 4px;
+    line-height: 1;
   }
-  .panel-view-all:hover { opacity: 0.8; }
 
-  /* ── Hook notification ── */
-  #hook-notification {
+  /* Hook pill */
+  #hook-bar {
     position: fixed;
-    bottom: 80px; left: 24px;
-    z-index: 40;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--primary);
-    border-radius: 8px;
-    padding: 12px 16px;
-    max-width: 300px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    bottom: 28px; left: 50%; transform: translateX(-50%);
+    z-index: 200;
+    display: flex; gap: 10px; flex-direction: column; align-items: center;
+  }
+
+  .hook-pill {
+    background: var(--panel);
+    border: 1px solid var(--amber-dim);
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 11px; color: var(--amber);
+    font-weight: 600; letter-spacing: 0.04em;
     cursor: pointer;
-    transform: translateY(20px);
     opacity: 0;
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
-    pointer-events: none;
+    animation: hookFadeIn 0.5s ease forwards;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .hook-pill:hover { background: var(--amber-dim); border-color: var(--amber); }
+
+  @keyframes hookFadeIn { to { opacity: 1; } }
+
+  /* Legend */
+  #legend {
+    position: fixed; bottom: 28px; left: 28px;
+    z-index: 200;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .legend-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 10px; color: var(--muted);
+    font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .legend-line { width: 20px; height: 1px; }
+
+  /* Wordmark */
+  #wordmark {
+    position: fixed; top: 24px; left: 28px; z-index: 200;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--amber);
   }
 
-  #hook-notification.visible {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: all;
+  #hint {
+    position: fixed; top: 24px; right: 28px; z-index: 200;
+    font-size: 10px; color: var(--muted); letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
-  .hook-arrow { color: var(--primary); margin-left: 4px; }
-
-  /* ── Filter pills ── */
-  #filter-bar {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    display: flex;
-    gap: 6px;
-    background: rgba(13,13,22,0.9);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    border-radius: 40px;
-    padding: 6px 8px;
-  }
-
-  .filter-pill {
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    padding: 5px 14px;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-    font-family: inherit;
-  }
-
-  .filter-pill:hover { background: var(--border); color: var(--text); }
-  .filter-pill.active { background: var(--primary); color: #000; font-weight: 600; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
-<svg id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
-<div id="nodes-layer"></div>
-<div id="tooltip"></div>
+<canvas id="canvas-bg"></canvas>
+<div id="map"></div>
+<svg id="edges-svg"></svg>
 
-<!-- Top bar -->
-<div id="topbar">
-  <div class="topbar-left">
-    <div class="amber-dot"></div>
-    <span class="wordmark">Decisionledger</span>
-  </div>
-  <div class="topbar-right">18 entities &nbsp;·&nbsp; 3 sources &nbsp;·&nbsp; 7 patterns</div>
-</div>
+<div id="wordmark">Decisionledger</div>
+<div id="hint">Click any node to explore</div>
 
-<!-- Side panel -->
-<div id="side-panel">
-  <button class="panel-close" id="panel-close-btn">×</button>
+<div id="panel">
+  <button id="panel-close" onclick="closePanel()">✕</button>
   <div id="panel-content"></div>
 </div>
 
-<!-- Hook notification -->
-<div id="hook-notification" id="hook-notif"></div>
+<div id="hook-bar"></div>
 
-<!-- Filter bar -->
-<div id="filter-bar">
-  <button class="filter-pill active" data-filter="all">All</button>
-  <button class="filter-pill" data-filter="decision">Decisions</button>
-  <button class="filter-pill" data-filter="question">Questions</button>
-  <button class="filter-pill" data-filter="pattern">Patterns</button>
-  <button class="filter-pill" data-filter="goal">Goals</button>
-  <button class="filter-pill" data-filter="constraint">Constraints</button>
+<div id="legend">
+  <div class="legend-row">
+    <div class="legend-line" style="background: var(--violet); opacity: 0.6;"></div>
+    Influence
+  </div>
+  <div class="legend-row">
+    <div class="legend-line" style="background: var(--red); opacity: 0.6; border-top: 1px dashed var(--red);"></div>
+    Contradiction
+  </div>
+  <div class="legend-row">
+    <div class="legend-line" style="background: var(--amber); opacity: 0.4;"></div>
+    Context
+  </div>
 </div>
 
 <script>
-// ──────────────────────────────────────────────
-// DATA
-// ──────────────────────────────────────────────
+// ─── DATA ────────────────────────────────────────────────────────────────────
 const NODES = [
-  // DECISIONS
+  // Gravitational center — behavioral pattern (mass=5, largest, most connected)
   {
-    id: 'd1', type: 'decision', label: 'Chose async-first culture',
-    title: 'Chose async-first culture',
-    description: 'Decided to build the team around async communication — no daily standups, no Slack obligations. Default to written, asynchronous collaboration across all functions.',
+    id: 'p1', type: 'pattern', mass: 5,
+    label: 'Avoids conflict in decisions',
+    snippet: '"We didn\'t want to rock the boat, so we went with consensus rather than best option."',
+    color: '#E8A020', ring: -1  // -1 = center
+  },
+
+  // Inner ring (ring 0) — high-mass decisions
+  {
+    id: 'd1', type: 'decision', mass: 4,
+    label: 'Hire AE after 12 customers',
+    snippet: '"We decided to bring on our first AE once we hit the 12-customer mark."',
     confidence: 0.91,
-    snippet: '"We kept slipping into sync habits and it was killing deep work. Made the call: async by default, sync by exception. Every decision written down."',
-    related: ['q1','p1','g1'],
-    hook: 'This pattern reinforces 2 other decisions →',
-    px: 22, py: 32
+    outcome: { expected: 'Close 3 deals/month within 60 days', actual: 'Closed 2 deals/month, took 90 days', verdict: 'partial', impact: 'Slower than expected but model validated' },
+    color: '#E8A020', ring: 0
   },
   {
-    id: 'd2', type: 'decision', label: 'Dropped B2B pivot',
-    title: 'Dropped B2B pivot',
-    description: 'Abandoned the enterprise B2B angle after 3 months of pilots. Returned to prosumer/SMB focus where product-market fit signals were stronger.',
+    id: 'd2', type: 'decision', mass: 4,
+    label: 'Skip seed round, go direct to Series A',
+    snippet: '"We\'re going straight to Series A — we have enough traction to skip the seed."',
     confidence: 0.88,
-    snippet: '"The enterprise deals kept stalling at legal. Our win rate was 8%. We were building for people who had to approve, not people who wanted to use it."',
-    related: ['q2','p2','d5'],
-    hook: '2 other decisions contradict this →',
-    contradicts: 'd5',
-    px: 55, py: 20
+    outcome: { expected: 'Raise $5M at $20M valuation', actual: null, verdict: 'pending', impact: null },
+    color: '#E8A020', ring: 0
   },
   {
-    id: 'd3', type: 'decision', label: 'Hired senior eng early',
-    title: 'Hired senior eng early',
-    description: 'Made the call to hire a senior engineer at month 4, before revenue justified it. Bet on velocity over burn efficiency.',
+    id: 'd3', type: 'decision', mass: 3.5,
+    label: 'Product-led, no outbound',
+    snippet: '"We\'re betting on product-led growth — no SDRs, no cold outreach."',
     confidence: 0.85,
-    snippet: '"We were at $3k MRR and I hired someone at $180k base. Most people thought I was crazy. But the output tripled in 6 weeks."',
-    related: ['q1','g1','g3'],
-    hook: 'This decision connects to your top goal →',
-    px: 75, py: 35
+    outcome: { expected: 'Organic CAC under $200', actual: 'Organic CAC $380', verdict: 'negative', impact: 'Need to revisit PLG assumption' },
+    color: '#E8A020', ring: 0
   },
+
+  // Mid ring (ring 1) — reasons, goals, constraints
   {
-    id: 'd4', type: 'decision', label: 'Delayed fundraise to Q2',
-    title: 'Delayed fundraise to Q2',
-    description: 'Chose to delay the seed round from Q4 to Q2 next year to improve metrics and negotiate from a stronger position.',
-    confidence: 0.79,
-    snippet: '"VCs were offering terms but the numbers weren\'t where I wanted them. Decided to extend runway and raise on our own terms in spring."',
-    related: ['q4','p2','c1'],
-    hook: 'This question hasn\'t been answered in 47 days →',
-    px: 38, py: 58
-  },
-  {
-    id: 'd5', type: 'decision', label: 'Cut features for speed',
-    title: 'Cut features for speed',
-    description: 'Removed 40% of the planned roadmap to ship faster. Prioritised a tight, opinionated core over a broad feature surface.',
-    confidence: 0.93,
-    snippet: '"We had 60 things on the board. I deleted 24 of them. Some were good ideas. All of them were slowing us down."',
-    related: ['d2','p3','g1'],
-    hook: 'This pattern appears in all 3 of your uploads →',
-    contradicts: 'd2',
-    px: 65, py: 62
-  },
-  {
-    id: 'd6', type: 'decision', label: 'Prioritised retention over growth',
-    title: 'Prioritised retention over growth',
-    description: 'Shifted focus from new user acquisition to reducing churn. Froze growth spend until month-3 retention hit 65%.',
+    id: 'r1', type: 'reason', mass: 2.5,
+    label: 'AE hire driven by inbound volume',
+    snippet: '"We had more demos booked than we could handle ourselves."',
     confidence: 0.87,
-    snippet: '"We were filling a leaky bucket. The growth numbers looked good until you looked at 90-day cohorts. Stopped all paid until retention was fixed."',
-    related: ['q3','g1','g3','p1'],
-    hook: '3 other decisions support this goal →',
-    px: 20, py: 70
-  },
-
-  // QUESTIONS
-  {
-    id: 'q1', type: 'question', label: 'When to hire a CTO?',
-    title: 'When to hire a CTO?',
-    description: 'Open question about the right time to bring on a technical co-founder or CTO as the team scales past 3 engineers.',
-    confidence: 0.72,
-    snippet: '"I keep coming back to this. Do I hire someone senior who can own the roadmap, or do I stay technical myself until Series A?"',
-    related: ['d1','d3'],
-    hook: 'This question hasn\'t been answered in 47 days →',
-    px: 48, py: 38
+    color: '#7c6fff', ring: 1
   },
   {
-    id: 'q2', type: 'question', label: 'Should we go enterprise?',
-    title: 'Should we go enterprise?',
-    description: 'Recurring question about whether to re-engage the enterprise segment with a more mature product and better legal templates.',
-    confidence: 0.65,
-    snippet: '"Now that we have 800 users and some case studies, do we try enterprise again? The ACV would change everything but so would the sales cycle."',
-    related: ['d2','d6'],
-    hook: '2 other decisions contradict this →',
-    px: 78, py: 52
+    id: 'g1', type: 'goal', mass: 2.5,
+    label: '$50k MRR by Q3',
+    snippet: '"We need $50k MRR to prove viability before the raise."',
+    confidence: 0.82,
+    color: '#4caf7d', ring: 1
   },
   {
-    id: 'q3', type: 'question', label: 'Is the CAC sustainable?',
-    title: 'Is the CAC sustainable?',
-    description: 'Unresolved concern about whether customer acquisition costs will compress as the channel matures or continue to inflate.',
-    confidence: 0.68,
-    snippet: '"Our CAC has gone from $40 to $110 in 6 months. If the payback period hits 18 months we have a structural problem, not a marketing problem."',
-    related: ['d6','g3'],
-    hook: 'This question hasn\'t been answered in 47 days →',
-    px: 30, py: 82
+    id: 'c1', type: 'constraint', mass: 2,
+    label: '18-month runway limit',
+    snippet: '"We have 18 months of runway — that\'s the hard constraint."',
+    confidence: 0.94,
+    color: '#e05555', ring: 1
   },
   {
-    id: 'q4', type: 'question', label: 'Right time to raise Series A?',
-    title: 'Right time to raise Series A?',
-    description: 'Strategic question about Series A timing relative to ARR, growth rate, and market conditions heading into Q3.',
-    confidence: 0.61,
-    snippet: '"The conventional wisdom is $1M ARR but I\'ve seen rounds at $600k with the right story. What\'s our story at $800k and 15% MoM?"',
-    related: ['d4','c1'],
-    hook: 'This pattern appears in all 3 of your uploads →',
-    px: 60, py: 80
-  },
-
-  // PATTERNS
-  {
-    id: 'p1', type: 'pattern', label: 'Avoids conflict in decisions',
-    title: 'Avoids conflict in decisions',
-    description: 'Recurring behavioural pattern: decisions are framed as product/business logic but often avoid naming interpersonal conflict as the real driver.',
-    confidence: 0.84,
-    snippet: '"The way you phrase these decisions — always the rational business case, never the team dynamics. There\'s a pattern here worth noticing."',
-    related: ['d1','d6'],
-    hook: 'This pattern appears in all 3 of your uploads →',
-    px: 12, py: 50
-  },
-  {
-    id: 'p2', type: 'pattern', label: 'Defers financial calls',
-    title: 'Defers financial calls',
-    description: 'Financial decisions — fundraising, pricing, burn rate — consistently appear later in conversations and are framed with more uncertainty than product decisions.',
+    id: 'q1', type: 'open_question', mass: 2,
+    label: 'Bridge round or direct Series A?',
+    snippet: '"We\'re still debating — bridge keeps us alive but signals weakness to A investors."',
     confidence: 0.79,
-    snippet: '"Every time we get to the money stuff, you qualify everything. Product decisions are crisp. Financial ones are hedged. The contrast is notable."',
-    related: ['d2','d4'],
-    hook: 'This pattern appears in all 3 of your uploads →',
-    px: 85, py: 22
+    color: '#a0a0a0', ring: 1
   },
   {
-    id: 'p3', type: 'pattern', label: 'Strong on product instinct',
-    title: 'Strong on product instinct',
-    description: 'High-confidence, fast decisions on product direction with clear rationale. Minimal second-guessing, strong internal signal alignment.',
-    confidence: 0.92,
-    snippet: '"When you talk about product you\'re decisive, specific, and grounded. Your confidence is highest here and the reasoning is tightest."',
-    related: ['d5','d1'],
-    hook: 'This strength appears across 6 decisions →',
-    px: 88, py: 70
-  },
-
-  // GOALS
-  {
-    id: 'g1', type: 'goal', label: 'Reach 1000 paying users',
-    title: 'Reach 1000 paying users',
-    description: 'Target milestone of 1,000 paying customers as the proof point for product-market fit before beginning Series A process.',
-    confidence: 0.95,
-    snippet: '"1000 is the number. Not revenue, not ARR. Paying users. If we hit that with reasonable retention we can tell a clear story."',
-    related: ['d1','d3','d6'],
-    hook: '3 other decisions support this goal →',
-    px: 42, py: 16
-  },
-  {
-    id: 'g2', type: 'goal', label: 'Build defensible moat',
-    title: 'Build defensible moat',
-    description: 'Long-term goal to create durable competitive advantages — data network effects, switching costs, and proprietary extraction models.',
-    confidence: 0.83,
-    snippet: '"The moat isn\'t the feature, it\'s the accumulated decisions. Every conversation we store makes the model better for that founder. That\'s the lock-in."',
-    related: ['d1','p3'],
-    hook: 'This goal connects to your core pattern →',
-    px: 18, py: 18
-  },
-  {
-    id: 'g3', type: 'goal', label: 'Profitable by Q4',
-    title: 'Profitable by Q4',
-    description: 'Operational profitability target for Q4 — default alive scenario independent of fundraising outcome.',
+    id: 'r2', type: 'reason', mass: 2,
+    label: 'Series A chosen for signal strength',
+    snippet: '"A seed would cap our valuation — going straight to A sends a stronger signal."',
     confidence: 0.76,
-    snippet: '"If the raise doesn\'t happen, I want to be default alive. Q4 profitability is the backstop. It changes the power dynamic with investors too."',
-    related: ['d4','d3','c1'],
-    hook: 'This question hasn\'t been answered in 47 days →',
-    px: 72, py: 16
+    color: '#7c6fff', ring: 1
   },
 
-  // CONSTRAINTS
+  // Outer ring (ring 2) — evidence, action items, peripheral
   {
-    id: 'c1', type: 'constraint', label: '12mo runway',
-    title: '12 months runway',
-    description: 'Current financial constraint: 12 months of runway at current burn. Sets hard deadline for either profitability or successful fundraise.',
-    confidence: 0.98,
-    snippet: '"We have exactly 12 months at this burn. That\'s the clock everything else runs against."',
-    related: ['d4','g3','q4'],
-    hook: 'This constraint affects 4 active decisions →',
-    px: 50, py: 72
-  },
-  {
-    id: 'c2', type: 'constraint', label: 'No offshore team',
-    title: 'No offshore team',
-    description: 'Deliberate constraint to keep the engineering team co-located (or same-timezone remote). Accepted higher salary cost for tighter culture control.',
+    id: 'e1', type: 'evidence', mass: 1.5,
+    label: '3 enterprise pilots confirmed',
+    snippet: '"Three enterprise customers said yes to pilots — that\'s the data we needed."',
     confidence: 0.91,
-    snippet: '"We could save $200k a year going offshore. We\'re not doing it. The coordination cost and culture fragmentation isn\'t worth it at this stage."',
-    related: ['d1','d3'],
-    hook: 'This constraint shapes 2 hiring decisions →',
-    px: 82, py: 82
+    color: '#60a5fa', ring: 2
+  },
+  {
+    id: 'a1', type: 'action_item', mass: 1.5,
+    label: 'Finalize pitch deck by Friday',
+    snippet: '"We need the deck done by Friday for the LP intro call."',
+    confidence: 0.85,
+    color: '#f59e0b', ring: 2
+  },
+  {
+    id: 'a2', type: 'action_item', mass: 1.5,
+    label: 'Interview 2 AE candidates this week',
+    snippet: '"Let\'s move fast — two interviews lined up for this week."',
+    confidence: 0.80,
+    color: '#f59e0b', ring: 2
+  },
+  {
+    id: 'e2', type: 'evidence', mass: 1.5,
+    label: 'Competitor raised at 15x ARR',
+    snippet: '"Competitor just closed at 15x ARR — that benchmarks our ask."',
+    confidence: 0.72,
+    color: '#60a5fa', ring: 2
+  },
+  {
+    id: 'q2', type: 'open_question', mass: 1,
+    label: 'When does PLG actually break?',
+    snippet: '"We haven\'t stress-tested PLG above $500k ARR — when does it stop working?"',
+    confidence: 0.68,
+    color: '#a0a0a0', ring: 2
+  },
+  {
+    id: 'p2', type: 'pattern', mass: 1.5,
+    label: 'Anchors on external signals',
+    snippet: '"Competitor benchmarks, investor signals — external data drives choices more than internal."',
+    color: '#E8A020', ring: 2
+  },
+  {
+    id: 'o1', type: 'outcome', mass: 2,
+    label: 'PLG CAC exceeded target',
+    outcome: { expected: 'Organic CAC under $200', actual: 'Organic CAC $380 — 90% overshoot', verdict: 'negative', impact: 'Core growth model needs revision before Series A' },
+    color: '#e05555', ring: 2
+  },
+];
+
+// Edge definitions: [from, to, type]
+const EDGES = [
+  ['r1', 'd1', 'influence'],
+  ['g1', 'd1', 'context'],
+  ['c1', 'd2', 'influence'],
+  ['r2', 'd2', 'influence'],
+  ['q1', 'd2', 'context'],
+  ['e1', 'd2', 'influence'],
+  ['e2', 'd2', 'context'],
+  ['a1', 'd2', 'context'],
+  ['a2', 'd1', 'context'],
+  ['g1', 'd3', 'influence'],
+  ['q2', 'd3', 'context'],
+  ['o1', 'd3', 'contradiction'],
+  ['p1', 'd1', 'context'],
+  ['p1', 'd2', 'context'],
+  ['p2', 'd2', 'influence'],
+  ['e1', 'g1', 'context'],
+  ['c1', 'g1', 'context'],
+];
+
+// Sync groups: nodes that pulse together
+const SYNC_GROUPS = [
+  ['d1', 'r1', 'a2'],
+  ['d2', 'r2', 'q1', 'e2', 'a1'],
+  ['d3', 'g1', 'q2', 'o1'],
+  ['p1', 'p2'],
+];
+
+// Cost hooks
+const HOOKS = [
+  { text: '⚠ Open question blocking 2 downstream hiring decisions', node: 'q1' },
+  { text: '↻ PLG outcome invalidates current Series A narrative', node: 'o1' },
+  { text: '✓ AE hire outcome: validate or revisit your model', node: 'd1' },
+];
+
+// ─── LAYOUT ──────────────────────────────────────────────────────────────────
+const CX = window.innerWidth / 2;
+const CY = window.innerHeight / 2;
+const RING_RADII = [160, 275, 395];
+
+function layoutNodes() {
+  const rings = [[], [], []];
+  let center = null;
+
+  for (const n of NODES) {
+    if (n.ring === -1) { center = n; continue; }
+    rings[n.ring].push(n);
   }
-];
 
-const TYPE_CONFIG = {
-  decision:   { color: '#E8A020', size: 48, label: 'Decision' },
-  question:   { color: '#FB923C', size: 38, label: 'Question' },
-  pattern:    { color: '#A78BFA', size: 44, label: 'Pattern' },
-  goal:       { color: '#34D399', size: 36, label: 'Goal' },
-  constraint: { color: '#F87171', size: 32, label: 'Constraint' }
-};
+  // Place center
+  if (center) { center.x = CX; center.y = CY; }
 
-// Connections: [fromId, toId, style]
-// style: 'default' | 'contradict'
-const CONNECTIONS = [
-  ['d1','q1','default'], ['d1','p1','default'], ['d1','g1','default'],
-  ['d2','q2','default'], ['d2','p2','default'],
-  ['d2','d5','contradict'],
-  ['d3','q1','default'], ['d3','g1','default'], ['d3','g3','default'],
-  ['d4','q4','default'], ['d4','p2','default'], ['d4','c1','default'],
-  ['d5','p3','default'],
-  ['d6','q3','default'], ['d6','g1','default'], ['d6','g3','default'], ['d6','p1','default'],
-  ['q3','g3','default'],
-  ['q4','c1','default'],
-  ['g3','c1','default'],
-  ['g2','p3','default'],
-  ['p2','d4','default'],
-];
+  // Place rings
+  for (let r = 0; r < 3; r++) {
+    const ring = rings[r];
+    const radius = RING_RADII[r];
+    ring.forEach((n, i) => {
+      const angle = (i / ring.length) * Math.PI * 2 - Math.PI / 2;
+      n.baseAngle = angle;
+      n.angle = angle;
+      n.radius = radius;
+      n.x = CX + Math.cos(angle) * radius;
+      n.y = CY + Math.sin(angle) * radius;
+      n.speed = (0.00008 + Math.random() * 0.00004) * (r === 0 ? 1.4 : r === 1 ? 1.0 : 0.65);
+      n.direction = Math.random() > 0.5 ? 1 : -1;
+    });
+  }
+}
 
-// ──────────────────────────────────────────────
-// BACKGROUND CANVAS
-// ──────────────────────────────────────────────
-const canvas = document.getElementById('bg-canvas');
+// ─── NODE SIZING ─────────────────────────────────────────────────────────────
+function nodeSize(n) {
+  return 20 + n.mass * 8;
+}
+
+// ─── CANVAS BACKGROUND ───────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas-bg');
 const ctx = canvas.getContext('2d');
+let ambientNodes = [];
 
-let W, H;
-function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-}
-resize();
-window.addEventListener('resize', () => { resize(); drawConnections(); });
+function initCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-const BG_NODE_COUNT = 100;
-const bgNodes = [];
-
-for (let i = 0; i < BG_NODE_COUNT; i++) {
-  bgNodes.push({
-    x: Math.random() * 2 - 0.5,  // normalized 0-1 with overflow
-    y: Math.random() * 2 - 0.5,
-    vx: (Math.random() - 0.5) * 0.00008,
-    vy: (Math.random() - 0.5) * 0.00008,
-    r: 1.5 + Math.random() * 1.5,
-    baseOpacity: 0.12 + Math.random() * 0.18,
-    pulsePhase: Math.random() * Math.PI * 2,
-    pulseSpeed: 0.003 + Math.random() * 0.005,
-    color: Math.random() < 0.7 ? '#E8A020' : '#FB923C'
-  });
+  ambientNodes = [];
+  for (let i = 0; i < 120; i++) {
+    ambientNodes.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + 0.3,
+      speed: Math.random() * 0.15 + 0.02,
+      angle: Math.random() * Math.PI * 2,
+      opacity: Math.random() * 0.25 + 0.05,
+    });
+  }
 }
 
-const CONNECTION_DIST = 0.22;
+function drawCanvas(t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-let bgT = 0;
-function animateBg() {
-  bgT += 1;
-  ctx.clearRect(0, 0, W, H);
+  // Radial amber glow at center
+  const grd = ctx.createRadialGradient(CX, CY, 0, CX, CY, 300);
+  grd.addColorStop(0, 'rgba(232, 160, 32, 0.07)');
+  grd.addColorStop(1, 'rgba(232, 160, 32, 0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Update positions
-  for (const n of bgNodes) {
-    n.x += n.vx;
-    n.y += n.vy;
-    if (n.x < -0.1) n.x = 1.1;
-    if (n.x > 1.1) n.x = -0.1;
-    if (n.y < -0.1) n.y = 1.1;
-    if (n.y > 1.1) n.y = -0.1;
-    n.pulsePhase += n.pulseSpeed;
-  }
+  // Ambient particles drift
+  for (const n of ambientNodes) {
+    n.x += Math.cos(n.angle) * n.speed;
+    n.y += Math.sin(n.angle) * n.speed;
+    n.angle += 0.002;
 
-  // Draw connections
-  for (let i = 0; i < bgNodes.length; i++) {
-    for (let j = i + 1; j < bgNodes.length; j++) {
-      const a = bgNodes[i], b = bgNodes[j];
-      const dx = a.x - b.x, dy = a.y - b.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < CONNECTION_DIST) {
-        const alpha = (1 - dist / CONNECTION_DIST) * 0.07;
-        ctx.beginPath();
-        ctx.strokeStyle = `rgba(232,160,32,${alpha})`;
-        ctx.lineWidth = 0.5;
-        ctx.moveTo(a.x * W, a.y * H);
-        ctx.lineTo(b.x * W, b.y * H);
-        ctx.stroke();
-      }
-    }
-  }
+    if (n.x < 0) n.x = canvas.width;
+    if (n.x > canvas.width) n.x = 0;
+    if (n.y < 0) n.y = canvas.height;
+    if (n.y > canvas.height) n.y = 0;
 
-  // Draw nodes
-  for (const n of bgNodes) {
-    const pulse = Math.sin(n.pulsePhase) * 0.5 + 0.5;
-    const opacity = n.baseOpacity * (0.7 + 0.3 * pulse);
     ctx.beginPath();
-    ctx.arc(n.x * W, n.y * H, n.r, 0, Math.PI * 2);
-    ctx.fillStyle = n.color + Math.round(opacity * 255).toString(16).padStart(2, '0');
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(232, 160, 32, ${n.opacity})`;
     ctx.fill();
   }
-
-  requestAnimationFrame(animateBg);
 }
-animateBg();
 
-// ──────────────────────────────────────────────
-// INTERACTIVE NODES
-// ──────────────────────────────────────────────
-const nodesLayer = document.getElementById('nodes-layer');
-const tooltip = document.getElementById('tooltip');
-
+// ─── DOM NODES ───────────────────────────────────────────────────────────────
 const nodeEls = {};
+const map = document.getElementById('map');
 
-NODES.forEach((node, i) => {
-  const cfg = TYPE_CONFIG[node.type];
-  const wrapper = document.createElement('div');
-  wrapper.className = 'node-wrapper';
-  wrapper.dataset.id = node.id;
-  wrapper.dataset.type = node.type;
-  wrapper.style.left = node.px + '%';
-  wrapper.style.top = node.py + '%';
-  wrapper.style.setProperty('--pulse-offset', (i * 320) + 'ms');
-
-  const circle = document.createElement('div');
-  circle.className = 'node-circle';
-  circle.style.width = cfg.size + 'px';
-  circle.style.height = cfg.size + 'px';
-  circle.style.background = cfg.color + '22';
-  circle.style.border = `2px solid ${cfg.color}88`;
-  circle.style.boxShadow = `0 0 12px ${cfg.color}44, inset 0 0 8px ${cfg.color}22`;
+function createNodeEl(n) {
+  const size = nodeSize(n);
+  const el = document.createElement('div');
+  el.className = 'node';
+  el.id = 'node-' + n.id;
+  el.style.width = size + 'px';
+  el.style.height = size + 'px';
+  el.style.left = n.x + 'px';
+  el.style.top = n.y + 'px';
 
   const inner = document.createElement('div');
   inner.className = 'node-inner';
-  inner.style.background = `radial-gradient(circle, ${cfg.color}55 0%, transparent 70%)`;
-  circle.appendChild(inner);
+
+  if (n.ring === -1) {
+    // Center: amber pulsing ring
+    inner.style.background = 'radial-gradient(circle at 40% 35%, #f5c855, #E8A020)';
+    inner.style.boxShadow = `0 0 30px ${n.color}55, 0 0 60px ${n.color}22`;
+  } else {
+    inner.style.background = n.color + '22';
+    inner.style.border = `1.5px solid ${n.color}55`;
+    inner.style.boxShadow = `0 0 12px ${n.color}22`;
+  }
 
   const label = document.createElement('div');
   label.className = 'node-label';
-  label.textContent = node.label;
+  label.textContent = n.label;
 
-  wrapper.appendChild(circle);
-  wrapper.appendChild(label);
-  nodesLayer.appendChild(wrapper);
-  nodeEls[node.id] = wrapper;
-
-  // Hover
-  wrapper.addEventListener('mouseenter', (e) => {
-    circle.style.boxShadow = `0 0 28px ${cfg.color}88, 0 0 8px ${cfg.color}55, inset 0 0 12px ${cfg.color}33`;
-    circle.style.borderColor = cfg.color;
-    circle.style.background = cfg.color + '44';
-    tooltip.textContent = node.title;
-    tooltip.classList.add('visible');
-  });
-
-  wrapper.addEventListener('mousemove', (e) => {
-    let tx = e.clientX + 14;
-    let ty = e.clientY - 30;
-    if (tx + 200 > window.innerWidth) tx = e.clientX - 214;
-    if (ty < 0) ty = e.clientY + 14;
-    tooltip.style.left = tx + 'px';
-    tooltip.style.top = ty + 'px';
-  });
-
-  wrapper.addEventListener('mouseleave', () => {
-    circle.style.boxShadow = `0 0 12px ${cfg.color}44, inset 0 0 8px ${cfg.color}22`;
-    circle.style.borderColor = cfg.color + '88';
-    circle.style.background = cfg.color + '22';
-    tooltip.classList.remove('visible');
-  });
-
-  wrapper.addEventListener('click', () => openPanel(node));
-});
-
-// ──────────────────────────────────────────────
-// SVG CONNECTIONS
-// ──────────────────────────────────────────────
-const svg = document.getElementById('connections-svg');
-
-function getNodeCenter(id) {
-  const el = nodeEls[id];
-  if (!el) return null;
-  const rect = el.getBoundingClientRect();
-  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-}
-
-function drawConnections() {
-  svg.innerHTML = '';
-  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-  svg.appendChild(defs);
-
-  CONNECTIONS.forEach(([aId, bId, style]) => {
-    const a = getNodeCenter(aId);
-    const b = getNodeCenter(bId);
-    if (!a || !b) return;
-
-    const nodeA = NODES.find(n => n.id === aId);
-    const nodeB = NODES.find(n => n.id === bId);
-    if (!nodeA || !nodeB) return;
-
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const mx = (a.x + b.x) / 2;
-    const my = (a.y + b.y) / 2;
-    // Perpendicular offset for curve
-    const len = Math.sqrt(dx*dx + dy*dy);
-    const curve = len * 0.25;
-    const nx = -dy / len * curve;
-    const ny = dx / len * curve;
-
-    const cx = mx + nx;
-    const cy = my + ny;
-
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    const d = `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
-    path.setAttribute('d', d);
-    path.setAttribute('fill', 'none');
-
-    if (style === 'contradict') {
-      path.setAttribute('stroke', '#F87171');
-      path.setAttribute('stroke-opacity', '0.35');
-      path.setAttribute('stroke-width', '1.5');
-      path.setAttribute('stroke-dasharray', '5,4');
+  // Verdict badge
+  if (n.outcome) {
+    const verdict = document.createElement('div');
+    verdict.className = 'node-verdict';
+    if (n.outcome.verdict === 'partial' || n.outcome.verdict === 'positive') {
+      verdict.textContent = '✓ Outcome measured';
+      verdict.style.color = '#4caf7d';
+    } else if (n.outcome.verdict === 'negative') {
+      verdict.textContent = '✗ Outcome negative';
+      verdict.style.color = '#e05555';
     } else {
-      // Color based on node types
-      let color = '#E8A020';
-      if (nodeA.type === 'goal' || nodeB.type === 'goal') color = '#34D399';
-      else if (nodeA.type === 'pattern' || nodeB.type === 'pattern') color = '#A78BFA';
-      else if (nodeA.type === 'question' || nodeB.type === 'question') color = '#FB923C';
-
-      path.setAttribute('stroke', color);
-      path.setAttribute('stroke-opacity', '0.22');
-      path.setAttribute('stroke-width', '1');
+      verdict.textContent = '⏳ Awaiting outcome';
+      verdict.style.color = '#E8A020';
     }
+    el.appendChild(verdict);
+  }
 
-    svg.appendChild(path);
+  el.appendChild(inner);
+  el.appendChild(label);
+  el.addEventListener('click', () => openPanel(n));
+  el.addEventListener('mouseenter', () => highlightConnected(n.id));
+  el.addEventListener('mouseleave', clearHighlight);
+
+  map.appendChild(el);
+  nodeEls[n.id] = el;
+  return el;
+}
+
+// ─── EDGES ───────────────────────────────────────────────────────────────────
+const svg = document.getElementById('edges-svg');
+const edgeEls = {};
+
+function createEdges() {
+  for (const [from, to, type] of EDGES) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('fill', 'none');
+    line.setAttribute('stroke-width', type === 'contradiction' ? '1.5' : '1');
+    line.setAttribute('opacity', '0.25');
+    if (type === 'influence') line.setAttribute('stroke', '#7c6fff');
+    else if (type === 'contradiction') { line.setAttribute('stroke', '#e05555'); line.setAttribute('stroke-dasharray', '4 3'); }
+    else line.setAttribute('stroke', '#E8A020');
+    svg.appendChild(line);
+    edgeEls[from + '-' + to] = line;
+  }
+}
+
+function updateEdges() {
+  for (const [from, to] of EDGES) {
+    const nf = NODES.find(n => n.id === from);
+    const nt = NODES.find(n => n.id === to);
+    if (!nf || !nt) continue;
+    const line = edgeEls[from + '-' + to];
+    if (!line) continue;
+
+    const sf = nodeSize(nf) / 2;
+    const st = nodeSize(nt) / 2;
+    const dx = nt.x - nf.x, dy = nt.y - nf.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    const x1 = nf.x + dx / dist * sf;
+    const y1 = nf.y + dy / dist * sf;
+    const x2 = nt.x - dx / dist * st;
+    const y2 = nt.y - dy / dist * st;
+    const mx = (x1 + x2) / 2 + (dy / dist) * 40;
+    const my = (y1 + y2) / 2 - (dx / dist) * 40;
+    line.setAttribute('d', `M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`);
+  }
+}
+
+// ─── PANEL ───────────────────────────────────────────────────────────────────
+function openPanel(n) {
+  const panel = document.getElementById('panel');
+  const content = document.getElementById('panel-content');
+
+  const typeLabel = { decision: 'Decision', reason: 'Reason', evidence: 'Evidence', goal: 'Goal', constraint: 'Constraint', open_question: 'Open Question', action_item: 'Action Item', outcome: 'Outcome', pattern: 'Behavioral Pattern' };
+
+  let html = `<div class="panel-type">${typeLabel[n.type] || n.type}</div>`;
+  html += `<div class="panel-title">${n.label}</div>`;
+
+  if (n.confidence) {
+    html += `<div class="panel-meta">Confidence: <strong style="color:var(--text)">${Math.round(n.confidence * 100)}%</strong></div>`;
+  }
+
+  if (n.snippet) {
+    html += `<div class="panel-snippet">${n.snippet}</div>`;
+  }
+
+  if (n.outcome) {
+    html += `<div class="outcome-card">`;
+    html += `<div class="outcome-label">Expected outcome</div>`;
+    html += `<div class="outcome-text">${n.outcome.expected}</div>`;
+    if (n.outcome.actual) {
+      html += `<div class="outcome-label outcome-actual-label">What actually happened</div>`;
+      html += `<div class="outcome-text">${n.outcome.actual}</div>`;
+    } else {
+      html += `<div class="outcome-label outcome-pending-label">⏳ Not yet measured</div>`;
+    }
+    if (n.outcome.impact) {
+      html += `<div class="outcome-label" style="margin-top:10px">Impact</div>`;
+      html += `<div class="outcome-text" style="color:var(--muted)">${n.outcome.impact}</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Connected nodes
+  const connected = EDGES
+    .filter(([f, t]) => f === n.id || t === n.id)
+    .map(([f, t, type]) => ({ id: f === n.id ? t : f, type }));
+
+  if (connected.length) {
+    html += `<div class="connected-list"><div class="panel-meta" style="margin-bottom:10px">Connected (${connected.length})</div>`;
+    for (const c of connected) {
+      const cn = NODES.find(nd => nd.id === c.id);
+      if (!cn) continue;
+      html += `<div class="connected-item" onclick="openPanel(NODES.find(n=>n.id==='${cn.id}'))">
+        <div class="connected-dot" style="background:${cn.color}"></div>
+        ${cn.label}
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  content.innerHTML = html;
+  panel.classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+}
+
+// ─── HIGHLIGHT ────────────────────────────────────────────────────────────────
+function highlightConnected(id) {
+  const connected = new Set([id]);
+  for (const [f, t] of EDGES) {
+    if (f === id) connected.add(t);
+    if (t === id) connected.add(f);
+  }
+  for (const n of NODES) {
+    const el = nodeEls[n.id];
+    if (!el) continue;
+    el.style.opacity = connected.has(n.id) ? '1' : '0.2';
+  }
+  for (const [from, to] of EDGES) {
+    const line = edgeEls[from + '-' + to];
+    if (!line) continue;
+    line.setAttribute('opacity', (from === id || to === id) ? '0.7' : '0.05');
+  }
+}
+
+function clearHighlight() {
+  for (const el of Object.values(nodeEls)) el.style.opacity = '1';
+  for (const line of Object.values(edgeEls)) line.setAttribute('opacity', '0.25');
+}
+
+// ─── PULSE ANIMATION ─────────────────────────────────────────────────────────
+const pulsePhase = {};
+SYNC_GROUPS.forEach((group, gi) => {
+  group.forEach(id => { pulsePhase[id] = gi * (Math.PI * 2 / SYNC_GROUPS.length); });
+});
+
+function applyPulse(t) {
+  for (const n of NODES) {
+    const el = nodeEls[n.id];
+    if (!el) continue;
+    const inner = el.querySelector('.node-inner');
+    if (!inner) continue;
+    const phase = pulsePhase[n.id] ?? 0;
+    const pulse = 0.5 + 0.5 * Math.sin(t * 0.0008 + phase);
+    const alpha = Math.round((0.15 + pulse * 0.25) * 255).toString(16).padStart(2, '0');
+    if (n.ring === -1) {
+      // center glows
+      const glow = 30 + pulse * 30;
+      inner.style.boxShadow = `0 0 ${glow}px ${n.color}66, 0 0 ${glow * 2}px ${n.color}22`;
+    } else {
+      inner.style.boxShadow = `0 0 ${8 + pulse * 14}px ${n.color}${alpha}`;
+    }
+  }
+}
+
+// ─── ORBITAL MOTION ──────────────────────────────────────────────────────────
+function orbitNodes(t) {
+  for (const n of NODES) {
+    if (n.ring === -1 || n.ring === undefined) continue;
+    n.angle += n.speed * n.direction;
+    n.x = CX + Math.cos(n.angle) * n.radius;
+    n.y = CY + Math.sin(n.angle) * n.radius;
+
+    const el = nodeEls[n.id];
+    if (el) {
+      el.style.left = n.x + 'px';
+      el.style.top = n.y + 'px';
+    }
+  }
+}
+
+// ─── EMERGENCE ───────────────────────────────────────────────────────────────
+function emergeNodes() {
+  const sorted = [...NODES].sort((a, b) => b.mass - a.mass);
+  sorted.forEach((n, i) => {
+    setTimeout(() => {
+      const el = nodeEls[n.id];
+      if (el) el.classList.add('visible');
+    }, 300 + i * 95);
   });
 }
 
-// Draw after layout settles
-setTimeout(drawConnections, 100);
-window.addEventListener('resize', () => setTimeout(drawConnections, 50));
-
-// ──────────────────────────────────────────────
-// SIDE PANEL
-// ──────────────────────────────────────────────
-const sidePanel = document.getElementById('side-panel');
-const panelContent = document.getElementById('panel-content');
-const panelCloseBtn = document.getElementById('panel-close-btn');
-
-let hookTimer = null;
-const hookNotif = document.getElementById('hook-notification');
-
-function openPanel(node) {
-  const cfg = TYPE_CONFIG[node.type];
-  const relatedNodes = (node.related || []).map(id => NODES.find(n => n.id === id)).filter(Boolean);
-
-  panelContent.innerHTML = `
-    <span class="panel-type-badge" style="background:${cfg.color}22;color:${cfg.color}">${cfg.label}</span>
-    <div class="panel-title">${node.title}</div>
-    <p class="panel-description">${node.description}</p>
-    <div class="confidence-badge">
-      <div class="confidence-dot" style="background:${node.confidence > 0.8 ? '#34D399' : node.confidence > 0.65 ? '#FB923C' : '#F87171'}"></div>
-      Confidence ${Math.round(node.confidence * 100)}%
-    </div>
-    <div class="panel-divider"></div>
-    <div class="panel-snippet">${node.snippet}</div>
-    <div class="panel-divider"></div>
-    <div class="panel-section-title">Connected entities</div>
-    <div class="panel-related-list">
-      ${relatedNodes.map(r => {
-        const rc = TYPE_CONFIG[r.type];
-        return `<div class="panel-related-item">
-          <div class="related-dot" style="background:${rc.color}"></div>
-          <span style="color:${rc.color};font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-right:6px">${rc.label}</span>
-          <span>${r.label}</span>
-        </div>`;
-      }).join('')}
-    </div>
-    <button class="panel-view-all">View all ${cfg.label.toLowerCase()}s <span>→</span></button>
-  `;
-
-  sidePanel.classList.add('open');
-
-  // Hook notification
-  if (hookTimer) clearTimeout(hookTimer);
-  hookNotif.classList.remove('visible');
-
-  hookTimer = setTimeout(() => {
-    hookNotif.textContent = node.hook || 'Connected to recent patterns →';
-    hookNotif.innerHTML += '<span class="hook-arrow">→</span>';
-    hookNotif.classList.add('visible');
-    const dismissTimer = setTimeout(() => hookNotif.classList.remove('visible'), 5000);
-    hookNotif.onclick = () => { hookNotif.classList.remove('visible'); clearTimeout(dismissTimer); };
-  }, 1500);
+// ─── HOOKS ───────────────────────────────────────────────────────────────────
+function spawnHooks() {
+  const bar = document.getElementById('hook-bar');
+  HOOKS.forEach((h, i) => {
+    setTimeout(() => {
+      const pill = document.createElement('div');
+      pill.className = 'hook-pill';
+      pill.textContent = h.text;
+      pill.style.animationDelay = '0s';
+      pill.onclick = () => {
+        const n = NODES.find(nd => nd.id === h.node);
+        if (n) openPanel(n);
+      };
+      bar.appendChild(pill);
+    }, 2000 + i * 600);
+  });
 }
 
-panelCloseBtn.addEventListener('click', () => {
-  sidePanel.classList.remove('open');
-  if (hookTimer) clearTimeout(hookTimer);
-  hookNotif.classList.remove('visible');
+// ─── MAIN LOOP ────────────────────────────────────────────────────────────────
+let started = false;
+
+function init() {
+  initCanvas();
+  layoutNodes();
+  createEdges();
+  for (const n of NODES) createNodeEl(n);
+  emergeNodes();
+  spawnHooks();
+
+  function loop(t) {
+    drawCanvas(t);
+    orbitNodes(t);
+    updateEdges();
+    applyPulse(t);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener('resize', () => {
+  initCanvas();
 });
 
-// ──────────────────────────────────────────────
-// FILTER PILLS
-// ──────────────────────────────────────────────
-const filterPills = document.querySelectorAll('.filter-pill');
-let activeFilter = 'all';
-
-filterPills.forEach(pill => {
-  pill.addEventListener('click', () => {
-    filterPills.forEach(p => p.classList.remove('active'));
-    pill.classList.add('active');
-    activeFilter = pill.dataset.filter;
-
-    Object.values(nodeEls).forEach(el => {
-      if (activeFilter === 'all' || el.dataset.type === activeFilter) {
-        el.classList.remove('dimmed');
-      } else {
-        el.classList.add('dimmed');
-      }
-    });
-  });
-});
+init();
 </script>
 </body>
 </html>

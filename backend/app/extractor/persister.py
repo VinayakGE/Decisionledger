@@ -1,5 +1,6 @@
 """Persist extracted entities to the database."""
 
+import json
 from typing import Any, Dict, List
 
 from sqlalchemy.orm import Session
@@ -8,6 +9,7 @@ from app.models.orm import (
     ActionItem,
     ActionStatus,
     Constraint,
+    ConversationSource,
     Decision,
     Evidence,
     Goal,
@@ -37,6 +39,9 @@ def persist_entities(
     source_id: int,
 ) -> int:
     """Write entities to DB. Returns count of rows created."""
+    # Collect unique behavioral patterns and store on the source record.
+    _store_behavioral_notes(db, entities, source_id)
+
     count = 0
     # first pass: create decisions so reasons/evidence can link to them
     decision_map: Dict[str, int] = {}  # title → id
@@ -163,3 +168,29 @@ def _clamp(v) -> float:
         return max(0.0, min(1.0, float(v)))
     except Exception:
         return 0.0
+
+
+def _store_behavioral_notes(db: Session, entities: List[Dict[str, Any]], source_id: int) -> None:
+    """Collect unique behavioral pattern strings from entity stamps and persist on the source."""
+    seen: set = set()
+    notes: List[str] = []
+    for e in entities:
+        bp = (e.get("behavioral_pattern") or "").strip()
+        if bp and bp.lower() not in {"unknown", ""} and bp not in seen:
+            seen.add(bp)
+            notes.append(bp)
+    if not notes:
+        return
+    source = db.query(ConversationSource).filter(ConversationSource.id == source_id).first()
+    if source is None:
+        return
+    # Merge with any previously stored notes (e.g. re-analysis).
+    existing: List[str] = []
+    if source.behavioral_notes_json:
+        try:
+            existing = json.loads(source.behavioral_notes_json)
+        except Exception:
+            existing = []
+    merged = list(dict.fromkeys(existing + notes))  # deduplicate while preserving order
+    source.behavioral_notes_json = json.dumps(merged)
+    db.add(source)

@@ -7,8 +7,11 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models.orm import ActionItem, Decision, Goal, OpenQuestion
+import json
+
+from app.models.orm import ActionItem, ConversationSource, Decision, Goal, OpenQuestion
 from app.models.schemas import (
+    BehavioralNote,
     BlindSpot,
     DecisionOut,
     DecisionReversal,
@@ -61,21 +64,39 @@ def generate_insights(db: Session) -> InsightReport:
     decisions = db.query(Decision).all()
     goals = db.query(Goal).all()
     action_items = db.query(ActionItem).all()
+    sources = db.query(ConversationSource).all()
 
     recurring = _find_recurring_questions(questions)
     reversals = _find_decision_reversals(decisions)
     top_goals = _rank_goals(goals)
     blind_spots = _find_blind_spots(questions, action_items)
+    behavioral_notes = _collect_behavioral_notes(sources)
 
     return InsightReport(
         recurring_questions=recurring,
         decision_reversals=reversals,
         top_goals=[GoalOut.model_validate(g) for g in top_goals[:10] if g.description],
         blind_spots=blind_spots,
+        behavioral_notes=behavioral_notes,
         total_decisions=len(decisions),
         total_open_questions=len(questions),
         total_action_items=len(action_items),
     )
+
+
+def _collect_behavioral_notes(sources: list) -> List[BehavioralNote]:
+    notes: List[BehavioralNote] = []
+    for source in sources:
+        if not source.behavioral_notes_json:
+            continue
+        try:
+            patterns: List[str] = json.loads(source.behavioral_notes_json)
+        except Exception:
+            continue
+        for p in patterns:
+            if p and p.lower() not in {"unknown", ""}:
+                notes.append(BehavioralNote(pattern=p, source_filename=source.filename))
+    return notes
 
 
 def _find_recurring_questions(questions: List[OpenQuestion]) -> List[RecurringQuestionGroup]:

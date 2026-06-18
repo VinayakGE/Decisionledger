@@ -386,6 +386,13 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** BehavioralNote */
+        BehavioralNote: {
+            /** Pattern */
+            pattern: string;
+            /** Source Filename */
+            source_filename: string;
+        };
         /** InsightReport */
         InsightReport: {
             /** Recurring Questions */
@@ -396,6 +403,8 @@ export interface components {
             top_goals: components["schemas"]["GoalOut"][];
             /** Blind Spots */
             blind_spots: components["schemas"]["BlindSpot"][];
+            /** Behavioral Notes */
+            behavioral_notes: components["schemas"]["BehavioralNote"][];
             /** Total Decisions */
             total_decisions: number;
             /** Total Open Questions */

@@ -20,6 +20,7 @@ export type UploadResponse = components["schemas"]["UploadResponse"];
 export type RecurringQuestionGroup = components["schemas"]["RecurringQuestionGroup"];
 export type DecisionReversal = components["schemas"]["DecisionReversal"];
 export type BlindSpot = components["schemas"]["BlindSpot"];
+export type BehavioralNote = components["schemas"]["BehavioralNote"];
 
 export interface FallbackStep {
   provider: string;

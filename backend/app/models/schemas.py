@@ -176,11 +176,17 @@ class BlindSpot(BaseModel):
     ratio: float  # actions / discussions — lower means more blind spot
 
 
+class BehavioralNote(BaseModel):
+    pattern: str
+    source_filename: str
+
+
 class InsightReport(BaseModel):
     recurring_questions: List[RecurringQuestionGroup]
     decision_reversals: List[DecisionReversal]
     top_goals: List[GoalOut]
     blind_spots: List[BlindSpot]
+    behavioral_notes: List[BehavioralNote] = []
     total_decisions: int
     total_open_questions: int
     total_action_items: int

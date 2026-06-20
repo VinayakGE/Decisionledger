@@ -1,8 +1,8 @@
 """Structured conversation capture endpoints for browser-based ingestion."""
 
-from datetime import timezone
 import os
 import re
+from datetime import timezone
 from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -44,13 +44,17 @@ def _to_conversation(payload: ChatGPTCaptureIn) -> Conversation:
         if message.content.strip()
     ]
     if not messages:
-        raise HTTPException(status_code=422, detail="Capture must include at least one non-empty message.")
+        raise HTTPException(
+            status_code=422, detail="Capture must include at least one non-empty message."
+        )
 
     created_at = payload.captured_at
     if created_at is None:
         created_at = next((message.timestamp for message in messages if message.timestamp), None)
 
-    return Conversation(title=_normalize_title(payload.title), messages=messages, created_at=created_at)
+    return Conversation(
+        title=_normalize_title(payload.title), messages=messages, created_at=created_at
+    )
 
 
 def _serialize_capture_markdown(payload: ChatGPTCaptureIn, conversation: Conversation) -> str:

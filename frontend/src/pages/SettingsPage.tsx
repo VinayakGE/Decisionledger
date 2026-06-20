@@ -71,7 +71,9 @@ export function SettingsPage() {
         <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
           <Info size={16} color={colors.primary} style={{ flexShrink: 0, marginTop: 2 }} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Capture vs analysis</div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+              Capture vs analysis
+            </div>
             <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8 }}>
               <strong>Browser capture:</strong> no new API key required.
             </p>

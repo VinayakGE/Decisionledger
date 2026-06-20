@@ -106,8 +106,8 @@ export function InsightsPage() {
               margin: "0 auto 28px",
             }}
           >
-            Capture a conversation or import a file and the engine will surface patterns,
-            reversals, and blind spots.
+            Capture a conversation or import a file and the engine will surface patterns, reversals,
+            and blind spots.
           </p>
           <Link
             to="/upload"

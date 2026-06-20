@@ -107,7 +107,9 @@ export function UploadPage() {
             </div>
           </div>
           <div style={{ background: colors.bg, borderRadius: 8, padding: "12px 14px" }}>
-            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>2. Capture current chat</div>
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+              2. Capture current chat
+            </div>
             <div style={{ fontSize: 12, color: colors.muted, lineHeight: 1.5 }}>
               Open a ChatGPT conversation, click <strong>Capture Current Chat</strong>, and the app
               will ingest it without any export step.

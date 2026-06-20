@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/capture/chatgpt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Capture Chatgpt Conversation */
+        post: operations["capture_chatgpt_conversation_capture_chatgpt_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/entities/sources": {
         parameters: {
             query?: never;
@@ -288,6 +305,29 @@ export interface components {
              * Format: binary
              */
             file: string;
+        };
+        /** CaptureMessageIn */
+        CaptureMessageIn: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant" | "system";
+            /** Content */
+            content: string;
+            /** Timestamp */
+            timestamp?: string | null;
+        };
+        /** ChatGPTCaptureIn */
+        ChatGPTCaptureIn: {
+            /** Title */
+            title?: string | null;
+            /** Source Url */
+            source_url?: string | null;
+            /** Captured At */
+            captured_at?: string | null;
+            /** Messages */
+            messages: components["schemas"]["CaptureMessageIn"][];
         };
         /** ConstraintOut */
         ConstraintOut: {
@@ -562,6 +602,39 @@ export interface operations {
         requestBody: {
             content: {
                 "multipart/form-data": components["schemas"]["Body_upload_file_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    capture_chatgpt_conversation_capture_chatgpt_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatGPTCaptureIn"];
             };
         };
         responses: {

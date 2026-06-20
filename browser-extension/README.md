@@ -7,7 +7,7 @@ Minimal Chrome extension for Phase 1 capture.
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked**
-4. Select `/home/runner/work/Decisionledger/Decisionledger/browser-extension`
+4. Select `<path-to-repo>/browser-extension`
 
 ## Use it
 

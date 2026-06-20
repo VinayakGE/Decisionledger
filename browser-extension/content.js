@@ -5,7 +5,11 @@ function normalizeWhitespace(text) {
 function detectTitle() {
   const heading = document.querySelector("main h1");
   if (heading?.textContent?.trim()) return heading.textContent.trim();
-  return document.title.replace(/\s*-\s*ChatGPT\s*$/i, "").trim() || "ChatGPT Capture";
+  const suffixes = [" - ChatGPT", " | ChatGPT"];
+  const title = document.title.trim();
+  const matchedSuffix = suffixes.find((suffix) => title.endsWith(suffix));
+  const withoutSuffix = matchedSuffix ? title.slice(0, -matchedSuffix.length).trim() : title;
+  return withoutSuffix || "ChatGPT Capture";
 }
 
 function collectMessages() {

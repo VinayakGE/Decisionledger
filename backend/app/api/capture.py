@@ -17,6 +17,7 @@ from app.parsers.base import Conversation, Message
 router = APIRouter(prefix="/capture", tags=["capture"])
 
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
+_MAX_SLUG_LENGTH = 48
 
 
 def _normalize_title(title: str | None) -> str:
@@ -26,7 +27,7 @@ def _normalize_title(title: str | None) -> str:
 
 def _slugify(value: str) -> str:
     slug = _NON_ALNUM.sub("-", value.lower()).strip("-")
-    return slug[:48] or "chatgpt-capture"
+    return slug[:_MAX_SLUG_LENGTH] or "chatgpt-capture"
 
 
 def _role_label(role: str) -> str:

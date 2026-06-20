@@ -146,7 +146,8 @@ def test_capture_chatgpt_returns_pending_and_writes_snapshot(tmp_path, monkeypat
     assert source is not None
     assert source.raw_path is not None
     assert os.path.exists(source.raw_path)
-    assert "Pricing strategy" in open(source.raw_path, encoding="utf-8").read()
+    with open(source.raw_path, encoding="utf-8") as f:
+        assert "Pricing strategy" in f.read()
     db.close()
 
 

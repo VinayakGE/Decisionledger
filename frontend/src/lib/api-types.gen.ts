@@ -366,6 +366,11 @@ export interface components {
              * @default []
              */
             evidence: components["schemas"]["EvidenceOut"][];
+            /**
+             * Outcomes
+             * @default []
+             */
+            outcomes: components["schemas"]["OutcomeOut"][];
         };
         /** DecisionReversal */
         DecisionReversal: {
@@ -454,6 +459,23 @@ export interface components {
             source_reference: string | null;
             /** Supporting Snippet */
             supporting_snippet: string | null;
+        };
+        /** OutcomeOut */
+        OutcomeOut: {
+            /** Id */
+            id: number;
+            /** Expected */
+            expected: string;
+            /** Actual */
+            actual?: string | null;
+            /** Confidence */
+            confidence: number;
+            /** Timeframe */
+            timeframe?: string | null;
+            /** Impact Statement */
+            impact_statement?: string | null;
+            /** Measured At */
+            measured_at?: string | null;
         };
         /** ProviderStatus */
         ProviderStatus: {

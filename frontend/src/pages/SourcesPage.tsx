@@ -34,6 +34,14 @@ const STATUS_LABEL: Record<string, string> = {
   pending: "Processing…",
 };
 
+const SOURCE_TYPE_LABEL: Record<string, string> = {
+  chatgpt: "CHATGPT",
+  claude: "CLAUDE",
+  markdown: "MARKDOWN",
+  text: "TEXT",
+  chatgpt_capture: "CHATGPT CAPTURE",
+};
+
 export function SourcesPage() {
   const { data: sources, loading, error, reload } = useData(() => api.getSources());
   const [deleting, setDeleting] = useState<number | null>(null);
@@ -122,7 +130,7 @@ export function SourcesPage() {
               textTransform: "uppercase",
             }}
           >
-            Upload a conversation →
+            Capture a conversation →
           </Link>
         </div>
       </PageShell>

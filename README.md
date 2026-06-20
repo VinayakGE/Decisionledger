@@ -1,8 +1,8 @@
 # Founder Brain Audit
 
-**Convert your AI conversations into structured decision intelligence.**
+**Convert captured conversations into structured decision intelligence.**
 
-Founder Brain Audit is a local-first analysis engine that parses your exported ChatGPT, Claude, Markdown, and plain text conversations and extracts structured entities — Decisions, Goals, Reasons, Evidence, Constraints, Open Questions, and Action Items — then runs an insight engine to surface recurring patterns, decision reversals, and blind spots.
+Founder Brain Audit is a local-first analysis engine that captures ChatGPT conversations or parses exported ChatGPT, Claude, Markdown, and plain text conversations, then extracts structured entities — Decisions, Goals, Reasons, Evidence, Constraints, Open Questions, and Action Items — and surfaces recurring patterns, decision reversals, and blind spots.
 
 > **Privacy-first.** All parsing and insight generation runs locally. Entity extraction sends conversation text to an LLM provider via your own API key — no data is sent anywhere without your explicit configuration. The default provider is Anthropic; the fallback chain (Anthropic → Gemini → Cerebras → Groq → Heuristic) tries each provider in order and stops at the first success. The Heuristic provider is fully local (no network calls). You control which providers are active by setting API keys in `.env`.
 
@@ -55,6 +55,7 @@ founder-brain-audit/
 │   ├── Dockerfile
 │   ├── nginx.conf
 │   └── package.json
+├── browser-extension/        # Chrome extension for instant ChatGPT capture
 ├── docker-compose.yml
 ├── .env.example
 └── README.md
@@ -129,9 +130,11 @@ rm backend/founder_brain_audit.db   # wipe and let the app recreate on next star
 
 ## How it works
 
-### 1 — Upload
+### 1 — Capture or Upload
 
-Drop a file on the Upload page. Supported formats:
+**Recommended:** use the browser extension in `browser-extension/` to capture the current ChatGPT thread instantly. No new integration API key is required for capture; your existing AI provider key is only used for extraction quality.
+
+**Fallback:** drop a file on the Capture page. Supported formats:
 
 | Format | How to export |
 |---|---|
@@ -176,6 +179,7 @@ The insight engine runs over all stored entities:
 
 | Method | Path | Description |
 |---|---|---|
+| `POST` | `/capture/chatgpt` | Capture one ChatGPT conversation from the browser extension |
 | `POST` | `/upload` | Upload a conversation file |
 | `GET` | `/entities/sources` | List all uploaded sources |
 | `GET` | `/entities/decisions` | List decisions (filter: `source_id`, `min_confidence`) |
@@ -207,7 +211,7 @@ Tests use an in-memory SQLite database and mock all Anthropic API calls — no k
 1. **Trustworthiness over completeness** — every entity has a confidence score; low-confidence fields are marked `Unknown` rather than hallucinated.
 2. **Local-first** — SQLite on disk, files stored locally, no telemetry.
 3. **Modular** — parsers, extractor, insight engine, and API are all independent modules with clear interfaces.
-4. **Incremental** — upload more files at any time; insights regenerate over the full corpus.
+4. **Incremental** — capture or upload more conversations at any time; insights regenerate over the full corpus.
 
 ---
 

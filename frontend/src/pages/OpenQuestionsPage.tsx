@@ -56,7 +56,7 @@ export function OpenQuestionsPage() {
           </p>
           {!sourceId && minConfidence === 0 && (
             <Link to="/upload" style={{ color: colors.primary, fontSize: 13 }}>
-              Upload a conversation to get started →
+              Capture a conversation to get started →
             </Link>
           )}
         </div>

@@ -1,7 +1,7 @@
 """Pydantic schemas for API I/O."""
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -27,6 +27,19 @@ class UploadResponse(BaseModel):
     extraction_confidence_avg: Optional[float] = None
     extraction_duration_ms: Optional[int] = None
     fallback_chain: List[FallbackStep] = []
+
+
+class CaptureMessageIn(BaseModel):
+    role: Literal["user", "assistant", "system"]
+    content: str
+    timestamp: Optional[datetime] = None
+
+
+class ChatGPTCaptureIn(BaseModel):
+    title: Optional[str] = None
+    source_url: Optional[str] = None
+    captured_at: Optional[datetime] = None
+    messages: List[CaptureMessageIn]
 
 
 # ── Reason / Evidence (nested) ────────────────────────────────────────────────

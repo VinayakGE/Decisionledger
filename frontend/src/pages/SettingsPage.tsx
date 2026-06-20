@@ -61,10 +61,27 @@ export function SettingsPage() {
         <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Settings</h1>
       </div>
       <p style={{ color: colors.textSecondary, marginBottom: 32, fontSize: 14 }}>
-        Configure API keys for entity extraction. Keys are kept in memory until the server restarts
-        — for permanent storage, set them as environment variables in your deployment platform
-        (Render dashboard, Docker .env, or local backend/.env).
+        Configure API keys for entity extraction quality. Browser capture itself needs no extra
+        integration key. Keys are kept in memory until the server restarts — for permanent storage,
+        set them as environment variables in your deployment platform (Render dashboard, Docker
+        .env, or local backend/.env).
       </p>
+
+      <Card style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <Info size={16} color={colors.primary} style={{ flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Capture vs analysis</div>
+            <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8 }}>
+              <strong>Browser capture:</strong> no new API key required.
+            </p>
+            <p style={{ fontSize: 13, color: colors.textSecondary, margin: 0 }}>
+              <strong>Structured extraction:</strong> optional AI provider keys improve quality and
+              reduce heuristic fallbacks.
+            </p>
+          </div>
+        </div>
+      </Card>
 
       {/* Extraction mode banner */}
       {data && (
@@ -104,8 +121,8 @@ export function SettingsPage() {
             </div>
             <div style={{ fontSize: 12, color: colors.textSecondary }}>
               {data.llm_enabled
-                ? "Uploads will use the full AI provider chain (Anthropic → Gemini → Cerebras → Groq → Heuristic)."
-                : "Uploads skip all LLM providers and use local heuristics. AI extraction runs automatically once the app is published."}
+                ? "Capture and uploads will use the full AI provider chain (Anthropic → Gemini → Cerebras → Groq → Heuristic)."
+                : "Capture and uploads skip all LLM providers and use local heuristics until AI extraction is enabled."}
             </div>
           </div>
         </div>

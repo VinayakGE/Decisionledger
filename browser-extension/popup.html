@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Decisionledger Capture</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 16px;
+        width: 320px;
+        font-family: Arial, sans-serif;
+        background: #0f1720;
+        color: #f5f7fb;
+      }
+      h1 {
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
+      p,
+      label,
+      input,
+      button {
+        font-size: 13px;
+      }
+      p {
+        color: #9da9b8;
+        line-height: 1.5;
+      }
+      label {
+        display: block;
+        margin: 12px 0 6px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #2b3645;
+        border-radius: 8px;
+        background: #131d29;
+        color: #f5f7fb;
+        padding: 10px 12px;
+      }
+      button {
+        width: 100%;
+        margin-top: 14px;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: #7c5cff;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button[disabled] {
+        opacity: 0.6;
+        cursor: wait;
+      }
+      #status {
+        margin-top: 12px;
+        min-height: 20px;
+        color: #9da9b8;
+      }
+      code {
+        color: #c8b9ff;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Decisionledger Capture</h1>
+    <p>
+      Capture the current ChatGPT thread and send it straight to Decisionledger. No export step, no
+      new integration key.
+    </p>
+    <label for="backendUrl">Decisionledger backend URL</label>
+    <input id="backendUrl" type="text" placeholder="http://localhost:8000" />
+    <button id="captureButton">Capture Current Chat</button>
+    <div id="status"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -14,7 +14,7 @@ const entityNav = [
 
 const mainNav = [
   { to: "/", label: "Dashboard", end: true },
-  { to: "/upload", label: "Upload" },
+  { to: "/upload", label: "Capture" },
   { to: "/sources", label: "Sources" },
 ];
 

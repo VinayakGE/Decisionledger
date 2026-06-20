@@ -2,6 +2,7 @@
 
 import io
 import json
+import os
 from unittest.mock import patch
 
 import pytest
@@ -116,6 +117,50 @@ def test_upload_markdown(tmp_path, monkeypatch):
     )
     assert r.status_code == 200
     assert r.json()["extraction_status"] == "pending"
+
+
+def test_capture_chatgpt_returns_pending_and_writes_snapshot(tmp_path, monkeypatch):
+    monkeypatch.setattr("app.api.capture.settings.upload_dir", str(tmp_path))
+    r = client.post(
+        "/capture/chatgpt",
+        json={
+            "title": "Pricing strategy",
+            "source_url": "https://chatgpt.com/c/example",
+            "captured_at": "2024-01-01T00:00:00Z",
+            "messages": [
+                {"role": "user", "content": "We should test annual plans."},
+                {"role": "assistant", "content": "That could improve cash flow."},
+            ],
+        },
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["source_type"] == "chatgpt_capture"
+    assert data["conversation_count"] == 1
+    assert data["extraction_status"] == "pending"
+
+    from app.models.orm import ConversationSource
+
+    db = TestSessionLocal()
+    source = db.query(ConversationSource).filter_by(id=data["source_id"]).first()
+    assert source is not None
+    assert source.raw_path is not None
+    assert os.path.exists(source.raw_path)
+    assert "Pricing strategy" in open(source.raw_path, encoding="utf-8").read()
+    db.close()
+
+
+def test_capture_chatgpt_requires_non_empty_messages(tmp_path, monkeypatch):
+    monkeypatch.setattr("app.api.capture.settings.upload_dir", str(tmp_path))
+    r = client.post(
+        "/capture/chatgpt",
+        json={
+            "title": "Empty capture",
+            "messages": [{"role": "user", "content": "   "}],
+        },
+    )
+    assert r.status_code == 422
+    assert "non-empty message" in r.json()["detail"]
 
 
 # ── Background extraction task ────────────────────────────────────────────────

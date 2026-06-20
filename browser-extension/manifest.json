@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Decisionledger Capture",
+  "version": "0.1.0",
+  "description": "Capture the current ChatGPT conversation into Decisionledger.",
+  "permissions": ["activeTab", "storage", "tabs"],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*",
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*"
+  ],
+  "action": {
+    "default_title": "Decisionledger Capture",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

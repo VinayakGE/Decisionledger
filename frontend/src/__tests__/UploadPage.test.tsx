@@ -9,6 +9,8 @@ vi.mock("../lib/api", () => ({
   api: {
     uploadFile: vi.fn(),
     getSource: vi.fn(),
+    getSettings: vi.fn(),
+    getSources: vi.fn(),
   },
   TERMINAL_STATUSES: new Set([
     "completed",
@@ -60,12 +62,21 @@ function renderUploadPage() {
 }
 
 describe("UploadPage", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(api.getSettings).mockResolvedValue({
+      providers: [],
+      heuristic_always_available: true,
+      llm_enabled: false,
+    } as any);
+    vi.mocked(api.getSources).mockResolvedValue([]);
+  });
   afterEach(() => vi.useRealTimers());
 
   it("renders the upload area in idle state", () => {
     renderUploadPage();
-    expect(screen.getByText(/drop your file here/i)).toBeInTheDocument();
+    expect(screen.getByText(/capture decisions instantly/i)).toBeInTheDocument();
+    expect(screen.getByText(/instant capture \(recommended\)/i)).toBeInTheDocument();
   });
 
   it("shows uploading state while upload is in progress", async () => {

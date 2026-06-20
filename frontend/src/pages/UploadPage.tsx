@@ -85,11 +85,56 @@ export function UploadPage() {
 
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 24px" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Analyse Your Conversations</h1>
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
+        Capture Decisions Instantly
+      </h1>
       <p style={{ color: colors.textSecondary, marginBottom: 24, fontSize: 14, lineHeight: 1.6 }}>
-        Upload a ChatGPT or Claude export and get an instant intelligence report — decisions made,
-        goals tracked, open questions, action items, and patterns in how you think.
+        Capture ChatGPT conversations with the browser extension or upload files as a fallback. The
+        engine turns raw conversation history into a decision ledger with decisions, goals, open
+        questions, action items, and reasoning patterns.
       </p>
+
+      <Card style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, letterSpacing: 0.3 }}>
+          Instant capture (recommended)
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ background: colors.bg, borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>1. Load extension</div>
+            <div style={{ fontSize: 12, color: colors.muted, lineHeight: 1.5 }}>
+              Load the unpacked browser extension from the repository&apos;s{" "}
+              <code>browser-extension/</code> folder.
+            </div>
+          </div>
+          <div style={{ background: colors.bg, borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>2. Capture current chat</div>
+            <div style={{ fontSize: 12, color: colors.muted, lineHeight: 1.5 }}>
+              Open a ChatGPT conversation, click <strong>Capture Current Chat</strong>, and the app
+              will ingest it without any export step.
+            </div>
+          </div>
+        </div>
+        <div
+          style={{
+            marginTop: 12,
+            fontSize: 12,
+            color: colors.textSecondary,
+            borderTop: `1px solid ${colors.border}`,
+            paddingTop: 12,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <span>
+            <strong>Capture source:</strong> no extra API key required
+          </span>
+          <span>
+            <strong>Analysis quality:</strong> your existing AI provider key is optional but
+            recommended
+          </span>
+        </div>
+      </Card>
 
       {/* Provider banner */}
       {settingsData && (
@@ -117,7 +162,7 @@ export function UploadPage() {
                   .filter((p: ProviderStatus) => p.configured)
                   .map((p: ProviderStatus) => p.label)
                   .join(", ")}`
-              : "No AI provider configured — extraction will use local heuristic fallback."}
+              : "No AI provider configured — capture still works, but analysis will use local heuristic fallback."}
           </span>
           {!anyConfigured && (
             <Link
@@ -164,10 +209,10 @@ export function UploadPage() {
         >
           <Upload size={40} color={colors.primary} style={{ margin: "0 auto 16px" }} />
           <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
-            Drop your file here or click to browse
+            Upload a file only if you are not using the extension
           </p>
           <p style={{ fontSize: 13, color: colors.textSecondary }}>
-            ChatGPT/Claude ZIP · JSON · Markdown · Plain text
+            Fallback import: ChatGPT/Claude ZIP · JSON · Markdown · Plain text
           </p>
           <input
             ref={inputRef}
@@ -331,7 +376,7 @@ export function UploadPage() {
                 fontSize: 14,
               }}
             >
-              Upload another
+              Import another file
             </button>
           </div>
         </Card>
@@ -342,7 +387,7 @@ export function UploadPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
             <AlertCircle size={20} color={colors.danger} />
             <span style={{ fontSize: 14, color: colors.danger, fontWeight: 600 }}>
-              Upload failed
+              Import failed
             </span>
           </div>
           <p style={{ fontSize: 13, color: colors.textSecondary, margin: "0 0 12px" }}>
@@ -375,7 +420,7 @@ export function UploadPage() {
             letterSpacing: 0.3,
           }}
         >
-          How to export your conversations
+          File import fallback
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
           {[
@@ -406,8 +451,8 @@ export function UploadPage() {
         >
           <span>🔒</span>
           <span>
-            Your files are processed locally and sent only to your configured AI provider for
-            extraction. Nothing is stored remotely.
+            Browser capture needs no extra integration key. Files stay local and are sent only to
+            your configured AI provider for extraction. Nothing is stored remotely.
           </span>
         </div>
       </Card>

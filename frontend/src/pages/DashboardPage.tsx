@@ -5,7 +5,7 @@ import { useData } from "../hooks/useData";
 import { colors } from "../lib/styles";
 import { Card } from "../components/Card";
 
-// ── Upload zone ───────────────────────────────────────────────────────────────
+// ── Capture zone ──────────────────────────────────────────────────────────────
 
 function UploadZone() {
   const [drag, setDrag] = useState(false);
@@ -72,8 +72,9 @@ function UploadZone() {
           Your conversations contain more decisions than you remember making.
         </h1>
         <p style={{ fontSize: 15, color: colors.textSecondary, lineHeight: 1.7, margin: 0 }}>
-          Upload a ChatGPT or Claude export. We extract every decision, goal, open question, and
-          pattern — then surface what you missed.
+          Capture ChatGPT conversations instantly with the browser extension, or fall back to file
+          import when needed. We extract every decision, goal, open question, and pattern — then
+          surface what you missed.
         </p>
       </div>
 
@@ -81,7 +82,7 @@ function UploadZone() {
       <div
         role="button"
         tabIndex={0}
-        aria-label="Upload file"
+        aria-label="Import fallback file"
         onClick={() => ref.current?.click()}
         onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && ref.current?.click()}
         onDrop={(e) => {
@@ -118,7 +119,7 @@ function UploadZone() {
 
         {state === "uploading" ? (
           <div style={{ color: colors.textSecondary, fontSize: 14 }}>
-            <Spinner /> Parsing your conversations…
+            <Spinner /> Importing your conversations…
           </div>
         ) : state === "error" ? (
           <div>
@@ -152,10 +153,10 @@ function UploadZone() {
               ↑
             </div>
             <div style={{ fontSize: 14, color: colors.text, fontWeight: 500, marginBottom: 6 }}>
-              Drop your export here
+              Import a file if you are not using the extension
             </div>
             <div style={{ fontSize: 12, color: colors.muted }}>
-              ChatGPT ZIP · Claude ZIP · Markdown · Plain text
+              Fallback import: ChatGPT ZIP · Claude ZIP · Markdown · Plain text
             </div>
           </>
         )}
@@ -187,7 +188,7 @@ function UploadZone() {
                 .filter((p: ProviderStatus) => p.configured)
                 .map((p: ProviderStatus) => p.label)
                 .join(", ")}`
-            : "No AI provider configured — using local heuristics"}
+            : "No AI provider configured — capture still works with local heuristics"}
           {!anyProvider && (
             <Link to="/settings" style={{ color: colors.primary, marginLeft: 4 }}>
               Add key →
@@ -196,7 +197,7 @@ function UploadZone() {
         </div>
       )}
 
-      {/* Export instructions */}
+      {/* Capture / import instructions */}
       <div
         style={{
           marginTop: 48,
@@ -211,10 +212,10 @@ function UploadZone() {
         }}
       >
         {[
-          ["ChatGPT", "Settings → Data Controls → Export Data"],
-          ["Claude", "claude.ai → Settings → Export Data"],
-          ["Markdown", ".md with User: / Assistant: labels"],
-          ["Plain text", "Notes, decisions, meeting transcripts"],
+          ["Browser extension", "Capture current ChatGPT thread instantly — no export step"],
+          ["AI key", "Optional for better extraction quality; not required for capture"],
+          ["ChatGPT export", "Fallback: Settings → Data Controls → Export Data"],
+          ["Claude / files", "Fallback: ZIP, Markdown, and plain text imports"],
         ].map(([src, hint]) => (
           <div key={src} style={{ background: colors.surface, padding: "12px 16px" }}>
             <div
@@ -233,7 +234,8 @@ function UploadZone() {
       </div>
 
       <div style={{ marginTop: 20, fontSize: 11, color: colors.muted, textAlign: "center" }}>
-        Processed on your infrastructure. Sent only to your configured AI provider for extraction.
+        Capture happens without a new integration key. Analysis is sent only to your configured AI
+        provider.
       </div>
     </div>
   );

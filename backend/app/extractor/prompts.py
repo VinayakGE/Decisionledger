@@ -19,12 +19,15 @@ OUTPUT — return ONLY this JSON, no prose, no markdown fences:
   "behavioral_pattern": "<1–2 sentences: what pattern do you see in HOW this person makes decisions? e.g. 'Delays decisions until forced by external pressure. Relies on gut feel over data.'>",
   "entities": [
     {
-      "type": "goal|decision|reason|evidence|constraint|open_question|action_item",
+      "type": "goal|decision|reason|evidence|constraint|open_question|action_item|outcome",
       "title": "<decisions only: max 8 words, verb-first, e.g. 'Hire AE after 12 customers'>",
       "description": "<minimum 15 chars, must add meaning beyond the title>",
       "confidence": 0.5–1.0,
       "supporting_snippet": "<exact verbatim quote from conversation, ≤ 200 chars>",
-      "linked_to": "<title of the decision this reason/evidence/action links to, or null>"
+      "linked_to": "<title of the decision this reason/evidence/action/outcome links to, or null>",
+      "expected": "<outcomes only: what was the founder expecting to happen? e.g. 'Raise more efficiently with stronger traction'>",
+      "actual": "<outcomes only: what actually happened? null if not yet measured. e.g. 'Valuation increased 22%, but took 2 more months'>",
+      "impact_statement": "<outcomes only: optional, what did this outcome mean? e.g. 'Proved the model was defensible'>"
     }
   ]
 }
@@ -36,7 +39,8 @@ ENTITY TYPE DEFINITIONS (be strict):
 - evidence: A data point, metric, or external fact cited to support a decision. "3 customers said X" is evidence.
 - constraint: A hard limit or non-negotiable. Budget, timeline, legal, technical blockers.
 - open_question: A real business question raised and NOT answered in this conversation.
-- action_item: A specific task with an implicit or explicit owner. NOT a vague next step."""
+- action_item: A specific task with an implicit or explicit owner. NOT a vague next step.
+- outcome: A measured result of a decision. Must have EXPECTED (what they thought would happen) and optionally ACTUAL (what did happen). Links to a decision. Only extract if there's explicit discussion of expected vs actual results."""
 
 USER_TEMPLATE = """Analyse this conversation and extract only high-quality, explicitly stated entities.
 

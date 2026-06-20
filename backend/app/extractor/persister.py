@@ -15,6 +15,7 @@ from app.models.orm import (
     Goal,
     GoalStatus,
     OpenQuestion,
+    Outcome,
     Reason,
 )
 
@@ -132,8 +133,41 @@ def persist_entities(
                     source_id=source_id,
                 )
             )
+        elif entity_type == "outcome":
+            # Outcomes are handled in a separate pass below
+            continue
         else:
             continue
+        count += 1
+
+    # Third pass: create outcomes (links to decisions)
+    for e in entities:
+        if e.get("type") != "outcome":
+            continue
+
+        if not _is_quality(e):
+            continue
+
+        expected = (e.get("expected") or "").strip()
+        actual = (e.get("actual") or "").strip() if e.get("actual") else None
+        impact = (e.get("impact_statement") or "").strip() if e.get("impact_statement") else None
+
+        if not expected:
+            continue
+
+        linked_id = _resolve_link(e, decision_map)
+        if not linked_id:
+            continue
+
+        db.add(
+            Outcome(
+                decision_id=linked_id,
+                expected=expected,
+                actual=actual,
+                confidence=_clamp(e.get("confidence", 0.0)),
+                impact_statement=impact,
+            )
+        )
         count += 1
 
     db.commit()

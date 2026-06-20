@@ -1118,6 +1118,14 @@
             "type": "array",
             "title": "Evidence",
             "default": []
+          },
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeOut"
+            },
+            "type": "array",
+            "title": "Outcomes",
+            "default": []
           }
         },
         "type": "object",
@@ -1414,6 +1422,74 @@
           "supporting_snippet"
         ],
         "title": "OpenQuestionOut"
+      },
+      "OutcomeOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "expected": {
+            "type": "string",
+            "title": "Expected"
+          },
+          "actual": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "timeframe": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeframe"
+          },
+          "impact_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Impact Statement"
+          },
+          "measured_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "expected",
+          "confidence"
+        ],
+        "title": "OutcomeOut"
       },
       "ProviderStatus": {
         "properties": {

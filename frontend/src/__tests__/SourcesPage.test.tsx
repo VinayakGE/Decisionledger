@@ -81,9 +81,7 @@ describe("SourcesPage", () => {
   it("shows empty state when no sources", async () => {
     vi.mocked(api.getSources).mockResolvedValue([]);
     renderSourcesPage();
-    await waitFor(() =>
-      expect(screen.getByText(/no captures or uploads yet/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/no uploads yet/i)).toBeInTheDocument());
   });
 
   it("deletes a source after inline confirmation", async () => {

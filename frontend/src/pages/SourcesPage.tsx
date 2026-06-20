@@ -4,12 +4,16 @@ import { api, Source, TERMINAL_STATUSES } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
 import { colors } from "../lib/styles";
-import { Trash2, RefreshCw } from "lucide-react";
+import { PageShell, Spinner, ErrorMsg } from "./DecisionsPage";
+import { RefreshCw, Trash2 } from "lucide-react";
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -21,24 +25,13 @@ const STATUS_COLOR: Record<string, string> = {
   pending: colors.muted,
 };
 
-const DEFAULT_STATUS_BG = `${colors.muted}1a`;
-
-const STATUS_BG: Record<string, string> = {
-  completed: `${colors.success}1a`,
-  heuristic_fallback: `${colors.warning}1a`,
-  completed_with_fallback: `${colors.success}1a`,
-  partial: `${colors.warning}1a`,
-  failed: `${colors.danger}1a`,
-  pending: DEFAULT_STATUS_BG,
-};
-
 const STATUS_LABEL: Record<string, string> = {
   completed: "Completed",
   heuristic_fallback: "Heuristic fallback",
-  completed_with_fallback: "Completed (with fallback)",
+  completed_with_fallback: "Completed",
   partial: "Partial",
   failed: "Failed",
-  pending: "Pending",
+  pending: "Processing…",
 };
 
 const SOURCE_TYPE_LABEL: Record<string, string> = {
@@ -57,7 +50,6 @@ export function SourcesPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
-  // Poll every 3 s while any source is pending
   useEffect(() => {
     const hasPending = (sources ?? []).some(
       (s) => !TERMINAL_STATUSES.has(s.extraction_status ?? "")
@@ -97,49 +89,59 @@ export function SourcesPage() {
 
   if (loading)
     return (
-      <Shell>
+      <PageShell title="Sources">
         <Spinner />
-      </Shell>
+      </PageShell>
     );
   if (error)
     return (
-      <Shell>
-        <p style={{ color: colors.danger }}>{error}</p>
-      </Shell>
+      <PageShell title="Sources">
+        <ErrorMsg msg={error} />
+      </PageShell>
     );
 
   const visible = (sources ?? []).filter((s) => !removed.has(s.id));
+
   if (!visible.length)
     return (
-      <Shell>
-        <div
-          style={{ textAlign: "center", padding: "60px 24px", color: colors.muted, fontSize: 14 }}
-        >
-          <p style={{ marginBottom: 16 }}>No captures or uploads yet.</p>
+      <PageShell title="Sources">
+        <div style={{ textAlign: "center", padding: "80px 24px", color: colors.muted }}>
+          <div style={{ fontSize: 48, opacity: 0.15, marginBottom: 20 }}>◎</div>
+          <p
+            style={{ fontSize: 15, fontWeight: 300, color: colors.textSecondary, marginBottom: 6 }}
+          >
+            No uploads yet.
+          </p>
+          <p style={{ fontSize: 13, color: colors.muted, marginBottom: 28 }}>
+            Every file you upload becomes a source — your decisions get extracted from it.
+          </p>
           <Link
-            to="/"
+            to="/upload"
             style={{
               display: "inline-block",
               background: colors.primary,
-              color: "#fff",
-              borderRadius: 8,
-              padding: "9px 20px",
-              fontWeight: 600,
-              fontSize: 13,
+              color: "#000",
+              borderRadius: 6,
+              padding: "10px 24px",
+              fontWeight: 700,
+              fontSize: 12,
               textDecoration: "none",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
             }}
           >
             Capture a conversation →
           </Link>
         </div>
-      </Shell>
+      </PageShell>
     );
 
   return (
-    <Shell count={visible.length}>
+    <PageShell title="Sources" count={visible.length} unit="files">
       {actionError && (
-        <p style={{ color: colors.danger, marginBottom: 12, fontSize: 13 }}>{actionError}</p>
+        <p style={{ color: colors.danger, marginBottom: 16, fontSize: 13 }}>{actionError}</p>
       )}
+
       {visible.map((s) => {
         const status = s.extraction_status ?? "unknown";
         const isPending = !TERMINAL_STATUSES.has(status);
@@ -147,51 +149,81 @@ export function SourcesPage() {
         const lowQuality =
           s.provider_used === "heuristic" ||
           (s.extraction_confidence_avg != null && s.extraction_confidence_avg < 0.55);
+        const statusColor = STATUS_COLOR[status] ?? colors.muted;
+
         return (
           <Card key={s.id} style={{ marginBottom: 12 }}>
+            {/* Low quality warning */}
             {lowQuality && !isPending && (
               <div
                 style={{
                   fontSize: 12,
                   color: colors.warning,
-                  background: `${colors.warning}18`,
-                  border: `1px solid ${colors.warning}44`,
-                  borderRadius: 6,
-                  padding: "6px 10px",
-                  marginBottom: 10,
+                  background: `${colors.warning}0A`,
+                  border: `1px solid ${colors.warning}33`,
+                  borderRadius: 5,
+                  padding: "7px 12px",
+                  marginBottom: 14,
+                  lineHeight: 1.5,
                 }}
               >
-                ⚠️ Low confidence extraction — AI provider may not have been available. Try{" "}
-                <strong>Re-analyze</strong> to improve quality.
+                Low confidence extraction — AI provider may not have been available.{" "}
+                <strong style={{ fontWeight: 600 }}>Re-analyze</strong> to improve quality.
               </div>
             )}
+
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 600, fontSize: 14 }} title={s.filename}>
-                    {s.filename.length > 40
-                      ? s.filename.slice(0, 20) + "…" + s.filename.slice(-15)
+                {/* Filename row */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    flexWrap: "wrap",
+                    marginBottom: 8,
+                  }}
+                >
+                  <span style={{ fontWeight: 500, fontSize: 14 }} title={s.filename}>
+                    {s.filename.length > 44
+                      ? s.filename.slice(0, 22) + "…" + s.filename.slice(-16)
                       : s.filename}
                   </span>
                   <span
                     style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      borderRadius: 4,
-                      padding: "2px 8px",
-                      background: STATUS_BG[status] ?? DEFAULT_STATUS_BG,
-                      color: STATUS_COLOR[status] ?? colors.muted,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: colors.muted,
+                      background: colors.border,
+                      padding: "2px 6px",
+                      borderRadius: 3,
+                    }}
+                  >
+                    {s.source_type}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: statusColor,
+                      background: `${statusColor}14`,
+                      padding: "2px 7px",
+                      borderRadius: 3,
                       display: "flex",
                       alignItems: "center",
-                      gap: 4,
+                      gap: 5,
                     }}
                   >
                     {isPending && (
                       <span
                         style={{
                           display: "inline-block",
-                          width: 8,
-                          height: 8,
+                          width: 7,
+                          height: 7,
                           borderRadius: "50%",
                           border: `1.5px solid ${colors.muted}`,
                           borderTopColor: "transparent",
@@ -201,11 +233,10 @@ export function SourcesPage() {
                     )}
                     {STATUS_LABEL[status] ?? status}
                   </span>
-                  <span style={{ fontSize: 11, color: colors.muted }}>
-                    {SOURCE_TYPE_LABEL[s.source_type] ?? s.source_type.toUpperCase()}
-                  </span>
                 </div>
-                <div style={{ marginTop: 6, display: "flex", gap: 20, flexWrap: "wrap" }}>
+
+                {/* Meta row */}
+                <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
                   {[
                     ["Uploaded", formatDate(s.uploaded_at)],
                     ["Conversations", s.conversation_count ?? "—"],
@@ -219,77 +250,109 @@ export function SourcesPage() {
                     ],
                   ].map(([label, val]) => (
                     <span key={String(label)} style={{ fontSize: 12, color: colors.textSecondary }}>
-                      <span style={{ color: colors.muted }}>{label}: </span>
+                      <span style={{ color: colors.muted }}>{label} </span>
                       {val}
                     </span>
                   ))}
                 </div>
               </div>
 
-              {/* Re-analyze button */}
-              <button
-                onClick={() => handleReanalyze(s)}
-                disabled={isBusy}
-                title={isPending ? "Extraction in progress…" : "Re-analyze with AI"}
-                style={{
-                  background: "none",
-                  border: `1px solid ${isBusy ? colors.border : colors.primary}`,
-                  cursor: isBusy ? "not-allowed" : "pointer",
-                  color: isBusy ? colors.muted : colors.primary,
-                  padding: "5px 10px",
-                  borderRadius: 6,
-                  flexShrink: 0,
-                  opacity: isBusy ? 0.5 : 1,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  fontSize: 12,
-                  fontWeight: 500,
-                }}
-              >
-                <RefreshCw
-                  size={13}
-                  style={reanalyzing === s.id ? { animation: "spin 0.8s linear infinite" } : {}}
-                />
-                Re-analyze
-              </button>
-
-              {/* Delete button */}
-              <button
-                onClick={() => setConfirmDelete(s.id)}
-                disabled={isBusy}
-                title="Delete source and all entities"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: isBusy ? "not-allowed" : "pointer",
-                  color: isBusy ? colors.muted : colors.danger,
-                  padding: 6,
-                  borderRadius: 6,
-                  flexShrink: 0,
-                  opacity: isBusy ? 0.5 : 1,
-                }}
-              >
-                <Trash2 size={16} />
-              </button>
+              {/* Actions */}
+              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                <button
+                  onClick={() => handleReanalyze(s)}
+                  disabled={isBusy}
+                  title="Re-analyze with AI"
+                  style={{
+                    background: "none",
+                    border: `1px solid ${isBusy ? colors.border : colors.borderStrong}`,
+                    color: isBusy ? colors.muted : colors.textSecondary,
+                    borderRadius: 5,
+                    padding: "5px 12px",
+                    cursor: isBusy ? "not-allowed" : "pointer",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    opacity: isBusy ? 0.45 : 1,
+                    transition: "border-color 0.12s, color 0.12s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isBusy) {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = colors.primary;
+                      (e.currentTarget as HTMLButtonElement).style.color = colors.primary;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = isBusy
+                      ? colors.border
+                      : colors.borderStrong;
+                    (e.currentTarget as HTMLButtonElement).style.color = isBusy
+                      ? colors.muted
+                      : colors.textSecondary;
+                  }}
+                >
+                  <RefreshCw
+                    size={12}
+                    style={reanalyzing === s.id ? { animation: "spin 0.8s linear infinite" } : {}}
+                  />
+                  Re-analyze
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(s.id)}
+                  disabled={isBusy}
+                  title="Delete source and all entities"
+                  style={{
+                    background: "none",
+                    border: `1px solid ${isBusy ? colors.border : colors.borderStrong}`,
+                    color: isBusy ? colors.muted : colors.textSecondary,
+                    borderRadius: 5,
+                    padding: "5px 8px",
+                    cursor: isBusy ? "not-allowed" : "pointer",
+                    opacity: isBusy ? 0.45 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                    transition: "border-color 0.12s, color 0.12s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isBusy) {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = colors.danger;
+                      (e.currentTarget as HTMLButtonElement).style.color = colors.danger;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = isBusy
+                      ? colors.border
+                      : colors.borderStrong;
+                    (e.currentTarget as HTMLButtonElement).style.color = isBusy
+                      ? colors.muted
+                      : colors.textSecondary;
+                  }}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
             </div>
 
-            {/* Inline delete confirmation bar */}
+            {/* Delete confirmation */}
             {confirmDelete === s.id && (
               <div
                 style={{
-                  marginTop: 10,
-                  background: `${colors.danger}12`,
-                  borderRadius: 6,
-                  padding: 8,
+                  marginTop: 12,
+                  background: `${colors.danger}0A`,
+                  border: `1px solid ${colors.danger}33`,
+                  borderRadius: 5,
+                  padding: "10px 14px",
                   display: "flex",
                   alignItems: "center",
                   gap: 12,
-                  fontSize: 13,
                 }}
               >
-                <span style={{ flex: 1, color: colors.danger }}>
-                  Delete this source and all its data?
+                <span style={{ flex: 1, fontSize: 13, color: colors.danger }}>
+                  Delete this source and all its extracted data?
                 </span>
                 <button
                   onClick={() => handleDelete(s)}
@@ -299,14 +362,16 @@ export function SourcesPage() {
                     color: "#fff",
                     border: "none",
                     borderRadius: 5,
-                    padding: "4px 12px",
-                    fontSize: 13,
-                    fontWeight: 600,
+                    padding: "5px 14px",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
                     cursor: deleting === s.id ? "not-allowed" : "pointer",
                     opacity: deleting === s.id ? 0.6 : 1,
                   }}
                 >
-                  Delete
+                  {deleting === s.id ? "Deleting…" : "Delete"}
                 </button>
                 <button
                   onClick={() => setConfirmDelete(null)}
@@ -314,9 +379,8 @@ export function SourcesPage() {
                     background: "none",
                     border: "none",
                     color: colors.muted,
-                    fontSize: 13,
+                    fontSize: 12,
                     cursor: "pointer",
-                    padding: "4px 4px",
                     textDecoration: "underline",
                   }}
                 >
@@ -327,37 +391,6 @@ export function SourcesPage() {
           </Card>
         );
       })}
-    </Shell>
-  );
-}
-
-function Shell({ children, count }: { children: React.ReactNode; count?: number }) {
-  return (
-    <div style={{ maxWidth: 820, margin: "0 auto", padding: "40px 24px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Sources</h1>
-        {count != null && (
-          <span style={{ fontSize: 13, color: colors.muted }}>
-            {count} file{count !== 1 ? "s" : ""}
-          </span>
-        )}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Spinner() {
-  return (
-    <div
-      style={{
-        width: 24,
-        height: 24,
-        border: `2px solid ${colors.border}`,
-        borderTopColor: colors.primary,
-        borderRadius: "50%",
-        animation: "spin 0.8s linear infinite",
-      }}
-    />
+    </PageShell>
   );
 }

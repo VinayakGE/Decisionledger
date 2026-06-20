@@ -3,20 +3,37 @@ import { api, ProviderStatus } from "../lib/api";
 import { useData } from "../hooks/useData";
 import { Card } from "../components/Card";
 import { colors } from "../lib/styles";
-import {
-  CheckCircle,
-  XCircle,
-  Settings,
-  KeyRound,
-  ExternalLink,
-  Info,
-  Zap,
-  FlaskConical,
-} from "lucide-react";
+import { PageShell, Spinner, ErrorMsg } from "./DecisionsPage";
+
+const PROVIDERS = [
+  {
+    field: "anthropic_api_key",
+    label: "Anthropic",
+    placeholder: "sk-ant-…",
+    link: "https://console.anthropic.com/",
+  },
+  {
+    field: "gemini_api_key",
+    label: "Google Gemini",
+    placeholder: "AIza…",
+    link: "https://aistudio.google.com/app/apikey",
+  },
+  {
+    field: "cerebras_api_key",
+    label: "Cerebras",
+    placeholder: "csk-…",
+    link: "https://cloud.cerebras.ai/",
+  },
+  {
+    field: "groq_api_key",
+    label: "Groq",
+    placeholder: "gsk_…",
+    link: "https://console.groq.com/keys",
+  },
+];
 
 export function SettingsPage() {
   const { data, loading, error, reload } = useData(() => api.getSettings());
-
   const [keys, setKeys] = useState<Record<string, string>>({
     anthropic_api_key: "",
     gemini_api_key: "",
@@ -33,9 +50,7 @@ export function SettingsPage() {
     setSaveSuccess(false);
     try {
       const payload: Record<string, string | null> = {};
-      for (const [k, v] of Object.entries(keys)) {
-        payload[k] = v.trim() || null;
-      }
+      for (const [k, v] of Object.entries(keys)) payload[k] = v.trim() || null;
       await api.updateSettings(payload as Parameters<typeof api.updateSettings>[0]);
       setSaveSuccess(true);
       setKeys({
@@ -52,246 +67,246 @@ export function SettingsPage() {
     }
   };
 
+  if (loading)
+    return (
+      <PageShell title="Settings">
+        <Spinner />
+      </PageShell>
+    );
+  if (error)
+    return (
+      <PageShell title="Settings">
+        <ErrorMsg msg={error} />
+      </PageShell>
+    );
+
   const hasAnyKey = Object.values(keys).some((v) => v.trim().length > 0);
+  const activeProvider = data?.providers.find((p: ProviderStatus) => p.configured);
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 24px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-        <Settings size={22} color={colors.primary} />
-        <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Settings</h1>
-      </div>
-      <p style={{ color: colors.textSecondary, marginBottom: 32, fontSize: 14 }}>
-        Configure API keys for entity extraction quality. Browser capture itself needs no extra
-        integration key. Keys are kept in memory until the server restarts — for permanent storage,
-        set them as environment variables in your deployment platform (Render dashboard, Docker
-        .env, or local backend/.env).
-      </p>
-
-      <Card style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-          <Info size={16} color={colors.primary} style={{ flexShrink: 0, marginTop: 2 }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-              Capture vs analysis
-            </div>
-            <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8 }}>
-              <strong>Browser capture:</strong> no new API key required.
-            </p>
-            <p style={{ fontSize: 13, color: colors.textSecondary, margin: 0 }}>
-              <strong>Structured extraction:</strong> optional AI provider keys improve quality and
-              reduce heuristic fallbacks.
-            </p>
+    <PageShell title="Settings">
+      {/* Extraction mode */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 12,
+          padding: "14px 18px",
+          borderRadius: 6,
+          marginBottom: 32,
+          background: data?.llm_enabled ? `${colors.success}0A` : `${colors.warning}0A`,
+          border: `1px solid ${data?.llm_enabled ? colors.success : colors.warning}33`,
+        }}
+      >
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: data?.llm_enabled ? colors.success : colors.warning,
+            flexShrink: 0,
+            marginTop: 4,
+          }}
+        />
+        <div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: data?.llm_enabled ? colors.success : colors.warning,
+              marginBottom: 3,
+            }}
+          >
+            {data?.llm_enabled ? "Production — LLM extraction active" : "Dev mode — heuristic only"}
+          </div>
+          <div style={{ fontSize: 12, color: colors.textSecondary }}>
+            {data?.llm_enabled
+              ? `Active provider: ${activeProvider?.label ?? "unknown"} · Chain: Anthropic → Gemini → Cerebras → Groq → Heuristic`
+              : "No API keys configured. Uploads use local heuristics — add a key below for full AI extraction."}
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Extraction mode banner */}
-      {data && (
+      {/* Provider status */}
+      <SepLabel>Provider Status</SepLabel>
+      <Card style={{ marginBottom: 32, padding: "0 24px" }}>
+        {data?.providers.map((p: ProviderStatus) => (
+          <div
+            key={p.name}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "12px 0",
+              borderBottom: `1px solid ${colors.border}`,
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: p.configured ? colors.success : colors.muted,
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ fontSize: 13, flex: 1 }}>{p.label}</span>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: p.configured ? colors.success : colors.muted,
+                background: p.configured ? `${colors.success}14` : `${colors.muted}14`,
+                padding: "2px 7px",
+                borderRadius: 3,
+              }}
+            >
+              {p.configured ? "Configured" : "Not set"}
+            </span>
+          </div>
+        ))}
         <div
           style={{
             display: "flex",
-            alignItems: "flex-start",
+            alignItems: "center",
             gap: 12,
-            padding: "14px 16px",
-            borderRadius: 10,
-            marginBottom: 24,
-            background: data.llm_enabled ? `${colors.success}15` : `${colors.warning}15`,
-            border: `1px solid ${data.llm_enabled ? colors.success : colors.warning}44`,
+            padding: "12px 0",
           }}
         >
-          {data.llm_enabled ? (
-            <Zap size={16} color={colors.success} style={{ flexShrink: 0, marginTop: 2 }} />
-          ) : (
-            <FlaskConical
-              size={16}
-              color={colors.warning}
-              style={{ flexShrink: 0, marginTop: 2 }}
-            />
-          )}
-          <div>
-            <div
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: colors.success,
+              flexShrink: 0,
+            }}
+          />
+          <span style={{ fontSize: 13, flex: 1 }}>Heuristic (local)</span>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: colors.success,
+              background: `${colors.success}14`,
+              padding: "2px 7px",
+              borderRadius: 3,
+            }}
+          >
+            Always available
+          </span>
+        </div>
+      </Card>
+
+      {/* Permanent storage note */}
+      <SepLabel>Permanent Storage</SepLabel>
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          padding: "14px 16px",
+          borderRadius: 6,
+          background: `${colors.warning}0A`,
+          border: `1px solid ${colors.warning}33`,
+          marginBottom: 32,
+        }}
+      >
+        <span style={{ fontSize: 13, color: colors.warning, flexShrink: 0, marginTop: 1 }}>⚠</span>
+        <div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: colors.warning,
+              marginBottom: 6,
+            }}
+          >
+            Keys reset on server restart
+          </div>
+          <div
+            style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 1.6, marginBottom: 10 }}
+          >
+            For persistent keys, set environment variables in your deployment platform — Render
+            dashboard, Docker .env, or local{" "}
+            <code
               style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: data.llm_enabled ? colors.success : colors.warning,
-                marginBottom: 3,
+                fontSize: 11,
+                background: colors.bg,
+                color: colors.primary,
+                padding: "1px 6px",
+                borderRadius: 3,
+                border: `1px solid ${colors.border}`,
+                fontFamily: "monospace",
               }}
             >
-              {data.llm_enabled
-                ? "Production mode — LLM extraction active"
-                : "Dev mode — heuristic only (no API tokens spent)"}
-            </div>
-            <div style={{ fontSize: 12, color: colors.textSecondary }}>
-              {data.llm_enabled
-                ? "Capture and uploads will use the full AI provider chain (Anthropic → Gemini → Cerebras → Groq → Heuristic)."
-                : "Capture and uploads skip all LLM providers and use local heuristics until AI extraction is enabled."}
-            </div>
+              backend/.env
+            </code>
+            .
           </div>
-        </div>
-      )}
-
-      {/* Provider status */}
-      <Card style={{ marginBottom: 24 }}>
-        <div
-          style={{ fontSize: 13, fontWeight: 600, color: colors.textSecondary, marginBottom: 14 }}
-        >
-          PROVIDER STATUS
-        </div>
-        {loading && <p style={{ color: colors.muted, fontSize: 13 }}>Loading…</p>}
-        {error && <p style={{ color: colors.danger, fontSize: 13 }}>{error}</p>}
-        {data && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {data.providers.map((p: ProviderStatus) => (
-              <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                {p.configured ? (
-                  <CheckCircle size={16} color={colors.success} />
-                ) : (
-                  <XCircle size={16} color={colors.muted} />
-                )}
-                <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>{p.label}</span>
-                <span
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {["ANTHROPIC_API_KEY", "GEMINI_API_KEY", "CEREBRAS_API_KEY", "GROQ_API_KEY"].map(
+              (name) => (
+                <code
+                  key={name}
                   style={{
                     fontSize: 11,
-                    fontWeight: 600,
-                    padding: "2px 8px",
-                    borderRadius: 999,
-                    background: p.configured ? `${colors.success}22` : `${colors.muted}22`,
-                    color: p.configured ? colors.success : colors.muted,
+                    background: colors.bg,
+                    color: colors.primary,
+                    padding: "3px 8px",
+                    borderRadius: 3,
+                    border: `1px solid ${colors.border}`,
+                    fontFamily: "monospace",
+                    display: "inline-block",
+                    width: "fit-content",
                   }}
                 >
-                  {p.configured ? "Configured" : "Not set"}
-                </span>
-              </div>
-            ))}
+                  {name}
+                </code>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Key inputs */}
+      <SepLabel>Set Keys — Session Only</SepLabel>
+      <Card>
+        {PROVIDERS.map(({ field, label, placeholder, link }) => (
+          <div key={field} style={{ marginBottom: 20 }}>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 12,
-                marginTop: 4,
-                paddingTop: 10,
-                borderTop: `1px solid ${colors.border}`,
+                justifyContent: "space-between",
+                marginBottom: 6,
               }}
             >
-              <CheckCircle size={16} color={colors.success} />
-              <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>Heuristic (local)</span>
               <span
                 style={{
                   fontSize: 11,
-                  fontWeight: 600,
-                  padding: "2px 8px",
-                  borderRadius: 999,
-                  background: `${colors.success}22`,
-                  color: colors.success,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: colors.textSecondary,
                 }}
               >
-                Always available
+                {label}
               </span>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* Permanent storage instructions */}
-      <Card style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-          <Info size={16} color={colors.warning} style={{ flexShrink: 0, marginTop: 2 }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: colors.warning }}>
-              Permanent Storage via Environment Variables
-            </div>
-            <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 10 }}>
-              For persistent keys, set environment variables — these survive server restarts.
-            </p>
-            <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 10 }}>
-              Set them in your deployment platform (Render dashboard, Docker .env, or local
-              backend/.env):
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {["ANTHROPIC_API_KEY", "GEMINI_API_KEY", "CEREBRAS_API_KEY", "GROQ_API_KEY"].map(
-                (name) => (
-                  <code
-                    key={name}
-                    style={{
-                      fontSize: 12,
-                      background: colors.bg,
-                      color: colors.primary,
-                      padding: "3px 8px",
-                      borderRadius: 4,
-                      display: "inline-block",
-                      width: "fit-content",
-                    }}
-                  >
-                    {name}
-                  </code>
-                )
-              )}
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Key input */}
-      <Card style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-          <KeyRound size={14} color={colors.primary} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: colors.textSecondary }}>
-            SET API KEYS (SESSION)
-          </span>
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: colors.warning,
-              background: `${colors.warning}18`,
-              borderRadius: 4,
-              padding: "2px 8px",
-            }}
-          >
-            ⚡ Session only — lost on restart
-          </span>
-        </div>
-        <p style={{ fontSize: 12, color: colors.muted, marginBottom: 16 }}>
-          Leave a field blank to keep the existing key. Keys will be active until the server
-          restarts.
-        </p>
-        {[
-          {
-            field: "anthropic_api_key",
-            label: "Anthropic API Key",
-            placeholder: "sk-ant-…",
-            link: "https://console.anthropic.com/",
-          },
-          {
-            field: "gemini_api_key",
-            label: "Google Gemini API Key",
-            placeholder: "AIza…",
-            link: "https://aistudio.google.com/app/apikey",
-          },
-          {
-            field: "cerebras_api_key",
-            label: "Cerebras API Key",
-            placeholder: "csk-…",
-            link: "https://cloud.cerebras.ai/",
-          },
-          {
-            field: "groq_api_key",
-            label: "Groq API Key",
-            placeholder: "gsk_…",
-            link: "https://console.groq.com/keys",
-          },
-        ].map(({ field, label, placeholder, link }) => (
-          <div key={field} style={{ marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 500 }}>{label}</label>
               <a
                 href={link}
                 target="_blank"
                 rel="noreferrer"
-                title="Get API key"
-                style={{ color: colors.muted, display: "flex" }}
+                style={{ fontSize: 11, color: colors.muted, textDecoration: "none" }}
               >
-                <ExternalLink size={11} />
+                Get key ↗
               </a>
             </div>
             <input
@@ -303,7 +318,7 @@ export function SettingsPage() {
                 width: "100%",
                 background: colors.bg,
                 border: `1px solid ${colors.border}`,
-                borderRadius: 8,
+                borderRadius: 6,
                 padding: "10px 14px",
                 color: colors.text,
                 fontSize: 13,
@@ -315,31 +330,57 @@ export function SettingsPage() {
         ))}
 
         {saveError && (
-          <p style={{ color: colors.danger, fontSize: 13, marginBottom: 12 }}>{saveError}</p>
+          <p style={{ color: colors.danger, fontSize: 12, marginBottom: 12 }}>{saveError}</p>
         )}
         {saveSuccess && (
-          <p style={{ color: colors.success, fontSize: 13, marginBottom: 12 }}>
-            Keys updated successfully.
+          <p style={{ color: colors.success, fontSize: 12, marginBottom: 12 }}>
+            Keys applied — active until server restarts.
           </p>
         )}
 
-        <button
-          onClick={handleSave}
-          disabled={saving || !hasAnyKey}
-          style={{
-            background: hasAnyKey && !saving ? colors.primary : colors.border,
-            color: hasAnyKey && !saving ? "#fff" : colors.muted,
-            border: "none",
-            borderRadius: 8,
-            padding: "10px 24px",
-            cursor: hasAnyKey && !saving ? "pointer" : "not-allowed",
-            fontWeight: 600,
-            fontSize: 14,
-          }}
-        >
-          {saving ? "Saving…" : "Apply Keys"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <button
+            onClick={handleSave}
+            disabled={saving || !hasAnyKey}
+            style={{
+              background: hasAnyKey && !saving ? colors.primary : colors.border,
+              color: hasAnyKey && !saving ? "#000" : colors.muted,
+              border: "none",
+              borderRadius: 6,
+              padding: "10px 24px",
+              cursor: hasAnyKey && !saving ? "pointer" : "not-allowed",
+              fontWeight: 700,
+              fontSize: 12,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+            }}
+          >
+            {saving ? "Applying…" : "Apply Keys"}
+          </button>
+          <span style={{ fontSize: 11, color: colors.muted }}>Active until server restarts</span>
+        </div>
       </Card>
+    </PageShell>
+  );
+}
+
+function SepLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.15em",
+        textTransform: "uppercase",
+        color: colors.muted,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        margin: "0 0 16px",
+      }}
+    >
+      {children}
+      <div style={{ flex: 1, height: 1, background: colors.border }} />
     </div>
   );
 }

@@ -41,6 +41,14 @@ const STATUS_LABEL: Record<string, string> = {
   pending: "Pending",
 };
 
+const SOURCE_TYPE_LABEL: Record<string, string> = {
+  chatgpt: "CHATGPT",
+  claude: "CLAUDE",
+  markdown: "MARKDOWN",
+  text: "TEXT",
+  chatgpt_capture: "CHATGPT CAPTURE",
+};
+
 export function SourcesPage() {
   const { data: sources, loading, error, reload } = useData(() => api.getSources());
   const [deleting, setDeleting] = useState<number | null>(null);
@@ -107,7 +115,7 @@ export function SourcesPage() {
         <div
           style={{ textAlign: "center", padding: "60px 24px", color: colors.muted, fontSize: 14 }}
         >
-          <p style={{ marginBottom: 16 }}>No uploads yet.</p>
+          <p style={{ marginBottom: 16 }}>No captures or uploads yet.</p>
           <Link
             to="/"
             style={{
@@ -121,7 +129,7 @@ export function SourcesPage() {
               textDecoration: "none",
             }}
           >
-            Upload a conversation →
+            Capture a conversation →
           </Link>
         </div>
       </Shell>
@@ -194,7 +202,7 @@ export function SourcesPage() {
                     {STATUS_LABEL[status] ?? status}
                   </span>
                   <span style={{ fontSize: 11, color: colors.muted }}>
-                    {s.source_type.toUpperCase()}
+                    {SOURCE_TYPE_LABEL[s.source_type] ?? s.source_type.toUpperCase()}
                   </span>
                 </div>
                 <div style={{ marginTop: 6, display: "flex", gap: 20, flexWrap: "wrap" }}>

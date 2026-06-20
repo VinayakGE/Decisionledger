@@ -19,6 +19,39 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/upload", tags=["upload"])
 
 
+def _create_pending_source(
+    db: Session,
+    *,
+    filename: str,
+    source_type: str,
+    raw_path: str,
+    conversation_count: int,
+) -> ConversationSource:
+    source = ConversationSource(
+        filename=filename,
+        source_type=source_type,
+        raw_path=raw_path,
+        conversation_count=conversation_count,
+        extraction_status="pending",
+        entities_extracted=0,
+    )
+    db.add(source)
+    db.commit()
+    db.refresh(source)
+    return source
+
+
+def _pending_response(source: ConversationSource) -> UploadResponse:
+    return UploadResponse(
+        source_id=source.id,
+        filename=source.filename,
+        source_type=source.source_type,
+        conversation_count=source.conversation_count,
+        entities_extracted=0,
+        extraction_status="pending",
+    )
+
+
 @router.post("", response_model=UploadResponse)
 async def upload_file(
     background_tasks: BackgroundTasks,
@@ -45,28 +78,16 @@ async def upload_file(
     with open(dest, "wb") as f:
         f.write(content)
 
-    source = ConversationSource(
+    source = _create_pending_source(
+        db,
         filename=file.filename or "upload",
         source_type=source_type,
         raw_path=dest,
         conversation_count=len(conversations),
-        extraction_status="pending",
-        entities_extracted=0,
     )
-    db.add(source)
-    db.commit()
-    db.refresh(source)
 
     background_tasks.add_task(_extract_and_persist, source.id, conversations)
-
-    return UploadResponse(
-        source_id=source.id,
-        filename=source.filename,
-        source_type=source.source_type,
-        conversation_count=source.conversation_count,
-        entities_extracted=0,
-        extraction_status="pending",
-    )
+    return _pending_response(source)
 
 
 def _extract_and_persist(source_id: int, conversations: list) -> None:

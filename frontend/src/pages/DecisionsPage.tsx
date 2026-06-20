@@ -211,7 +211,7 @@ function EmptyState({ message, showUploadLink }: { message: string; showUploadLi
       <p style={{ marginBottom: showUploadLink ? 12 : 0 }}>{message}</p>
       {showUploadLink && (
         <Link to="/upload" style={{ color: colors.primary, fontSize: 13 }}>
-          Upload a conversation to get started →
+          Capture a conversation to get started →
         </Link>
       )}
     </div>

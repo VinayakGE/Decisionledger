@@ -82,7 +82,7 @@ describe("SourcesPage", () => {
     vi.mocked(api.getSources).mockResolvedValue([]);
     renderSourcesPage();
     await waitFor(() =>
-      expect(screen.getByText(/no captures or uploads yet/i)).toBeInTheDocument()
+      expect(screen.getByText(/no uploads yet/i)).toBeInTheDocument()
     );
   });
 

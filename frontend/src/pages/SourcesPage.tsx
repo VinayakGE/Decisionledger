@@ -296,7 +296,7 @@ export function SourcesPage() {
                 <button
                   onClick={() => setConfirmDelete(s.id)}
                   disabled={isBusy}
-                  title="Delete source"
+                  title="Delete source and all entities"
                   style={{
                     background: "none",
                     border: `1px solid ${isBusy ? colors.border : colors.borderStrong}`,

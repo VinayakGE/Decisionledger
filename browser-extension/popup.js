@@ -34,7 +34,15 @@ async function postCapture(baseUrl, payload) {
     body: JSON.stringify(payload),
   });
 
-  const data = await response.json().catch(() => ({}));
+  const raw = await response.text();
+  let data = {};
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      data = { detail: raw };
+    }
+  }
   if (!response.ok) {
     throw new Error(data.detail || response.statusText || "Capture failed");
   }

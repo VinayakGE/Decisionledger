@@ -27,8 +27,9 @@ function collectMessages() {
     .filter(Boolean);
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== "COLLECT_CHATGPT_CONVERSATION") return undefined;
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  void sender;
+  if (message?.type !== "COLLECT_CHATGPT_CONVERSATION") return;
 
   try {
     const messages = collectMessages();

@@ -46,7 +46,8 @@ def _to_conversation(payload: ChatGPTCaptureIn) -> Conversation:
     ]
     if not messages:
         raise HTTPException(
-            status_code=422, detail="Capture must include at least one non-empty message."
+            status_code=422,
+            detail="Capture messages were empty after trimming whitespace. Include at least one non-empty message.",
         )
 
     created_at = payload.captured_at

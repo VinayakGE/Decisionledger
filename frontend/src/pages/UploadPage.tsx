@@ -23,6 +23,7 @@ type State =
 
 const ACCEPTED = ".zip,.json,.md,.txt";
 const POLL_INTERVAL_MS = 2000;
+const EXTENSION_DIR_LABEL = "browser-extension/";
 
 export function UploadPage() {
   const [state, setState] = useState<State>({ type: "idle" });
@@ -103,7 +104,7 @@ export function UploadPage() {
             <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>1. Load extension</div>
             <div style={{ fontSize: 12, color: colors.muted, lineHeight: 1.5 }}>
               Load the unpacked browser extension from the repository&apos;s{" "}
-              <code>browser-extension/</code> folder.
+              <code>{EXTENSION_DIR_LABEL}</code> folder.
             </div>
           </div>
           <div style={{ background: colors.bg, borderRadius: 8, padding: "12px 14px" }}>

@@ -2,7 +2,6 @@
 
 import io
 import json
-import os
 from unittest.mock import patch
 
 import pytest
@@ -120,6 +119,8 @@ def test_upload_markdown(tmp_path, monkeypatch):
 
 
 def test_capture_chatgpt_returns_pending_and_writes_snapshot(tmp_path, monkeypatch):
+    import os
+
     monkeypatch.setattr("app.api.capture.settings.upload_dir", str(tmp_path))
     r = client.post(
         "/capture/chatgpt",
@@ -161,7 +162,33 @@ def test_capture_chatgpt_requires_non_empty_messages(tmp_path, monkeypatch):
         },
     )
     assert r.status_code == 422
-    assert "non-empty message" in r.json()["detail"]
+    assert "empty after trimming whitespace" in r.json()["detail"]
+
+
+def test_capture_markdown_snapshot_includes_metadata():
+    from types import SimpleNamespace
+
+    from app.api.capture import _serialize_capture_markdown
+    from app.parsers.base import Conversation, Message
+
+    markdown = _serialize_capture_markdown(
+        payload=SimpleNamespace(
+            source_url="https://chatgpt.com/c/example",
+            captured_at=None,
+        ),
+        conversation=Conversation(
+            title="Pricing strategy",
+            messages=[
+                Message(role="user", content="We should test annual plans."),
+                Message(role="assistant", content="That could improve cash flow."),
+            ],
+        ),
+    )
+
+    assert "# Pricing strategy" in markdown
+    assert "> Source: https://chatgpt.com/c/example" in markdown
+    assert "**User:**" in markdown
+    assert "**Assistant:**" in markdown
 
 
 # ── Background extraction task ────────────────────────────────────────────────
